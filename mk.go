@@ -10,10 +10,13 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+
+	"github.com/mattn/go-isatty"
 )
 
 // True if messages should be printed without fancy colors.
-var nocolor bool = true
+//  - By default, if the output stream is not the terminal, colors are disabled
+var nocolor bool = !isatty.IsTerminal(os.Stdout.Fd())
 
 // True if we are ignoring timestamps and rebuilding everything.
 var rebuildall bool = false
@@ -366,7 +369,7 @@ func main() {
 
 	// Create a dummy virtual rule that depends on every target
 	root := rule{}
-	root.targets = []pattern{pattern{false, "", nil}}
+	root.targets = []pattern{{false, "", nil}}
 	root.attributes = attribSet{false, false, false, false, false, false, false, true, false}
 	root.prereqs = targets
 	rs.add(root)
