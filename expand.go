@@ -3,6 +3,7 @@
 package main
 
 import (
+	"os"
 	"regexp"
 	"strings"
 	"unicode/utf8"
@@ -203,6 +204,11 @@ func expandSigil(input string, vars map[string][]string) ([]string, int) {
 		} else {
 			return []string{"$" + input[:offset]}, offset
 		}
+	}
+
+	// Find the subsitution in the environment.
+	if varval, ok := os.LookupEnv(varname); ok {
+		return []string{varval}, offset
 	}
 
 	return []string{"$" + input}, len(input)
