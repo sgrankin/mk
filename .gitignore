@@ -57,3 +57,6 @@ pom.xml
 # Builds
 *.o
 out/
+
+# Vim swapfile
+*.swp
