@@ -2,12 +2,12 @@ package main
 
 import (
 	"bufio"
-    "runtime"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 )
