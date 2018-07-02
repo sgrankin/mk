@@ -79,6 +79,7 @@ improvements.
 
 ### Options
 
+  * `-C directory` Change directory to `directory` first.
   * `-f filename` Use the given file as the mkfile.
   * `-n` Dry run, print commands without actually executing.
   * `-r` Force building of the immediate targets.
