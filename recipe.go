@@ -95,16 +95,19 @@ func dorecipe(target string, u *node, e *edge, dryrun bool) bool {
 
 	input := expandRecipeSigils(e.r.recipe, vars)
 	
-	sh := vars["shell"][0]
-	args := []string{}
+	sh, args := expandShell(vars["shell"][0], []string{})
 
 	if len(e.r.shell) > 0 {
-		sh = e.r.shell[0]
-		args = e.r.shell[1:]
+		var s string
+		var a []string
+		
+		s, a = expandShell(e.r.shell[0], e.r.shell[1:])
+	
+		sh = s
+		args = a
 	}
 
 	mkPrintRecipe(target, input, e.r.attributes.quiet)
-
 	if dryrun {
 		return true
 	}
