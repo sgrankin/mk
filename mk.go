@@ -22,6 +22,10 @@ var (
 	// Default shell to use if none specified via $shell.
 	defaultShell string
 	
+	// Do not drop shell arguments when calling with no further arguments
+	// This works around `sh -c commands...` being a thing, but allows the `rc -v commands...` argument-less flags
+	dontDropArgs bool
+	
 	// True if we are ignoring timestamps and rebuilding everything.
 	rebuildall bool = false
 	
@@ -330,6 +334,7 @@ func main() {
 	flag.BoolVar(&quiet, "q", false, "don't print recipes before executing them")
 	flag.BoolVar(&color, "color",  isatty.IsTerminal(os.Stdout.Fd()), "turn color on/off")
 	flag.StringVar(&defaultShell, "shell", "sh -c", "default shell to use if none are specified via $shell")
+	flag.BoolVar(&dontDropArgs, "F", false, "don't drop shell arguments when no further arguments are specified")
 	// TODO(rjk): P9P mk command line compatability.
 	flag.Parse()
 
