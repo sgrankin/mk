@@ -14,35 +14,40 @@ import (
 	"github.com/mattn/go-isatty"
 )
 
-// True if messages should be printed with fancy colors.
-// By default, if the output stream is not the terminal, colors are disabled.
-var color bool
+var (
+	// True if messages should be printed with fancy colors.
+	// By default, if the output stream is not the terminal, colors are disabled.
+	color bool
+	
+	// Default shell to use if none specified via $shell.
+	defaultShell string
+	
+	// True if we are ignoring timestamps and rebuilding everything.
+	rebuildall bool = false
+	
+	// Set of targets for which we are forcing rebuild
+	rebuildtargets map[string]bool = make(map[string]bool)
+	
+	// Lock on standard out, messages don't get interleaved too much.
+	mkMsgMutex sync.Mutex
+	
+	// Limit the number of recipes executed simultaneously.
+	subprocsAllowed int
+	
+	// Current subprocesses being executed
+	subprocsRunning int
+	
+	// Wakeup on a free subprocess slot.
+	subprocsRunningCond *sync.Cond = sync.NewCond(&sync.Mutex{})
+	
+	// Prevent more than one recipe at a time from trying to take over
+	exclusiveSubproc = sync.Mutex{}
 
-// True if we are ignoring timestamps and rebuilding everything.
-var rebuildall bool = false
-
-// Set of targets for which we are forcing rebuild
-var rebuildtargets map[string]bool = make(map[string]bool)
-
-// Lock on standard out, messages don't get interleaved too much.
-var mkMsgMutex sync.Mutex
-
-// The maximum number of times an rule may be applied.
-// This limits recursion of both meta- and non-meta-rules!
-// Maybe, this shouldn't affect meta-rules?!
-var maxRuleCnt int = 1
-
-// Limit the number of recipes executed simultaneously.
-var subprocsAllowed int
-
-// Current subprocesses being executed
-var subprocsRunning int
-
-// Wakeup on a free subprocess slot.
-var subprocsRunningCond *sync.Cond = sync.NewCond(&sync.Mutex{})
-
-// Prevent more than one recipe at a time from trying to take over
-var exclusiveSubproc = sync.Mutex{}
+	// The maximum number of times an rule may be applied.
+	// This limits recursion of both meta- and non-meta-rules!
+	// Maybe, this shouldn't affect meta-rules?!
+	maxRuleCnt int = 1
+)
 
 // Wait until there is an available subprocess slot.
 func reserveSubproc() {
@@ -324,6 +329,8 @@ func main() {
 	flag.BoolVar(&interactive, "i", false, "prompt before executing rules")
 	flag.BoolVar(&quiet, "q", false, "don't print recipes before executing them")
 	flag.BoolVar(&color, "color",  isatty.IsTerminal(os.Stdout.Fd()), "turn color on/off")
+	flag.StringVar(&defaultShell, "shell", "sh", "default shell to use if none are specified via $shell")
+	// TODO(rjk): P9P mk command line compatability.
 	flag.Parse()
 
 	if directory != "" {

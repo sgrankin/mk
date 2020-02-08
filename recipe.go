@@ -87,9 +87,15 @@ func dorecipe(target string, u *node, e *edge, dryrun bool) bool {
 		}
 	}
 	vars["prereq"] = prereqs
+	
+	// Set shell	
+	if len(vars["shell"]) < 1 {
+		vars["shell"] = []string{defaultShell}
+	}
 
 	input := expandRecipeSigils(e.r.recipe, vars)
-	sh := "sh"
+	
+	sh := vars["shell"][0]
 	args := []string{}
 
 	if len(e.r.shell) > 0 {

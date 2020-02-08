@@ -319,8 +319,17 @@ func expandBackQuoted(input string, vars map[string][]string) ([]string, int) {
 		env = append(env, key + "=" + strings.Join(values, " "))
 	}
 
+	// TODO - might have $shell available by now, but maybe not?
+	// It's not populated, regardless
+	var shell string
+	if len(vars["shell"]) < 1 {
+		shell = defaultShell
+	} else {
+		shell = vars["shell"][0]
+	}
+	
 	// TODO: handle errors
-	output, _ := subprocess("sh", nil, env, input[:j], true)
+	output, _ := subprocess(shell, nil, env, input[:j], true)
 
 	parts := make([]string, 0)
 	_, tokens := lexWords(output)
