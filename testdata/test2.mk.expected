@@ -1,0 +1,2 @@
+process bar mk
+secondprocess mk  test2.mk.o

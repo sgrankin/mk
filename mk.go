@@ -12,7 +12,7 @@ import (
 )
 
 // True if messages should be printed without fancy colors.
-var nocolor bool = false
+var nocolor bool = true
 
 // True if we are ignoring timestamps and rebuilding everything.
 var rebuildall bool = false
