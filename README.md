@@ -111,5 +111,5 @@ try and see what you think!
 This work is provided under the [BSD 2-clause](https://opensource.org/licenses/BSD-2-Clause) license.
 
 Copyright (c) 2013, [Daniel C. Jones](https://github.com/dcjones) - All rights reserved.
-Updates made by [Paul deGrandis](https://github.com/ohpauleez) Feb 2016.
+Updates by people listed in [contributors.md](contributors.md)
 
