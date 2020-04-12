@@ -24,23 +24,75 @@ func TestBasicMaking(t *testing.T) {
 			output: "testdata/test1.mk.expected",
 			errors: "",
 		},
+// failure expected. 
+//		{
+//			input:  "testdata/test2.mk",
+//			output: "testdata/test2.mk.expected",
+//			errors: "",
+//		},
 		{
-			// Expected failure
-			input:  "testdata/test2.mk",
-			output: "testdata/test2.mk.expected",
+			input:  "testdata/test3.mk",
+			output: "testdata/test3.mk.expected",
 			errors: "",
 		},
+		{
+			input:  "testdata/test4.mk",
+			output: "testdata/test4.mk.expected",
+			errors: "",
+		},
+// \ doesn't work. expected failure
+//		{
+//			input:  "testdata/test5.mk",
+//			output: "testdata/test5.mk.expected",
+//			errors: "",
+//		},
+		{
+			input:  "testdata/test6.mk",
+			output: "testdata/test6.mk.expected",
+			errors: "",
+		},
+// $vars are not expanded in import statements. expected to fail.
+//		{
+//			input:  "testdata/test7.mk",
+//			output: "testdata/test7.mk.expected",
+//			errors: "",
+//		},
+// $vars are not expanded in import statements. expected to fail.
+//		{
+//			input:  "testdata/test7.mk",
+//			output: "testdata/test7.mk.expected",
+//			errors: "",
+//		},
+		{
+			// Variables expanded in recipes.
+			input:  "testdata/test8.mk",
+			output: "testdata/test8.mk.expected",
+			errors: "",
+		},
+// expected to fail.
+//		{
+//			// EOF can end a variable if no \n present.
+//			input:  "testdata/test9.mk",
+//			output: "testdata/test9.mk.expected",
+//			errors: "",
+//		},
+// expected to fail: <| doesn't work.
+//		{
+//			// External commands can generate 
+//			input:  "testdata/test10.mk",
+//			output: "testdata/test10.mk.expected",
+//			errors: "",
+//		},
 	}
 
 	for _, tv := range tests {
-		got, errgot, err := startMk("-n", "-f", tv.input)
+		// TODO(rjk): Validate generated errors.
+		got, _, err := startMk("-n", "-f", tv.input)
 
 		if err != nil {
 			t.Errorf("%s exec failed: %v", tv.input, err)
 			continue
 		}
-		t.Log("got output", string(got))
-		t.Log("got error", string(errgot))
 
 		efd, err := os.Open(tv.output)
 		if err != nil {

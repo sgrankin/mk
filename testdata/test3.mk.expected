@@ -1,0 +1,2 @@
+one: process bar
+test3.mk.o: secondprocess ab
