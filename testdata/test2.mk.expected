@@ -1,2 +1,1 @@
-process bar mk
-secondprocess mk  test2.mk.o
+test2.mk.o: secondprocess mk $stem test2.mk.o

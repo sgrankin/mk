@@ -201,14 +201,14 @@ func expandSigil(input string, vars map[string][]string) ([]string, int) {
 		varvals, ok := vars[varname]
 		if ok {
 			return varvals, offset
-		} else {
-			return []string{"$" + input[:offset]}, offset
 		}
-	}
 
-	// Find the subsitution in the environment.
-	if varval, ok := os.LookupEnv(varname); ok {
-		return []string{varval}, offset
+		// Find the subsitution in the environment.
+		if varval, ok := os.LookupEnv(varname); ok {
+			return []string{varval}, offset
+		}
+
+		return []string{"$" + input[:offset]}, offset
 	}
 
 	return []string{"$" + input}, len(input)

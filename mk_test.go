@@ -32,7 +32,7 @@ func TestBasicMaking(t *testing.T) {
 			input:  "testdata/test2.mk",
 			output: "testdata/test2.mk.expected",
 			errors: "",
-			passes: false,
+			passes: true,
 		},
 		{
 			// Variables defined in the mkfile are expanded in dependencies
