@@ -14,75 +14,82 @@ type testvector struct {
 	input  string
 	output string
 	errors string
+	passes bool
 }
 
 // For each test vector, confirm that it matches
 func TestBasicMaking(t *testing.T) {
 	tests := []testvector{
 		{
+			// Really basic mk operation.
 			input:  "testdata/test1.mk",
 			output: "testdata/test1.mk.expected",
 			errors: "",
+			passes: true,
 		},
-// failure expected. 
-//		{
-//			input:  "testdata/test2.mk",
-//			output: "testdata/test2.mk.expected",
-//			errors: "",
-//		},
 		{
+			// Environment variables are expanded in dependencies
+			input:  "testdata/test2.mk",
+			output: "testdata/test2.mk.expected",
+			errors: "",
+			passes: false,
+		},
+		{
+			// Variables defined in the mkfile are expanded in dependencies
 			input:  "testdata/test3.mk",
 			output: "testdata/test3.mk.expected",
 			errors: "",
+			passes: true,
 		},
 		{
+			// Pair of dependencies in an variable are expanded.
 			input:  "testdata/test4.mk",
 			output: "testdata/test4.mk.expected",
 			errors: "",
+			passes: true,
 		},
-// \ doesn't work. expected failure
-//		{
-//			input:  "testdata/test5.mk",
-//			output: "testdata/test5.mk.expected",
-//			errors: "",
-//		},
 		{
+			// \ can escape newlines.
+			input:  "testdata/test5.mk",
+			output: "testdata/test5.mk.expected",
+			errors: "",
+			passes: false,
+		},
+		{
+			// variables can be set included from another file
 			input:  "testdata/test6.mk",
 			output: "testdata/test6.mk.expected",
 			errors: "",
+			passes: true,
 		},
-// $vars are not expanded in import statements. expected to fail.
-//		{
-//			input:  "testdata/test7.mk",
-//			output: "testdata/test7.mk.expected",
-//			errors: "",
-//		},
-// $vars are not expanded in import statements. expected to fail.
-//		{
-//			input:  "testdata/test7.mk",
-//			output: "testdata/test7.mk.expected",
-//			errors: "",
-//		},
+		{
+			// $vars are not expanded in import statements. expected to fail.
+			input:  "testdata/test7.mk",
+			output: "testdata/test7.mk.expected",
+			errors: "",
+			passes: false,
+		},
 		{
 			// Variables expanded in recipes.
 			input:  "testdata/test8.mk",
 			output: "testdata/test8.mk.expected",
 			errors: "",
+			passes: true,
 		},
-// expected to fail.
-//		{
-//			// EOF can end a variable if no \n present.
-//			input:  "testdata/test9.mk",
-//			output: "testdata/test9.mk.expected",
-//			errors: "",
-//		},
-// expected to fail: <| doesn't work.
-//		{
-//			// External commands can generate 
-//			input:  "testdata/test10.mk",
-//			output: "testdata/test10.mk.expected",
-//			errors: "",
-//		},
+		{
+			// EOF can end a variable if no \n present.
+			input:  "testdata/test9.mk",
+			output: "testdata/test9.mk.expected",
+			errors: "",
+			passes: false,
+		},
+		{
+			// External commands can generate variables
+			input:  "testdata/test10.mk",
+			output: "testdata/test10.mk.expected",
+			errors: "",
+			passes: false,
+		},
 	}
 
 	for _, tv := range tests {
@@ -90,8 +97,12 @@ func TestBasicMaking(t *testing.T) {
 		got, _, err := startMk("-n", "-f", tv.input)
 
 		if err != nil {
-			t.Errorf("%s exec failed: %v", tv.input, err)
-			continue
+			if !tv.passes {
+				t.Logf("%s expected failure", tv.input)
+				t.Logf("%s exec failed: %v", tv.input, err)
+			} else {
+				t.Errorf("%s exec failed: %v", tv.input, err)
+			}
 		}
 
 		efd, err := os.Open(tv.output)
@@ -107,7 +118,12 @@ func TestBasicMaking(t *testing.T) {
 
 		// TODO(rjk): Read expected errors if they exist.
 		if diff := cmp.Diff(string(want), string(got)); diff != "" {
-			t.Errorf("%s: mismatch (-want +got):\n%s", tv.input, diff)
+			if !tv.passes {
+				t.Logf("%s expected failure", tv.input)
+				t.Logf("%s: mismatch (-want +got):\n%s", tv.input, diff)
+			} else {
+				t.Errorf("%s: mismatch (-want +got):\n%s", tv.input, diff)
+			}
 		}
 	}
 }
