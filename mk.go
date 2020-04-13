@@ -15,8 +15,8 @@ import (
 )
 
 // True if messages should be printed with fancy colors.
-//  - By default, if the output stream is not the terminal, colors are disabled
-var color bool = isatty.IsTerminal(os.Stdout.Fd())
+// By default, if the output stream is not the terminal, colors are disabled.
+var color bool
 
 // True if we are ignoring timestamps and rebuilding everything.
 var rebuildall bool = false
@@ -323,6 +323,7 @@ func main() {
 	flag.IntVar(&maxRuleCnt, "l", 1, "maximum number of times a specific rule can be applied (recursion)")
 	flag.BoolVar(&interactive, "i", false, "prompt before executing rules")
 	flag.BoolVar(&quiet, "q", false, "don't print recipes before executing them")
+	flag.BoolVar(&color, "color",  isatty.IsTerminal(os.Stdout.Fd()), "turn color on/off")
 	flag.Parse()
 
 	if directory != "" {
