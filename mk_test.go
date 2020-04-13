@@ -90,6 +90,13 @@ func TestBasicMaking(t *testing.T) {
 			errors: "",
 			passes: false,
 		},
+		{
+			// External commands can generate variables
+			input:  "testdata/test11.mk",
+			output: "testdata/test11.mk.expected",
+			errors: "",
+			passes: true,
+		},
 	}
 
 	for _, tv := range tests {
