@@ -1,6 +1,6 @@
 # A multi-line variable is expanded to decide to run two sub-depenencies
 deps = \
-	one\
+	one \
 	 two
 
 test3.mk.o: $deps

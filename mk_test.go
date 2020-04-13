@@ -53,7 +53,7 @@ func TestBasicMaking(t *testing.T) {
 			input:  "testdata/test5.mk",
 			output: "testdata/test5.mk.expected",
 			errors: "",
-			passes: false,
+			passes: true,
 		},
 		{
 			// variables can be set included from another file
