@@ -3,8 +3,6 @@
     <img alt="Logo" src="http://dcjones.github.com/mk/mk.svg">
 </p>
 
-This is [@galexite](https://github.com/galexite)'s fork of [dcjones/mk](https://github.com/dcjones/mk).
-
 Mk is a reboot of the Plan 9 mk command, which itself is [a successor to
 make](http://www.cs.tufts.edu/~nr/cs257/archive/andrew-hume/mk.pdf).
 
@@ -87,6 +85,7 @@ improvements.
   * `-a` Force building the targets and of all their dependencies.
   * `-p` Maximum number of jobs to execute in parallel (default: # CPU cores)
   * `-i` Show rules that will execute and prompt before executing.
+  * `-color` Boolean flag to force color on / off.
 
 
 ## Non-shell recipes
@@ -112,6 +111,8 @@ try and see what you think!
 
 This work is provided under the [BSD 2-clause](https://opensource.org/licenses/BSD-2-Clause) license.
 
-Copyright (c) 2013, [Daniel C. Jones](https://github.com/dcjones) - All rights reserved.
-Updates by people listed in [contributors.md](contributors.md)
+Copyright (c) 2013, [Daniel C. Jones](https://github.com/dcjones) - All rights reserved. 
+
+With updates by people listed in
+[contributors.md](contributors.md)
 
