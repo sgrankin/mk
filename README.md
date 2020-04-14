@@ -71,7 +71,7 @@ improvements.
      file. Just stick it directly in the mkfile.
   1. Add `$shell` variable which will be sourced as the shell for recipe blocks 
      unless overriden by an 'S' attribute.
-  1. Pretty colors via `-C`.
+  1. Pretty colors.
 
 
 ## Usage

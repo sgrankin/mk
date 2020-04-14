@@ -91,7 +91,7 @@ func TestBasicMaking(t *testing.T) {
 			passes: false,
 		},
 		{
-			// External commands can generate variables
+			// mkfile variables are expanded in backquote substitution
 			input:  "testdata/test11.mk",
 			output: "testdata/test11.mk.expected",
 			errors: "",
