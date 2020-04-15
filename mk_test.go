@@ -67,7 +67,7 @@ func TestBasicMaking(t *testing.T) {
 			input:  "testdata/test7.mk",
 			output: "testdata/test7.mk.expected",
 			errors: "",
-			passes: false,
+			passes: true,
 		},
 		{
 			// Variables expanded in recipes.
