@@ -81,7 +81,7 @@ func TestBasicMaking(t *testing.T) {
 			input:  "testdata/test9.mk",
 			output: "testdata/test9.mk.expected",
 			errors: "",
-			passes: false,
+			passes: true,
 		},
 		{
 			// External commands can generate variables
