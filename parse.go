@@ -105,6 +105,17 @@ func parseTopLevel(p *parser, t token) parserStateFun {
 	return parseTopLevel
 }
 
+func prettyPipeIncludeName(args []string) string {
+	nb := new(strings.Builder)
+	nb.WriteString("<|")
+	nb.WriteString(args[0])
+	for _, a := range args[1:] {
+		nb.WriteRune(' ')
+		nb.WriteString(a)
+	}
+	return nb.String()
+}
+
 // Consumed a '<|'
 func parsePipeInclude(p *parser, t token) parserStateFun {
 	switch t.typ {
@@ -112,31 +123,21 @@ func parsePipeInclude(p *parser, t token) parserStateFun {
 		if len(p.tokenbuf) == 0 {
 			p.basicErrorAtToken("empty pipe include", t)
 		}
-
-		args := make([]string, len(p.tokenbuf))
-		for i := 0; i < len(p.tokenbuf); i++ {
-			args[i] = p.tokenbuf[i].val
+		args := make([]string, 0, len(p.tokenbuf))
+		for _, tk := range p.tokenbuf {
+			// TODO(rjk): Do we need to expand backticks here?
+			args = append(args, expand(tk.val, p.rules.vars, false)...)
 		}
 
-		// TODO - might have $shell available by now, but maybe not?
-		// It's not populated, regardless
-		var shell string
-
-		if len(p.rules.vars["shell"]) < 1 {
-			shell, args = expandShell(defaultShell, args)
-		} else {
-			shell, args = expandShell(p.rules.vars["shell"][0], args)
-		}
-		output, success := subprocess(shell, args, nil, "", true)
+		// TODO(rjk): determine what env should be in comparison with p9p.
+		output, success := subprocess(args[0], args[1:], nil, "", true)
 		if !success {
 			p.basicErrorAtToken("subprocess include failed", t)
 		}
 
-		parseInto(output, fmt.Sprintf("%s:%s", p.name, shell), p.rules, p.path)
-
+		parseInto(output, prettyPipeIncludeName(args), p.rules, p.path)
 		p.clear()
 		return parseTopLevel
-
 	// Almost anything goes. Let the shell sort it out.
 	case tokenPipeInclude:
 		fallthrough

@@ -88,7 +88,7 @@ func TestBasicMaking(t *testing.T) {
 			input:  "testdata/test10.mk",
 			output: "testdata/test10.mk.expected",
 			errors: "",
-			passes: false,
+			passes: true,
 		},
 		{
 			// mkfile variables are expanded in backquote substitution
