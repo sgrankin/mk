@@ -52,8 +52,8 @@ func (p *parser) clear() {
 type parserStateFun func(*parser, token) parserStateFun
 
 // Parse a mkfile, returning a new ruleSet.
-func parse(input string, name string, path string) *ruleSet {
-	rules := &ruleSet{make(map[string][]string),
+func parse(input string, name string, path string, env map[string][]string) *ruleSet {
+	rules := &ruleSet{env,
 		make([]rule, 0),
 		make(map[string][]int)}
 	parseInto(input, name, rules, path)
@@ -116,7 +116,12 @@ func parsePipeInclude(p *parser, t token) parserStateFun {
 		args := make([]string, len(p.tokenbuf) + 1)
 		args[0] = "-c"
 		for i := 0; i < len(p.tokenbuf); i++ {
-			args[i + 1] = p.tokenbuf[i].val
+			s := p.tokenbuf[i].val
+			expanded := expand(s, p.rules.vars, false)
+			if len(expanded) > 0 {
+				s = expanded[0]
+			}
+			args[i + 1] = s
 		}
 
 		output, success := subprocess("sh", args, "", true)
@@ -156,6 +161,11 @@ func parseRedirInclude(p *parser, t token) parserStateFun {
 		for i := range p.tokenbuf {
 			filename += p.tokenbuf[i].val
 		}
+		expanded := expand(filename, p.rules.vars, false)
+		if len(expanded) > 0 {
+			filename = expanded[0]
+		}
+		fmt.Printf("parsed filename: %v\nexpanded filename: %v\n", filename, expanded)
 		file, err := os.Open(filename)
 		if err != nil {
 			p.basicErrorAtToken(fmt.Sprintf("cannot open %s", filename), p.tokenbuf[0])
