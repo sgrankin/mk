@@ -135,6 +135,35 @@ func TestBasicMaking(t *testing.T) {
 	}
 }
 
+// Make sure that recipes get mk variables as environment.
+func TestRecipesHaveEnv(t *testing.T) {
+		input := "testdata/test12.mk"
+		got, _, err := startMk("-f", input)
+
+		if err != nil {
+				t.Errorf("%s exec failed: %v", input, err)
+		}
+
+		// Make sure that the output has the right variables in it.
+		// got should be the contents of the environment.
+		envs := make([]string, 0)
+		for _, b := range bytes.Split(got, []byte("\n")) {
+			envs = append(envs, string(b))
+		}
+		outer: for _, ekv := range []string {
+			"bar=thebigness",
+			"TEST_MAIN=mk",
+			"shell=sh",
+		} {
+			for _, v := range envs {
+				if v == ekv {
+					continue outer
+				}
+			}
+			t.Errorf("%s: output missing %s", input, ekv)
+		}
+}
+
 func TestMain(m *testing.M) {
 	switch os.Getenv("TEST_MAIN") {
 	case "mk":

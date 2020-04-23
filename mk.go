@@ -173,7 +173,7 @@ func mkNode(g *graph, u *node, dryrun bool, required bool) {
 		u.mutex.Unlock()
 	}()
 
-	// there's no fucking rules, dude
+	// there's no rules.
 	if len(u.prereqs) == 0 {
 		if !(u.r != nil && u.r.attributes.virtual) && !u.exists {
 			wd, _ := os.Getwd()
@@ -396,6 +396,9 @@ func main() {
 	root.prereqs = targets
 	rs.add(root)
 
+	// Keep a global reference to the total state of mk variables.
+	GlobalMkState = rs.vars
+
 	if interactive {
 		g := buildgraph(rs, "")
 		mkNode(g, g.root, true, true)
@@ -418,3 +421,5 @@ func main() {
 	g := buildgraph(rs, "")
 	mkNode(g, g.root, dryrun, true)
 }
+
+var GlobalMkState  map[string][]string
