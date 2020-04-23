@@ -316,6 +316,8 @@ func main() {
 	flag.BoolVar(&quiet, "q", false, "don't print recipes before executing them")
 	flag.Parse()
 
+	_, nocolor = os.LookupEnv("NO_COLOR")
+
 	mkfile, err := os.Open(mkfilepath)
 	if err != nil {
 		mkError("no mkfile found")
