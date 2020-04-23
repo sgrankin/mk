@@ -1,4 +1,4 @@
-PROG=mk
+PROG=nmk
 
 # Locations
 DESTDIR=/usr/local
