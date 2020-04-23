@@ -6,13 +6,13 @@
 Mk is a reboot of the Plan 9 mk command, which itself is [a successor to
 make](http://www.cs.tufts.edu/~nr/cs257/archive/andrew-hume/mk.pdf).
 
-## Installation
+# Installation
 
  1. Install Go.
- 2. Run `go get github.com/dcjones/mk`
+ 2. Run `go get github.com/rjkroege/mk`
  3. Make sure `$GOPATH/bin` is in your `PATH`.
 
-## Why Plan 9 mk is better than make
+# Why Plan 9 mk is better than make
 
 Way back in the 90s, some smart guys at Bell Labs got together and decided to
 write new operating system to replace Unix. The idea was to keep everything that
@@ -49,7 +49,7 @@ And much more!
 Read [Maintaining Files on Plan 9 with Mk](http://doc.cat-v.org/plan_9/4th_edition/papers/mk)
 for good overview.
 
-## Improvements over Plan 9 mk
+# Improvements over Plan 9 mk
 
 This mk stays mostly faithful to Plan 9, but makes a few (in my opinion)
 improvements.
@@ -74,11 +74,11 @@ improvements.
   1. Pretty colors.
 
 
-## Usage
+# Usage
 
 `mk [options] [target] ...`
 
-### Options
+## Options
 
   * `-C directory` Change directory to `directory` first.
   * `-f filename` Use the given file as the mkfile.
@@ -90,6 +90,8 @@ improvements.
   * `-color` Boolean flag to force color on / off.
   * `-F` Don't drop shell arguments when no further arguments are specified.
   * `-s name` Default shell to use if none are specified via $shell (default: "sh -c")
+  * `-l int` Maximum number of recursive invocations of a rule. (default 1)
+  * `-q` Don't print recipesbefore executing them.
 
 ## Non-shell recipes
 
@@ -105,17 +107,17 @@ mean.txt:Sjulia: input.txt
             mean(map(parseint, eachline(open("$prereq")))))
 ```
 
-## Current State
+# Current State
 
 Functional, but with some bugs and some unimplemented minor features. Give it a
 try and see what you think!
 
-## License
+# License
 
 This work is provided under the [BSD 2-clause](https://opensource.org/licenses/BSD-2-Clause) license.
 
 Copyright (c) 2013, [Daniel C. Jones](https://github.com/dcjones) - All rights reserved. 
 
-With updates by people listed in
+With additional updates by people listed in
 [contributors.md](contributors.md)
 
