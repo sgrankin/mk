@@ -5,9 +5,11 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"reflect"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/sanity-io/litter"
 )
 
 type testvector struct {
@@ -97,6 +99,13 @@ func TestBasicMaking(t *testing.T) {
 			errors: "",
 			passes: true,
 		},
+		{
+			// mkfile variables are expanded in backquote substitution
+			input:  "testdata/test13.mk",
+			output: "testdata/test13.mk.expected",
+			errors: "",
+			passes: false,
+		},
 	}
 
 	for _, tv := range tests {
@@ -137,31 +146,32 @@ func TestBasicMaking(t *testing.T) {
 
 // Make sure that recipes get mk variables as environment.
 func TestRecipesHaveEnv(t *testing.T) {
-		input := "testdata/test12.mk"
-		got, _, err := startMk("-f", input)
+	input := "testdata/test12.mk"
+	got, _, err := startMk("-f", input)
 
-		if err != nil {
-				t.Errorf("%s exec failed: %v", input, err)
-		}
+	if err != nil {
+		t.Errorf("%s exec failed: %v", input, err)
+	}
 
-		// Make sure that the output has the right variables in it.
-		// got should be the contents of the environment.
-		envs := make([]string, 0)
-		for _, b := range bytes.Split(got, []byte("\n")) {
-			envs = append(envs, string(b))
-		}
-		outer: for _, ekv := range []string {
-			"bar=thebigness",
-			"TEST_MAIN=mk",
-			"shell=sh",
-		} {
-			for _, v := range envs {
-				if v == ekv {
-					continue outer
-				}
+	// Make sure that the output has the right variables in it.
+	// got should be the contents of the environment.
+	envs := make([]string, 0)
+	for _, b := range bytes.Split(got, []byte("\n")) {
+		envs = append(envs, string(b))
+	}
+outer:
+	for _, ekv := range []string{
+		"bar=thebigness",
+		"TEST_MAIN=mk",
+		"shell=sh",
+	} {
+		for _, v := range envs {
+			if v == ekv {
+				continue outer
 			}
-			t.Errorf("%s: output missing %s", input, ekv)
 		}
+		t.Errorf("%s: output missing %s", input, ekv)
+	}
 }
 
 func TestMain(m *testing.M) {
@@ -190,4 +200,174 @@ func startMk(args ...string) ([]byte, []byte, error) {
 	}
 
 	return outbuffy.Bytes(), errbuffy.Bytes(), nil
+}
+
+type expandtv struct {
+	input       string
+	vars        map[string][]string
+	expandticks bool
+	want        []string
+}
+
+func TestExpand(t *testing.T) {
+
+	tests := []expandtv{
+		{
+			input:       "a",
+			vars:        map[string][]string{},
+			expandticks: false,
+			want:        []string{"a"},
+		},
+		{
+			input: "a",
+			vars: map[string][]string{
+				"a": {"glenda"},
+			},
+			expandticks: false,
+			want:        []string{"a"},
+		},
+		{
+			input: "$a",
+			vars: map[string][]string{
+				"a": {"glenda"},
+			},
+			expandticks: false,
+			want:        []string{"glenda"},
+		},
+		{
+			input: "${a}",
+			vars: map[string][]string{
+				"a": {"glenda"},
+			},
+			expandticks: false,
+			want:        []string{"glenda"},
+		},
+		{
+			input: "${a}",
+			vars: map[string][]string{
+				"a": {"glenda", "gopher"},
+			},
+			expandticks: false,
+			want:        []string{"glenda", "gopher"},
+		},
+		{
+			input: "ab$targetpath",
+			vars: map[string][]string{
+				"targetpath": {"./testdata"},
+			},
+			expandticks: false,
+			want:        []string{"ab./testdata"},
+		},
+		{
+			input: "$targetpathab",
+			vars: map[string][]string{
+				"targetpath": {"./testdata"},
+			},
+			expandticks: false,
+			want:        []string{"$targetpathab"},
+		},
+		{
+			input: "$targetpath/foo",
+			vars: map[string][]string{
+				"targetpath": {"./testdata"},
+			},
+			expandticks: false,
+			want:        []string{"./testdata/foo"},
+		},
+		{
+			input: "${targetpath}/foo",
+			vars: map[string][]string{
+				"targetpath": {"./testdata"},
+			},
+			expandticks: false,
+			want:        []string{"./testdata/foo"},
+		},
+		// This one differs between p9p mk and mk.
+		// Do we want this difference?
+		//		{
+		//			input:       "\"$targetpath\"",
+		//			vars:        map[string][]string{
+		//				"targetpath": []string{"./testdata"},
+		//			},
+		//			expandticks: false,
+		//			want:        []string{"\"$targetpath\""},
+		//		},
+		{
+			input: "'$targetpath'",
+			vars: map[string][]string{
+				"targetpath": {"./testdata"},
+			},
+			expandticks: false,
+			want:        []string{"$targetpath"},
+		},
+		{
+			input: "$prefix.$suffix",
+			vars: map[string][]string{
+				"prefix": {"name"},
+				"suffix": {"o"},
+			},
+			expandticks: false,
+			want:        []string{"name.o"},
+		},
+		{
+			input: "${targets:%=$targetpath/%}",
+			vars: map[string][]string{
+				"targetpath": {"./testdata"},
+				"targets":    {"rupert", "ruxpin"},
+			},
+			expandticks: false,
+			want:        []string{"./testdata/rupert", "./testdata/ruxpin"},
+		},
+		{
+			input: "${targets:%=%.$novar}",
+			vars: map[string][]string{
+				"suffixes": {"o", "ab", "b"},
+				"targets":  {"rupert", "ruxpin"},
+			},
+			expandticks: false,
+			want:        []string{"rupert.$novar", "ruxpin.$novar"},
+		},
+		{
+			input: "${targets:%=%.$suffixes}",
+			vars: map[string][]string{
+				"suffixes": {"teddy", "ab", "b"},
+				"targets":  {"rupert", "ruxpin"},
+			},
+			expandticks: false,
+			want: []string{
+				"rupert.teddy",
+				"ab",
+				"b",
+				"ruxpin.teddy",
+				"ab",
+				"b",
+			},
+		},
+		{
+			input: "${targets:%=%.$suffixes}",
+			vars: map[string][]string{
+				"suffixes": {"adventure"},
+				"targets":  {"rupert bear", "ruxpin bear"},
+			},
+			expandticks: false,
+			want: []string{
+				"rupert bear.adventure",
+				"ruxpin bear.adventure",
+			},
+		},
+	}
+
+	//	failing := tests[11:]
+
+	for i, tv := range tests {
+		got := expand(tv.input, tv.vars, tv.expandticks)
+
+		if !reflect.DeepEqual(got, tv.want) {
+			t.Errorf("%d: input: %#v, vars: %s, ticks: %v. got %s, want %s",
+				i,
+				tv.input, litter.Sdump(tv.vars), tv.expandticks,
+				litter.Sdump(got),
+				litter.Sdump(tv.want))
+		}
+	}
 }

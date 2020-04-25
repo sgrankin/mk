@@ -1,0 +1,9 @@
+all: process1 ./testdata/rupert ./testdata/ruxpin
+      process2 ab./testdata
+      process3 $targetpathab
+      process4 ./testdata/foo
+      process5 ./testdata/foo
+      process6 "./testdata"
+      process7 name.o
+      process8 rupert.o ruxpin.o
+      process9 rupert.o ab d ruxpin.o ab d

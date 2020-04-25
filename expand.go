@@ -137,18 +137,19 @@ func expandSingleQuoted(input string) (string, int) {
 	return input[:j], (j + 1)
 }
 
+	
+var expandSigil_namelist_pattern = regexp.MustCompile(`^\s*([^:]+)\s*:\s*([^%]*)%([^=]*)\s*=\s*([^%]*)%([^%]*)\s*`)
+
 // Expand something starting with at '$'.
 func expandSigil(input string, vars map[string][]string) ([]string, int) {
 	c, w := utf8.DecodeRuneInString(input)
 	var offset int
 	var varname string
-	var namelist_pattern = regexp.MustCompile(`^\s*([^:]+)\s*:\s*([^%]*)%([^=]*)\s*=\s*([^%]*)%([^%]*)\s*`)
+	namelist_pattern := expandSigil_namelist_pattern
 
-	// escaping of "$" with "$$"
-	if c == '$' {
+	if c == '$' {	// escaping of "$" with "$$"
 		return []string{"$"}, 2
-		// match bracketed expansions: ${foo}, or ${foo:a%b=c%d}
-	} else if c == '{' {
+	} else if c == '{' {	// match bracketed expansions: ${foo}, or ${foo:a%b=c%d}
 		j := strings.IndexRune(input[w:], '}')
 		if j < 0 {
 			return []string{"$" + input}, len(input)
@@ -168,20 +169,20 @@ func expandSigil(input string, vars map[string][]string) ([]string, int) {
 			}
 
 			pat := regexp.MustCompile(strings.Join([]string{`^\Q`, a, `\E(.*)\Q`, b, `\E$`}, ""))
-			expanded_values := make([]string, len(values))
-			for i, value := range values {
+			expanded_values := make([]string, 0, len(values))
+			for _, value := range values {
 				value_match := pat.FindStringSubmatch(value)
 				if value_match != nil {
-					expanded_values[i] = strings.Join([]string{c, value_match[1], d}, "")
+					expanded_values = append(expanded_values, expand(strings.Join([]string{c, value_match[1], d}, ""), vars, false)...)
 				} else {
-					expanded_values[i] = value
+					// What case is this?
+					expanded_values = append(expanded_values, value)
 				}
 			}
 
 			return expanded_values, offset
 		}
-		// bare variables: $foo
-	} else {
+	} else {	// bare variables: $foo
 		// try to match a variable name
 		i := 0
 		j := i
