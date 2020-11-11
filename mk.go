@@ -362,7 +362,7 @@ func main() {
 
 	// Create a dummy virtual rule that depends on every target
 	root := rule{}
-	root.targets = []pattern{pattern{false, "", nil}}
+	root.targets = []pattern{{false, "", nil}}
 	root.attributes = attribSet{false, false, false, false, false, false, false, true, false}
 	root.prereqs = targets
 	rs.add(root)
