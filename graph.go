@@ -3,7 +3,10 @@ package main
 import (
 	"fmt"
 	"io"
+	"log"
+	"net/url"
 	"os"
+	"strings"
 	"sync"
 	"time"
 )
@@ -59,18 +62,36 @@ type node struct {
 
 // Update a node's timestamp and 'exists' flag.
 func (u *node) updateTimestamp() {
-	info, err := os.Stat(u.name)
-	if err == nil {
-		u.t = info.ModTime()
-		u.exists = true
-		u.flags |= nodeFlagProbable
+	if strings.HasPrefix(u.name, "s3\\://") || strings.HasPrefix(u.name, "https\\://") || strings.HasPrefix(u.name, "http\\://") {
+		// remove the \ that was required by the parser
+		// so that we can parse the string as a url
+		u.name = strings.Replace(u.name, "\\", "", 1)
+		up, err := url.Parse(u.name)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Println(up.Scheme, up.Host, up.Path[1:])
+
+		if up.Scheme == "http" || up.Scheme == "https" {
+			updateHttpTimestamp(u)
+		} else if up.Scheme == "s3" {
+			updateS3Timestamp(u, up)
+		}
 	} else {
-		_, ok := err.(*os.PathError)
-		if ok {
-			u.t = time.Unix(0, 0)
-			u.exists = false
+		info, err := os.Stat(u.name)
+		log.Println(u.name)
+		if err == nil {
+			u.t = info.ModTime()
+			u.exists = true
+			u.flags |= nodeFlagProbable
 		} else {
-			mkError(err.Error())
+			_, ok := err.(*os.PathError)
+			if ok {
+				u.t = time.Unix(0, 0)
+				u.exists = false
+			} else {
+				mkError(err.Error())
+			}
 		}
 	}
 
