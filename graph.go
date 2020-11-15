@@ -70,7 +70,6 @@ func (u *node) updateTimestamp() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		log.Println(up.Scheme, up.Host, up.Path[1:])
 
 		if up.Scheme == "http" || up.Scheme == "https" {
 			updateHttpTimestamp(u)
@@ -79,7 +78,6 @@ func (u *node) updateTimestamp() {
 		}
 	} else {
 		info, err := os.Stat(u.name)
-		log.Println(u.name)
 		if err == nil {
 			u.t = info.ModTime()
 			u.exists = true

@@ -19,14 +19,13 @@ func updateHttpTimestamp(u *node) {
 		log.Fatal(err)
 	}
 	lastModified := resp.Header.Get("Last-Modified")
-	log.Println(lastModified)
 	if lastModified == "" {
 		// no Last-Modified header so lets assume that it
 		// doesn't exist
 		u.t = time.Unix(0, 0)
 		u.exists = false
 	} else {
-		tmptime, err := time.Parse("RFC1123", lastModified)
+		tmptime, err := time.Parse(time.RFC1123, lastModified)
 		if err != nil {
 			log.Fatal(err)
 		}
