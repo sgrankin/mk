@@ -6,7 +6,6 @@
     * Dummy rule for multiple explicit targets
     * Expand `$newprereq`.
     * Expand `$alltargets`.
-    * Man page.
     * Namelist syntax.
     * Environment variables.
 
