@@ -35,7 +35,11 @@ func updateHttpTimestamp(u *node) {
 }
 
 func updateS3Timestamp(u *node, uri *url.URL) {
-	svc := s3.New(session.New())
+	sess, err := session.NewSessionWithOptions(session.Options{
+		// Force enable Shared Config support
+		SharedConfigState: session.SharedConfigEnable,
+	})
+	svc := s3.New(sess)
 	input := &s3.HeadObjectInput{
 		Bucket: aws.String(uri.Host),
 		Key:    aws.String(uri.Path[1:]),
