@@ -63,9 +63,6 @@ type node struct {
 // Update a node's timestamp and 'exists' flag.
 func (u *node) updateTimestamp() {
 	if strings.HasPrefix(u.name, "s3://") || strings.HasPrefix(u.name, "https://") || strings.HasPrefix(u.name, "http://") {
-		// remove the \ that was required by the parser
-		// so that we can parse the string as a url
-		u.name = strings.Replace(u.name, "\\", "", 1)
 		up, err := url.Parse(u.name)
 		if err != nil {
 			log.Fatal(err)
