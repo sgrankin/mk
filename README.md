@@ -116,7 +116,11 @@ anotherfile.csv: "https://example.com/data/results.csv"
    curl $prereq > $target
 ```
 
+<<<<<<< HEAD
 Remote files need to be enclosed in double quotes to protect the colon character
+=======
+Remote files need to be enclosed in double quotes to protect the color character
+>>>>>>> 5e6cf75529bb4e2cc1e37fc3c63f996a14155b2a
 from being interpreted as the separator between targets, attributes, and prerequisites.
 
 For http(s) files the `Last-Modified` header is inspected to determine if the 
