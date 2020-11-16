@@ -10,7 +10,7 @@ is for anyone who loves make, but hates all its stupid bullshit.
 # Installation
 
  1. Install Go.
- 2. Run `go get github.com/dcjones/mk`
+ 2. Run `go get github.com/ctSkennerton/mk`
  3. Make sure `$GOPATH/bin` is in your `PATH`.
 
 # Why Plan 9 mk is better than make
@@ -51,8 +51,7 @@ Mk](http://doc.cat-v.org/plan_9/4th_edition/papers/mk) for good overview.
 
 # Improvements over Plan 9 mk
 
-This mk stays mostly faithful to Plan 9, but makes a few (in my opinion)
-improvements.
+This mk stays mostly faithful to Plan 9, but makes a few improvements.
 
   1. A clean, modern implementation in Go, that doesn't depend on the whole Plan
      9 stack.
@@ -69,6 +68,7 @@ improvements.
   1. Add an 'S' attribute to execute recipes with programs other than sh. This
      way, you don't have to separate your six line python script into its own
      file. Just stick it directly in the mkfile.
+  1. Use remote files in Amazon S3 or http(s) URLs as prerequesites or targets 
   1. Pretty colors.
 
 
@@ -99,6 +99,30 @@ mean.txt:Sjulia: input.txt
     println(open("$target", "w"),
             mean(map(parseint, eachline(open("$prereq")))))
 ```
+
+# Remote files
+
+Another major addition over Plan 9 mk is the ability to have remote files in the
+dependancy graph. A common usage (in my work at least) is to download files from
+a public http repository or from Amazon S3. This has previously been difficult to
+do as make/mk had no (easy) way of comparing whether these files were older than
+the target.
+
+```make
+somefile.txt: "s3://bucket/path/to/key/file.txt.gz"
+   aws s3 cp $prereq - | gunzip -c - > $target
+
+anotherfile.csv: "https://example.com/data/results.csv"
+   curl $prereq > $target
+```
+
+Remote files need to be enclosed in double quotes to protect the colon character
+from being interpreted as the separator between targets, attributes, and prerequisites.
+
+For http(s) files the `Last-Modified` header is inspected to determine if the 
+resource is older than the target. If that header doesn't exist then it is
+assumed that the resource is older than the target. S3 files utilize the AWS
+S3 api to determine the last modification time.
 
 # Current State
 
