@@ -62,17 +62,17 @@ type rule struct {
 }
 
 // Equivalent recipes.
-func (r1 *rule) equivRecipe(r2 *rule) bool {
-	if r1.recipe != r2.recipe {
+func (r *rule) equivRecipe(r2 *rule) bool {
+	if r.recipe != r2.recipe {
 		return false
 	}
 
-	if len(r1.shell) != len(r2.shell) {
+	if len(r.shell) != len(r2.shell) {
 		return false
 	}
 
-	for i := range r1.shell {
-		if r1.shell[i] != r2.shell[i] {
+	for i := range r.shell {
+		if r.shell[i] != r2.shell[i] {
 			return false
 		}
 	}
