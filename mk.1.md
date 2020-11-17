@@ -53,14 +53,12 @@ A mkfile consists of assignments (described under `Environment')
  and rules. A rule contains targets and a tail. A target
   is a literal string and is normally a file name.  The
 tail contains zero or more prerequisites and an optional
-recipe, which is an rc script.  Each line of the recipe must
+recipe.  Each line of the recipe must
 begin with white space.  A rule takes the form
 
     target: prereq1 prereq2
-            rc recipe using prereq1, prereq2 to build target
+            recipe using prereq1, prereq2 to build target
 
-When the recipe is executed, the first character on every
-line is elided.
 
 After the colon on the target line, a rule may specify
 attributes, described below.
@@ -71,24 +69,20 @@ any potential target whose name matches A%B with % replaced
 by an arbitrary string, called the stem. In interpreting a
 meta-rule, the stem is substituted for all occurrences of %
 in the prerequisite names.  In the recipe of a meta-rule,
-the environment variable $stem contains the string matched
+the environment variable `$stem` contains the string matched
 by the %.  For example, a meta-rule to compile a C program
 using might be:
 
     %: %.c
         cc -o $stem $stem.c
 
-Meta-rules may contain an ampersand & rather than a percent
-sign %.  A % matches a maximal length string of any characters;
-an & matches a maximal length string of any characters
-except period or slash.
 
 The text of the mkfile is processed as follows.  Lines
 beginning with `<` followed by a file name are replaced by the
 contents of the named file.  Lines beginning with `<|` followed
  by a file name are replaced by the output of the exe-
 cution of the named file.  Blank lines and comments, which
-run from unquoted # characters to the following newline, are
+run from unquoted `#` characters to the following newline, are
 deleted.  The character sequence backslash-newline is
 deleted, so long lines in mkfile may be folded.  Non-recipe
 lines are processed by substituting for `{command}` the output
@@ -114,17 +108,17 @@ the following conditions:
 
 ### Environment
 Rules may make use of environment variables.  A legal
-reference of the form $OBJ is expanded. A reference
-of the form ${name:A%B=C%D}, where A, B, C, D are (possibly
+reference of the form `$OBJ` is expanded. A reference
+of the form `${name:A%B=C%D}`, where A, B, C, D are (possibly
 empty) strings, has the value formed by expanding
-$name and substituting C for A and D for B in each word in
-$name that matches pattern A%B.
+`$name` and substituting C for A and D for B in each word in
+`$name` that matches pattern A%B.
 
 Variables can be set by assignments of the form
 
     var=[attr=]value
 
-Blanks in the value break it into words, as in rc but without
+Blanks in the value break it into words, but without
 the surrounding parentheses.  Such variables are
 exported to the environment of recipes as they are executed,
 unless U, the only legal attribute attr, is present.  The
@@ -137,13 +131,6 @@ first (but not any subsequent) assignment to that variable.
 The variable MKFLAGS contains all the option arguments
 (arguments starting with '-' or containing '=') and MKARGS
 contains all the targets in the call to mk.
-
-It is recommended that mkfiles start with
-
-    </$objtype/mkfile
-
-to set CC, LD, AS, O, YACC, and MK to values appropriate to
-the target architecture (see the examples below).
 
 ### Execution
 During execution, mk determines which targets must be
@@ -163,27 +150,28 @@ is updated the date stamp is set to the most recent date
 stamp of its prerequisites.  Otherwise, if a target does not
 exist as a file, its date stamp is set to the most recent
 date stamp of its prerequisites, or zero if it has no prerequisites.
+For URLs the `Last-Modified` header returned from a HTTP HEAD request
+is used to determine if the target is up to date.
 Otherwise, the target is the name of a file and
 the target's date stamp is always that file's modification
 date.  The date stamp is computed when the target is needed
 in the execution of a rule; it is not a static value.
 
 Nonexistent targets that have prerequisites and are themselves
-prerequisites are treated specially.  Such a target t
+prerequisites are treated specially.  Such a target `t`
 is given the date stamp of its most recent prerequisite and
-if this causes all the targets which have t as a prerequisite
-to be up to date, t is considered up to date.  Otherwise, 
-t is made in the normal fashion.  The -i flag overrides this special treatment.
+if this causes all the targets which have `t` as a prerequisite
+to be up to date, `t` is considered up to date.  Otherwise, 
+`t` is made in the normal fashion.  
 
 Files may be made in any order that respects the preceding
 restrictions.
 
 A recipe is executed by supplying the recipe as standard
-input to the command
+input to the command, `sh`, unless The `S` attribute is set,
+which defines an alternative program to run the recipe
 
-        /bin/rc -e -I
-
-(the -e is omitted if the E attribute is set).  The environment is augmented by the following variables:
+The environment is augmented by the following variables:
 
 $alltarget    
 :   all the targets of this rule.
@@ -224,21 +212,21 @@ recipe, not while evaluating the mkfile.
 
 Unless the rule has the Q attribute, the recipe is printed
 prior to execution with recognizable environment variables
-expanded.  Commands returning nonempty status (see intro(1))
-cause mk to terminate.
+expanded.  Commands returning nonempty status
+cause `mk` to terminate.
 
-Recipes and backquoted rc commands in places such as assign-
-ments execute in a copy of mk's environment; changes they
+Recipes and backquoted commands in places such as assignments 
+execute in a copy of mk's environment; changes they
 make to environment variables are not visible from mk.
 
 Variable substitution in a rule is done when the rule is
 read; variable substitution in the recipe is done when the
 recipe is executed.  For example:
 
-    bar=a.c
+    bar = a.c
     foo: $bar
             $CC -o foo $bar
-    bar=b.c
+    bar = b.c
 
 will compile b.c into foo, if a.c is newer than foo.
 
@@ -272,6 +260,12 @@ P
     prog 'arg1' 'arg2' and should return a null exit status
     if and only if arg1 is up to date with respect to arg2.
     Date stamps are still propagated in the normal way.
+    This attribute is not compatible with the S attribute.
+
+S
+:   Characters after S until the terminating : are taken as
+    a program name. This program will be used to execute the
+    recipe. This attrbiute is not compatible with the P attribute.
 
 Q    
 :   The recipe is not printed prior to execution.
@@ -281,8 +275,7 @@ R
     the rule, % has no special meaning.  The target is
     interpreted as a regular expression as defined in
     regexp(6). The prerequisites may contain references to
-    subexpressions in form \n, as in the substitute command
-    of sam(1).
+    subexpressions in form \n.
 
 U    
 :   The targets are considered to have been updated even if
@@ -342,19 +335,13 @@ x.tab.h rule:
 
 
 # SEE ALSO
-A. Hume, ``Mk: a Successor to Make''.
+A. Hume, "Mk: a Successor to Make".
 
-Andrew G. Hume and Bob Flandrena, ``Maintaining Files on
-Plan 9 with Mk''.
+Andrew G. Hume and Bob Flandrena, "Maintaining Files on
+Plan 9 with Mk".
+
+Most of the content of this manual is copied from the 
+Plan 9 mk manual available here:
+http://man.cat-v.org/plan_9/1/mk
 
 # BUGS
-Identical recipes for regular expression meta-rules only
-have one target.
-
-Seemingly appropriate input like CFLAGS=-DHZ=60 is parsed as
-an erroneous attribute; correct it by inserting a space
-after the first `='.
-
-The recipes printed by mk before being passed to rc for exe-
-cution are sometimes erroneously expanded for printing.
-Don't trust what's printed; rely on what rc does.
