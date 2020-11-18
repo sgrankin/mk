@@ -15,8 +15,7 @@ import (
 )
 
 // True if messages should be printed without fancy colors.
-var nocolor bool = !isatty.IsTerminal(os.Stdout.Fd())
-
+var nocolor bool = isatty.IsTerminal(os.Stdout.Fd())
 
 // True if we are ignoring timestamps and rebuilding everything.
 var rebuildall bool = false
@@ -66,13 +65,13 @@ func finishSubproc() {
 func reserveExclusiveSubproc() {
 	exclusiveSubproc.Lock()
 	// Wait until everything is done running
-	stolen_subprocs := 0
+	stolenSubprocs := 0
 	subprocsRunningCond.L.Lock()
-	stolen_subprocs = subprocsAllowed - subprocsRunning
+	stolenSubprocs = subprocsAllowed - subprocsRunning
 	subprocsRunning = subprocsAllowed
-	for stolen_subprocs < subprocsAllowed {
+	for stolenSubprocs < subprocsAllowed {
 		subprocsRunningCond.Wait()
-		stolen_subprocs += subprocsAllowed - subprocsRunning
+		stolenSubprocs += subprocsAllowed - subprocsRunning
 		subprocsRunning = subprocsAllowed
 	}
 }
@@ -252,17 +251,17 @@ func mkError(msg string) {
 }
 
 func mkPrintError(msg string) {
-	if color {
+	if !nocolor {
 		os.Stderr.WriteString(ansiTermRed)
 	}
 	fmt.Fprintf(os.Stderr, "error: %s\n", msg)
-	if color {
+	if !nocolor {
 		os.Stderr.WriteString(ansiTermDefault)
 	}
 }
 
 func mkPrintSuccess(msg string) {
-	if !color {
+	if nocolor {
 		fmt.Println(msg)
 	} else {
 		fmt.Printf("%s%s%s\n", ansiTermGreen, msg, ansiTermDefault)
@@ -271,7 +270,7 @@ func mkPrintSuccess(msg string) {
 
 func mkPrintMessage(msg string) {
 	mkMsgMutex.Lock()
-	if !color {
+	if nocolor {
 		fmt.Println(msg)
 	} else {
 		fmt.Printf("%s%s%s\n", ansiTermBlue, msg, ansiTermDefault)
@@ -281,7 +280,7 @@ func mkPrintMessage(msg string) {
 
 func mkPrintRecipe(target string, recipe string, quiet bool) {
 	mkMsgMutex.Lock()
-	if !color {
+	if nocolor {
 		fmt.Printf("%s: ", target)
 	} else {
 		fmt.Printf("%s%s%s → %s",
@@ -289,7 +288,7 @@ func mkPrintRecipe(target string, recipe string, quiet bool) {
 			ansiTermDefault, ansiTermBlue)
 	}
 	if quiet {
-		if !color {
+		if nocolor {
 			fmt.Println("...")
 		} else {
 			fmt.Println("…")
@@ -300,7 +299,7 @@ func mkPrintRecipe(target string, recipe string, quiet bool) {
 			os.Stdout.WriteString("\n")
 		}
 	}
-	if color {
+	if !nocolor {
 		os.Stdout.WriteString(ansiTermDefault)
 	}
 	mkMsgMutex.Unlock()

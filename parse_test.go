@@ -27,7 +27,8 @@ func ruleAttributesNotSet(t *testing.T, r *rule) {
 // prerequesite; both are local files.
 func TestParseOneRuleLocalFiles(t *testing.T) {
 	mkfileAsString := "somefile.txt: a_prereq.csv\n\techo $target"
-	ruleSet := parse(mkfileAsString, "mkfile", "/mkfile")
+	env := make(map[string][]string)
+	ruleSet := parse(mkfileAsString, "mkfile", "/mkfile", env)
 	if len(ruleSet.rules) != 1 {
 		t.Errorf("There should be 1 rule")
 	}
@@ -46,7 +47,8 @@ func TestParseOneRuleLocalFiles(t *testing.T) {
 // prerequesite; both are local files.
 func TestParseOneRuleMultiPrereqLocalFiles(t *testing.T) {
 	mkfileAsString := "somefile.txt: a_prereq.csv b_prereq.tsv\n\techo $target"
-	ruleSet := parse(mkfileAsString, "mkfile", "/mkfile")
+	env := make(map[string][]string)
+	ruleSet := parse(mkfileAsString, "mkfile", "/mkfile", env)
 	if len(ruleSet.rules) != 1 {
 		t.Errorf("There should be 1 rule")
 	}
@@ -79,7 +81,8 @@ func TestParseOneRuleWithAttributeLocalFiles(t *testing.T) {
 
 	for k, v := range attribMap {
 		mkfileAsString := fmt.Sprintf("somefile.txt:%s: a_prereq.csv\n\techo $target", k)
-		ruleSet := parse(mkfileAsString, "mkfile", "/mkfile")
+		env := make(map[string][]string)
+		ruleSet := parse(mkfileAsString, "mkfile", "/mkfile", env)
 		if len(ruleSet.rules) != 1 {
 			t.Errorf("There should be 1 rule")
 		}
@@ -105,7 +108,8 @@ func TestParseOneRuleWithAttributeLocalFiles(t *testing.T) {
 // method to determine if the target is up to date.
 func TestParseOneRuleAltCompareLocalFiles(t *testing.T) {
 	mkfileAsString := "somefile.txt:Pcmp -s: a_prereq.csv\n\techo $target"
-	ruleSet := parse(mkfileAsString, "mkfile", "/mkfile")
+	env := make(map[string][]string)
+	ruleSet := parse(mkfileAsString, "mkfile", "/mkfile", env)
 	if len(ruleSet.rules) != 1 {
 		t.Errorf("There should be 1 rule")
 	}
@@ -127,7 +131,8 @@ func TestParseOneRuleAltCompareLocalFiles(t *testing.T) {
 // to run the recipie
 func TestParseOneRuleAltShellLocalFiles(t *testing.T) {
 	mkfileAsString := "somefile.txt:Scmp -s: a_prereq.csv\n\techo $target"
-	ruleSet := parse(mkfileAsString, "mkfile", "/mkfile")
+	env := make(map[string][]string)
+	ruleSet := parse(mkfileAsString, "mkfile", "/mkfile", env)
 	if len(ruleSet.rules) != 1 {
 		t.Errorf("There should be 1 rule")
 	}
@@ -174,7 +179,8 @@ func TestParseOneRuleAltShellLocalFiles(t *testing.T) {
 // prerequesite; both are local files.
 func TestParseOneRuleHTTPPrereq(t *testing.T) {
 	mkfileAsString := "somefile.txt: \"http://golang.org/a_prereq.csv\"\n\techo $target"
-	ruleSet := parse(mkfileAsString, "mkfile", "/mkfile")
+	env := make(map[string][]string)
+	ruleSet := parse(mkfileAsString, "mkfile", "/mkfile", env)
 	if len(ruleSet.rules) != 1 {
 		t.Errorf("There should be 1 rule")
 	}

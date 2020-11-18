@@ -6,7 +6,6 @@ import (
 	"os"
 	"regexp"
 	"strings"
-	"os"
 	"unicode/utf8"
 )
 
@@ -314,10 +313,10 @@ func expandBackQuoted(input string, vars map[string][]string) ([]string, int) {
 	if j < 0 {
 		return []string{input}, len(input)
 	}
-	
+
 	env := os.Environ()
 	for key, values := range vars {
-		env = append(env, key + "=" + strings.Join(values, " "))
+		env = append(env, key+"="+strings.Join(values, " "))
 	}
 
 	// TODO: handle errors
