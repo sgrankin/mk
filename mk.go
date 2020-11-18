@@ -319,6 +319,8 @@ func main() {
 	flag.BoolVar(&quiet, "q", false, "don't print recipes before executing them")
 	flag.Parse()
 
+	_, nocolor = os.LookupEnv("NO_COLOR")
+
 	mkfile, err := os.Open(mkfilepath)
 	if err != nil {
 		mkError("no mkfile found")
@@ -331,7 +333,13 @@ func main() {
 		mkError("unable to find mkfile's absolute path")
 	}
 
-	rs := parse(string(input), mkfilepath, abspath)
+	env := make(map[string][]string)
+	for _, elem := range os.Environ() {
+		vals := strings.SplitN(elem, "=", 2)
+		env[vals[0]] = append(env[vals[0]], vals[1])
+	}
+
+	rs := parse(string(input), mkfilepath, abspath, env)
 	if quiet {
 		for i := range rs.rules {
 			rs.rules[i].attributes.quiet = true
