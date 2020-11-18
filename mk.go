@@ -17,6 +17,7 @@ import (
 // True if messages should be printed without fancy colors.
 var nocolor bool = !isatty.IsTerminal(os.Stdout.Fd())
 
+
 // True if we are ignoring timestamps and rebuilding everything.
 var rebuildall bool = false
 
@@ -249,17 +250,17 @@ func mkError(msg string) {
 }
 
 func mkPrintError(msg string) {
-	if !nocolor {
+	if color {
 		os.Stderr.WriteString(ansiTermRed)
 	}
-	fmt.Fprintf(os.Stderr, "%s\n", msg)
-	if !nocolor {
+	fmt.Fprintf(os.Stderr, "error: %s\n", msg)
+	if color {
 		os.Stderr.WriteString(ansiTermDefault)
 	}
 }
 
 func mkPrintSuccess(msg string) {
-	if nocolor {
+	if !color {
 		fmt.Println(msg)
 	} else {
 		fmt.Printf("%s%s%s\n", ansiTermGreen, msg, ansiTermDefault)
@@ -268,7 +269,7 @@ func mkPrintSuccess(msg string) {
 
 func mkPrintMessage(msg string) {
 	mkMsgMutex.Lock()
-	if nocolor {
+	if !color {
 		fmt.Println(msg)
 	} else {
 		fmt.Printf("%s%s%s\n", ansiTermBlue, msg, ansiTermDefault)
@@ -278,7 +279,7 @@ func mkPrintMessage(msg string) {
 
 func mkPrintRecipe(target string, recipe string, quiet bool) {
 	mkMsgMutex.Lock()
-	if nocolor {
+	if !color {
 		fmt.Printf("%s: ", target)
 	} else {
 		fmt.Printf("%s%s%s → %s",
@@ -286,7 +287,7 @@ func mkPrintRecipe(target string, recipe string, quiet bool) {
 			ansiTermDefault, ansiTermBlue)
 	}
 	if quiet {
-		if nocolor {
+		if !color {
 			fmt.Println("...")
 		} else {
 			fmt.Println("…")
@@ -297,19 +298,21 @@ func mkPrintRecipe(target string, recipe string, quiet bool) {
 			os.Stdout.WriteString("\n")
 		}
 	}
-	if !nocolor {
+	if color {
 		os.Stdout.WriteString(ansiTermDefault)
 	}
 	mkMsgMutex.Unlock()
 }
 
 func main() {
+	var directory string
 	var mkfilepath string
 	var interactive bool
 	var dryrun bool
 	var shallowrebuild bool
 	var quiet bool
 
+	flag.StringVar(&directory, "C", "", "directory to change in to")
 	flag.StringVar(&mkfilepath, "f", "mkfile", "use the given file as mkfile")
 	flag.BoolVar(&dryrun, "n", false, "print commands without actually executing")
 	flag.BoolVar(&shallowrebuild, "r", false, "force building of just targets")
@@ -320,6 +323,12 @@ func main() {
 	flag.Parse()
 
 	_, nocolor = os.LookupEnv("NO_COLOR")
+	if directory != "" {
+		err := os.Chdir(directory)
+		if err != nil {
+			mkError(fmt.Sprintf("changing directory to `%s' failed", directory))
+		}
+	}
 
 	mkfile, err := os.Open(mkfilepath)
 	if err != nil {

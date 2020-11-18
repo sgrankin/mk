@@ -1,3 +1,4 @@
+# To be done
 
 # Short-term
     * Expand ${foo}.
@@ -7,7 +8,6 @@
     * Expand `$newprereq`.
     * Expand `$alltargets`.
     * Namelist syntax.
-    * Environment variables.
 
 # Long-term
     * Nicer syntax for alternative-shell rules.
