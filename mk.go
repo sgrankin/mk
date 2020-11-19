@@ -14,34 +14,44 @@ import (
 	"github.com/mattn/go-isatty"
 )
 
-// True if messages should be printed without fancy colors.
-var nocolor bool = isatty.IsTerminal(os.Stdout.Fd())
+var (
+	// True if messages should be printed with fancy colors.
+	// By default, if the output stream is not the terminal, colors are disabled.
+	color bool
 
-// True if we are ignoring timestamps and rebuilding everything.
-var rebuildall bool = false
+	// Default shell to use if none specified via $shell.
+	defaultShell string
 
-// Set of targets for which we are forcing rebuild
-var rebuildtargets map[string]bool = make(map[string]bool)
+	// Do not drop shell arguments when calling with no further arguments
+	// This works around `sh -c commands...` being a thing, but allows the `rc -v commands...` argument-less flags
+	dontDropArgs bool
 
-// Lock on standard out, messages don't get interleaved too much.
-var mkMsgMutex sync.Mutex
+	// True if we are ignoring timestamps and rebuilding everything.
+	rebuildall bool = false
 
-// The maximum number of times an rule may be applied.
-// This limits recursion of both meta- and non-meta-rules!
-// Maybe, this shouldn't affect meta-rules?!
-var maxRuleCnt int = 1
+	// Set of targets for which we are forcing rebuild
+	rebuildtargets map[string]bool = make(map[string]bool)
 
-// Limit the number of recipes executed simultaneously.
-var subprocsAllowed int
+	// Lock on standard out, messages don't get interleaved too much.
+	mkMsgMutex sync.Mutex
 
-// Current subprocesses being executed
-var subprocsRunning int
+	// Limit the number of recipes executed simultaneously.
+	subprocsAllowed int
 
-// Wakeup on a free subprocess slot.
-var subprocsRunningCond *sync.Cond = sync.NewCond(&sync.Mutex{})
+	// Current subprocesses being executed
+	subprocsRunning int
 
-// Prevent more than one recipe at a time from trying to take over
-var exclusiveSubproc = sync.Mutex{}
+	// Wakeup on a free subprocess slot.
+	subprocsRunningCond *sync.Cond = sync.NewCond(&sync.Mutex{})
+
+	// Prevent more than one recipe at a time from trying to take over
+	exclusiveSubproc = sync.Mutex{}
+
+	// The maximum number of times an rule may be applied.
+	// This limits recursion of both meta- and non-meta-rules!
+	// Maybe, this shouldn't affect meta-rules?!
+	maxRuleCnt int = 1
+)
 
 // Wait until there is an available subprocess slot.
 func reserveSubproc() {
@@ -163,7 +173,7 @@ func mkNode(g *graph, u *node, dryrun bool, required bool) {
 		u.mutex.Unlock()
 	}()
 
-	// there's no fucking rules, dude
+	// there's no rules.
 	if len(u.prereqs) == 0 {
 		if !(u.r != nil && u.r.attributes.virtual) && !u.exists {
 			wd, _ := os.Getwd()
@@ -251,17 +261,17 @@ func mkError(msg string) {
 }
 
 func mkPrintError(msg string) {
-	if !nocolor {
+	if color {
 		os.Stderr.WriteString(ansiTermRed)
 	}
 	fmt.Fprintf(os.Stderr, "error: %s\n", msg)
-	if !nocolor {
+	if color {
 		os.Stderr.WriteString(ansiTermDefault)
 	}
 }
 
 func mkPrintSuccess(msg string) {
-	if nocolor {
+	if !color {
 		fmt.Println(msg)
 	} else {
 		fmt.Printf("%s%s%s\n", ansiTermGreen, msg, ansiTermDefault)
@@ -270,7 +280,7 @@ func mkPrintSuccess(msg string) {
 
 func mkPrintMessage(msg string) {
 	mkMsgMutex.Lock()
-	if nocolor {
+	if !color {
 		fmt.Println(msg)
 	} else {
 		fmt.Printf("%s%s%s\n", ansiTermBlue, msg, ansiTermDefault)
@@ -280,7 +290,7 @@ func mkPrintMessage(msg string) {
 
 func mkPrintRecipe(target string, recipe string, quiet bool) {
 	mkMsgMutex.Lock()
-	if nocolor {
+	if !color {
 		fmt.Printf("%s: ", target)
 	} else {
 		fmt.Printf("%s%s%s → %s",
@@ -288,7 +298,7 @@ func mkPrintRecipe(target string, recipe string, quiet bool) {
 			ansiTermDefault, ansiTermBlue)
 	}
 	if quiet {
-		if nocolor {
+		if !color {
 			fmt.Println("...")
 		} else {
 			fmt.Println("…")
@@ -299,7 +309,7 @@ func mkPrintRecipe(target string, recipe string, quiet bool) {
 			os.Stdout.WriteString("\n")
 		}
 	}
-	if !nocolor {
+	if color {
 		os.Stdout.WriteString(ansiTermDefault)
 	}
 	mkMsgMutex.Unlock()
@@ -322,9 +332,12 @@ func main() {
 	flag.IntVar(&maxRuleCnt, "l", 1, "maximum number of times a specific rule can be applied (recursion)")
 	flag.BoolVar(&interactive, "i", false, "prompt before executing rules")
 	flag.BoolVar(&quiet, "q", false, "don't print recipes before executing them")
+	flag.BoolVar(&color, "color", isatty.IsTerminal(os.Stdout.Fd()), "turn color on/off")
+	flag.StringVar(&defaultShell, "shell", "sh -c", "default shell to use if none are specified via $shell")
+	flag.BoolVar(&dontDropArgs, "F", false, "don't drop shell arguments when no further arguments are specified")
+	// TODO(rjk): P9P mk command line compatability.
 	flag.Parse()
 
-	_, nocolor = os.LookupEnv("NO_COLOR")
 	if directory != "" {
 		err := os.Chdir(directory)
 		if err != nil {
@@ -389,6 +402,9 @@ func main() {
 	root.prereqs = targets
 	rs.add(root)
 
+	// Keep a global reference to the total state of mk variables.
+	GlobalMkState = rs.vars
+
 	if interactive {
 		g := buildgraph(rs, "")
 		mkNode(g, g.root, true, true)
@@ -411,3 +427,5 @@ func main() {
 	g := buildgraph(rs, "")
 	mkNode(g, g.root, dryrun, true)
 }
+
+var GlobalMkState map[string][]string

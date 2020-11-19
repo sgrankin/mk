@@ -88,25 +88,38 @@ func dorecipe(target string, u *node, e *edge, dryrun bool) bool {
 	}
 	vars["prereq"] = prereqs
 
-	input := expandRecipeSigils(e.r.recipe, vars)
-	sh := "sh"
-	args := []string{}
-
+	// Setup the shell in vars.
+	sh, args := expandShell(defaultShell, []string{})
 	if len(e.r.shell) > 0 {
-		sh = e.r.shell[0]
-		args = e.r.shell[1:]
+		sh, args = expandShell(e.r.shell[0], e.r.shell[1:])
 	}
+	vars["shell"] = append([]string{sh}, args...)
+
+	// Build the command.
+	input := expandRecipeSigils(e.r.recipe, vars)
 
 	mkPrintRecipe(target, input, e.r.attributes.quiet)
-
 	if dryrun {
 		return true
+	}
+
+	// Merge and construct the execution environment for this recipe.
+	for k, v := range GlobalMkState {
+		if _, ok := vars[k]; !ok {
+			vars[k] = v
+		}
+	}
+	// "\x01" is a magic constant that Plan9 rc uses to separate elements in an array.
+	// TODO(rjk): Do the right thing for other shells that have arrays.
+	env := os.Environ()
+	for k, v := range vars {
+		env = append(env, k+"="+strings.Join(v, "\x01"))
 	}
 
 	_, success := subprocess(
 		sh,
 		args,
-		nil,
+		env,
 		input,
 		false)
 

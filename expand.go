@@ -137,18 +137,18 @@ func expandSingleQuoted(input string) (string, int) {
 	return input[:j], (j + 1)
 }
 
+var expandSigil_namelist_pattern = regexp.MustCompile(`^\s*([^:]+)\s*:\s*([^%]*)%([^=]*)\s*=\s*([^%]*)%([^%]*)\s*`)
+
 // Expand something starting with at '$'.
 func expandSigil(input string, vars map[string][]string) ([]string, int) {
 	c, w := utf8.DecodeRuneInString(input)
 	var offset int
 	var varname string
-	var namelist_pattern = regexp.MustCompile(`^\s*([^:]+)\s*:\s*([^%]*)%([^=]*)\s*=\s*([^%]*)%([^%]*)\s*`)
+	namelist_pattern := expandSigil_namelist_pattern
 
-	// escaping of "$" with "$$"
-	if c == '$' {
+	if c == '$' { // escaping of "$" with "$$"
 		return []string{"$"}, 2
-		// match bracketed expansions: ${foo}, or ${foo:a%b=c%d}
-	} else if c == '{' {
+	} else if c == '{' { // match bracketed expansions: ${foo}, or ${foo:a%b=c%d}
 		j := strings.IndexRune(input[w:], '}')
 		if j < 0 {
 			return []string{"$" + input}, len(input)
@@ -168,20 +168,20 @@ func expandSigil(input string, vars map[string][]string) ([]string, int) {
 			}
 
 			pat := regexp.MustCompile(strings.Join([]string{`^\Q`, a, `\E(.*)\Q`, b, `\E$`}, ""))
-			expanded_values := make([]string, len(values))
-			for i, value := range values {
+			expanded_values := make([]string, 0, len(values))
+			for _, value := range values {
 				value_match := pat.FindStringSubmatch(value)
 				if value_match != nil {
-					expanded_values[i] = strings.Join([]string{c, value_match[1], d}, "")
+					expanded_values = append(expanded_values, expand(strings.Join([]string{c, value_match[1], d}, ""), vars, false)...)
 				} else {
-					expanded_values[i] = value
+					// What case is this?
+					expanded_values = append(expanded_values, value)
 				}
 			}
 
 			return expanded_values, offset
 		}
-		// bare variables: $foo
-	} else {
+	} else { // bare variables: $foo
 		// try to match a variable name
 		i := 0
 		j := i
@@ -205,9 +205,14 @@ func expandSigil(input string, vars map[string][]string) ([]string, int) {
 		varvals, ok := vars[varname]
 		if ok {
 			return varvals, offset
-		} else {
-			return []string{"$" + input[:offset]}, offset
 		}
+
+		// Find the subsitution in the environment.
+		if varval, ok := os.LookupEnv(varname); ok {
+			return []string{varval}, offset
+		}
+
+		return []string{"$" + input[:offset]}, offset
 	}
 
 	// Find the subsitution in the environment.
@@ -319,8 +324,19 @@ func expandBackQuoted(input string, vars map[string][]string) ([]string, int) {
 		env = append(env, key+"="+strings.Join(values, " "))
 	}
 
+	// TODO - might have $shell available by now, but maybe not?
+	// It's not populated, regardless
+
+	var shell string
+	var shellargs []string
+	if len(vars["shell"]) < 1 {
+		shell, shellargs = expandShell(defaultShell, shellargs)
+	} else {
+		shell, shellargs = expandShell(vars["shell"][0], shellargs)
+	}
+
 	// TODO: handle errors
-	output, _ := subprocess("sh", nil, env, input[:j], true)
+	output, _ := subprocess(shell, shellargs, env, input[:j], true)
 
 	parts := make([]string, 0)
 	_, tokens := lexWords(output)
@@ -329,4 +345,38 @@ func expandBackQuoted(input string, vars map[string][]string) ([]string, int) {
 	}
 
 	return parts, (j + 1)
+}
+
+// Expand the shell command into cmd, args...
+// Ex. "sh -c", "pwd" becomes sh, [-c, pwd]
+func expandShell(shcmd string, args []string) (string, []string) {
+	var shell string
+	var shellargs []string
+
+	fields := strings.Fields(shcmd)
+	shell = fields[0]
+
+	if len(fields) > 1 {
+		shellargs = fields[1:]
+	}
+
+	switch {
+	// TODO - This case logic might be shaky, works for now
+	case len(shellargs) > 0 && len(args) > 0:
+		args = append(shellargs, args...)
+
+	case len(shellargs) > 0 && dontDropArgs:
+		args = append(shellargs, args...)
+
+	default:
+		//fmt.Println("dropping in expand!")
+	}
+
+	if len(shellargs) > 0 && dontDropArgs {
+
+	} else {
+
+	}
+
+	return shell, args
 }

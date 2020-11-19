@@ -71,6 +71,8 @@ This mk stays mostly faithful to Plan 9, but makes a few improvements.
      way, you don't have to separate your six line python script into its own
      file. Just stick it directly in the mkfile.
   1. Use remote files in Amazon S3 or http(s) URLs as prerequesites or targets 
+  1. Add `$shell` variable which will be sourced as the shell for recipe blocks 
+     unless overriden by an 'S' attribute.
   1. Pretty colors.
 
 
@@ -87,7 +89,11 @@ This mk stays mostly faithful to Plan 9, but makes a few improvements.
   * `-a` Force building the targets and of all their dependencies.
   * `-p` Maximum number of jobs to execute in parallel (default: # CPU cores)
   * `-i` Show rules that will execute and prompt before executing.
-
+  * `-color` Boolean flag to force color on / off.
+  * `-F` Don't drop shell arguments when no further arguments are specified.
+  * `-s name` Default shell to use if none are specified via $shell (default: "sh -c")
+  * `-l int` Maximum number of recursive invocations of a rule. (default 1)
+  * `-q` Don't print recipesbefore executing them.
 
 ## Non-shell recipes
 
@@ -132,4 +138,12 @@ S3 api to determine the last modification time.
 Functional, but with some bugs and some unimplemented minor features. Give it a
 try and see what you think!
 
+# License
+
+This work is provided under the [BSD 2-clause](https://opensource.org/licenses/BSD-2-Clause) license.
+
+Copyright (c) 2013, [Daniel C. Jones](https://github.com/dcjones) - All rights reserved. 
+
+With additional updates by people listed in
+[contributors.md](contributors.md)
 
