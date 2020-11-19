@@ -194,3 +194,25 @@ func TestParseOneRuleHTTPPrereq(t *testing.T) {
 
 	ruleAttributesNotSet(t, &rule)
 }
+
+// Make sure that we can parse assignments that are across multiple lines
+// like:
+// OFILES = a.o\
+//          b.o
+//          c.o
+//prog: $OFILES
+//    cc -o $target $prereqs
+func TestParseAssignmentNewLine(t *testing.T) {
+	mkfileAsString := "OFILES=9p1.o\\\n9p1lib.o\nprog: $OFILES\n\techo $target"
+
+	env := make(map[string][]string)
+	ruleSet := parse(mkfileAsString, "mkfile", "/mkfile", env)
+	if len(ruleSet.rules) != 1 {
+		t.Errorf("There should be 1 rule")
+	}
+	rule := ruleSet.rules[0]
+	t.Log(rule.prereqs)
+	if len(rule.prereqs) != 2 {
+		t.Errorf("There should be 2 prerequesites")
+	}
+}
