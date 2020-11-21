@@ -98,6 +98,14 @@ func TestExpand(t *testing.T) {
 			want:        []string{"./testdata"},
 		},
 		{
+			input: "\"s3://$targetpath\"",
+			vars: map[string][]string{
+				"targetpath": {"testdata"},
+			},
+			expandticks: false,
+			want:        []string{"s3://testdata"},
+		},
+		{
 			input: "'$targetpath'",
 			vars: map[string][]string{
 				"targetpath": {"./testdata"},
