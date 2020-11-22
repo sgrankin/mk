@@ -216,3 +216,17 @@ func TestParseAssignmentNewLine(t *testing.T) {
 		t.Errorf("There should be 2 prerequesites")
 	}
 }
+
+func TestParseS3Prereq(t *testing.T) {
+	mkfileAsString := "data/processed/(\\d+)/mapping_k10.bam.bai:R: \"s3://wb-boxer/runs/contition_${stem1}_bowtie_k10/mapping.bam.bai\"\n\taws s3 cp $prereq $target"
+	env := make(map[string][]string)
+	ruleSet := parse(mkfileAsString, "mkfile", "/mkfile", env)
+	if len(ruleSet.rules) != 1 {
+		t.Errorf("There should be 1 rule")
+	}
+	rule := ruleSet.rules[0]
+	t.Log(rule.prereqs)
+	if !rule.attributes.regex || !rule.ismeta {
+		t.Error("The rule has not been recognized as a regex")
+	}
+}
