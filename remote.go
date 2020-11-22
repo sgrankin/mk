@@ -21,9 +21,10 @@ func updateHttpTimestamp(u *node) {
 	lastModified := resp.Header.Get("Last-Modified")
 	if lastModified == "" {
 		// no Last-Modified header so lets assume that it
-		// doesn't exist
+		// is very old - but still exists
 		u.t = time.Unix(0, 0)
-		u.exists = false
+		u.exists = true
+		u.flags |= nodeFlagProbable
 	} else {
 		tmptime, err := time.Parse(time.RFC1123, lastModified)
 		if err != nil {
@@ -31,6 +32,7 @@ func updateHttpTimestamp(u *node) {
 		}
 		u.t = tmptime
 		u.exists = true
+		u.flags |= nodeFlagProbable
 	}
 }
 
@@ -57,5 +59,6 @@ func updateS3Timestamp(u *node, uri *url.URL) {
 	}
 	u.t = *result.LastModified
 	u.exists = true
+	u.flags |= nodeFlagProbable
 	//fmt.Println(result)
 }
