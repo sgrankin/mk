@@ -184,3 +184,36 @@ func TestExpand(t *testing.T) {
 		}
 	}
 }
+
+func TestExpandRecipeSigils(t *testing.T) {
+	tests := []expandtv{
+		{
+			input: "/runs/contition_${stem1}_bowtie_k10/mapping.bam.bai",
+			vars: map[string][]string{
+				"stem1": {"a"},
+			},
+			expandticks: false,
+			want:        []string{"/runs/contition_a_bowtie_k10/mapping.bam.bai"},
+		},
+		{
+			input: "s3://runs/contition_${stem1}_bowtie_k10/mapping.bam.bai",
+			vars: map[string][]string{
+				"stem1": {"a"},
+			},
+			expandticks: false,
+			want:        []string{"s3://runs/contition_a_bowtie_k10/mapping.bam.bai"},
+		},
+	}
+
+	for i, tv := range tests {
+		got := expandRecipeSigils(tv.input, tv.vars)
+
+		if !reflect.DeepEqual(got, tv.want[0]) {
+			t.Errorf("%d: input: %#v, vars: %s. got %s, want %s",
+				i,
+				tv.input, litter.Sdump(tv.vars),
+				litter.Sdump(got),
+				litter.Sdump(tv.want[0]))
+		}
+	}
+}
