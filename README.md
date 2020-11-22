@@ -3,8 +3,6 @@
     <img alt="Logo" src="http://dcjones.github.com/mk/mk.svg">
 </p>
 
-This is [@galexite](https://github.com/galexite)'s fork of [dcjones/mk](https://github.com/dcjones/mk).
-
 Mk is a reboot of the Plan 9 mk command, which itself is [a successor to
 make](http://www.cs.tufts.edu/~nr/cs257/archive/andrew-hume/mk.pdf).
 

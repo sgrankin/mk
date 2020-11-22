@@ -314,7 +314,7 @@ list:
 
 Regular expression meta-rules:
 
-    ([^/]*)/(.*)\.$O:R:  \1/\2.c
+    ([^/]*)/(.*)\.$O:R:  $stem1/$stem2.c
             cd $stem1; $CC $CFLAGS $stem2.c
 
 A correct way to deal with yacc(1) grammars.  The file lex.c

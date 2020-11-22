@@ -34,8 +34,8 @@ type pattern struct {
 	rpat     *regexp.Regexp // non-nil if this is a regexp pattern
 }
 
-// Match a pattern, returning an array of submatches, or nil if it doesn'm
-// match.
+// Match a pattern, returning an array of submatches,
+// or nil if it doesn't match.
 func (p *pattern) match(target string) []string {
 	if p.rpat != nil {
 		return p.rpat.FindStringSubmatch(target)
@@ -211,6 +211,6 @@ func (rs *ruleSet) executeAssignment(ts []token) *assignmentError {
 	}
 
 	rs.vars[assignee] = vals
-	
+
 	return nil
 }
