@@ -23,7 +23,7 @@
 <header id="title-block-header">
 <h1 class="title">Mk: make remade</h1>
 </header>
-<p>Mk is a reboot of the Plan 9 mk command, which itself is <a href="http://www.cs.tufts.edu/~nr/cs257/archive/andrew-hume/mk.pdf">a successor to make</a>.</p>
+<p>Mk is a reboot of the Plan 9 <code>mk</code> command, which itself is <a href="http://www.cs.tufts.edu/~nr/cs257/archive/andrew-hume/mk.pdf">a successor to make</a>.</p>
 <h2 id="installation">Installation</h2>
 <ol type="1">
 <li>Install Go.</li>
@@ -32,7 +32,7 @@
 </ol>
 <h2 id="why-plan-9-mk-is-better-than-make">Why Plan 9 mk is better than make</h2>
 <p>Way back in the 90s, some smart guys at Bell Labs got together and decided to write new operating system to replace Unix. The idea was to keep everything that was great about Unix, but totally disregard backwards compatibility in a quest for something better. The operating system they designed, Plan 9, had a lot of terrific ideas, and though some were cherry picked, the OS as a whole never really caught on.</p>
-<p>Among the gems in Plan 9 was a rewrite of the venerable Unix make command, in the form of mk. Simply put, mk is make, but with a large collection of relatively minor improvements, adding up to something more consistent, elegant, and powerful. To name a few specifics:</p>
+<p>Among the gems in Plan 9 was a rewrite of the venerable Unix make command, in the form of <code>mk</code>. Simply put, <code>mk</code> is <code>make</code>, but with a large collection of relatively minor improvements, adding up to something more consistent, elegant, and powerful. To name a few specifics:</p>
 <ol type="1">
 <li>Recipes are delimited by any indentation, not tab characters in particular.</li>
 <li>Phony targets are handled separately from file targets. Your mkfile won’t be broken by having a file named ‘clean’.</li>

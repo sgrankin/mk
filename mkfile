@@ -1,5 +1,7 @@
 site:V: index.html manual.html contributors.html license.html
 
+push:V: site
+	git push
 
 index.html: README.md
     pandoc -s --to html5 --from markdown -c style.css --metadata title="Mk: make remade" -o $target <(sed -e 's/\.md/.html/g' $prereq)
