@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Mk: make remade</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="style.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Mk: make remade</h1>
+</header>
+<p>Mk is a reboot of the Plan 9 mk command, which itself is <a href="http://www.cs.tufts.edu/~nr/cs257/archive/andrew-hume/mk.pdf">a successor to make</a>.</p>
+<h2 id="installation">Installation</h2>
+<ol type="1">
+<li>Install Go.</li>
+<li>Run <code>go get github.com/ctSkennerton/mk</code></li>
+<li>Make sure <code>$GOPATH/bin</code> is in your <code>PATH</code>.</li>
+</ol>
+<h2 id="why-plan-9-mk-is-better-than-make">Why Plan 9 mk is better than make</h2>
+<p>Way back in the 90s, some smart guys at Bell Labs got together and decided to write new operating system to replace Unix. The idea was to keep everything that was great about Unix, but totally disregard backwards compatibility in a quest for something better. The operating system they designed, Plan 9, had a lot of terrific ideas, and though some were cherry picked, the OS as a whole never really caught on.</p>
+<p>Among the gems in Plan 9 was a rewrite of the venerable Unix make command, in the form of mk. Simply put, mk is make, but with a large collection of relatively minor improvements, adding up to something more consistent, elegant, and powerful. To name a few specifics:</p>
+<ol type="1">
+<li>Recipes are delimited by any indentation, not tab characters in particular.</li>
+<li>Phony targets are handled separately from file targets. Your mkfile won’t be broken by having a file named ‘clean’.</li>
+<li>Attributes instead of weird special targets like <code>.SECONDARY:</code>.</li>
+<li>Special variables like <code>$target</code>, <code>$prereq</code>, and <code>$stem</code> in place of make’s pointlessly cryptic <code>$@</code>, <code>$^</code>, and <code>$*</code>.</li>
+<li>In addition to suffix rules (e.g. <code>%.o: %.c</code>), mk has more powerful regular expression rules.</li>
+<li>Sane handling of rules with multiple targets.</li>
+<li>An optional attribute to delete targets when a recipe fails, so you aren’t left with corrupt output.</li>
+<li>Plan 9 mkfiles can not only include other mkfiles, but pipe in the output of recipes. Your mkfile can configure itself by doing something like <code>&lt;|sh config.sh</code>.</li>
+<li>A generalized mechanism to determine if a target is out of date, for when timestamps won’t cut it.</li>
+<li>Variables are expanded in recipes only if they are defined. That way you usually don’t have to escape <code>$</code>.</li>
+</ol>
+<p>And much more! Read <a href="http://doc.cat-v.org/plan_9/4th_edition/papers/mk">Maintaining Files on Plan 9 with Mk</a> for good overview.</p>
+<h2 id="improvements-over-plan-9-mk">Improvements over Plan 9 mk</h2>
+<p>This mk stays mostly faithful to Plan 9, but makes a few improvements.</p>
+<ol type="1">
+<li>A clean, modern implementation in Go, that doesn’t depend on the whole Plan 9 stack.</li>
+<li>Parallel by default. Modern computers can build more than one C file at a time. Cases that should not be run in parallel are the exception. Use <code>-p=1</code> if this is the case.</li>
+<li>Use Go regular expressions, which are perl-like. The original mk used plan9 regex, which few people know or care to learn.</li>
+<li>Regex matches are substituted into rule prerequisites with <code>$stem1</code>, <code>$stem2</code>, etc, rather than <code>\1</code>, <code>\2</code>, etc.</li>
+<li>Allow blank lines in recipes. A recipe is any indented block of text, and continues until a non-indented character or the end of the file. (Similar to blocks in Python.)</li>
+<li>Add an ‘S’ attribute to execute recipes with programs other than sh. This way, you don’t have to separate your six line python script into its own file. Just stick it directly in the mkfile.</li>
+<li>Use remote files in Amazon S3 or http(s) URLs as prerequesites or targets</li>
+<li>Add <code>$shell</code> variable which will be sourced as the shell for recipe blocks unless overriden by an ‘S’ attribute.</li>
+<li>Pretty colors.</li>
+</ol>
+<h2 id="usage">Usage</h2>
+<p><em>See the <a href="manual.html">manual</a> for more info</em></p>
+<p><code>mk [options] [target] ...</code></p>
+<h3 id="options">Options</h3>
+<ul>
+<li><code>-C directory</code> Change directory to <code>directory</code> first.</li>
+<li><code>-f filename</code> Use the given file as the mkfile.</li>
+<li><code>-n</code> Dry run, print commands without actually executing.</li>
+<li><code>-r</code> Force building of the immediate targets.</li>
+<li><code>-a</code> Force building the targets and of all their dependencies.</li>
+<li><code>-p</code> Maximum number of jobs to execute in parallel (default: # CPU cores)</li>
+<li><code>-i</code> Show rules that will execute and prompt before executing.</li>
+<li><code>-color</code> Boolean flag to force color on / off.</li>
+<li><code>-F</code> Don’t drop shell arguments when no further arguments are specified.</li>
+<li><code>-s name</code> Default shell to use if none are specified via $shell (default: “sh -c”)</li>
+<li><code>-l int</code> Maximum number of recursive invocations of a rule. (default 1)</li>
+<li><code>-q</code> Don’t print recipesbefore executing them.</li>
+</ul>
+<h2 id="non-shell-recipes">Non-shell recipes</h2>
+<p>Non-shell recipes are a major addition over Plan 9 mk. They can be used with the <code>S[command]</code> attribute, where <code>command</code> is an arbitrary command that the recipe will be piped into. For example, here’s a recipe to add the read numbers from a file and write their mean to another file. Unlike a typical recipe, it’s written in Julia.</p>
+<pre class="make"><code>mean.txt:Sjulia: input.txt
+    println(open(&quot;$target&quot;, &quot;w&quot;),
+            mean(map(parseint, eachline(open(&quot;$prereq&quot;)))))</code></pre>
+<h1 id="remote-files">Remote files</h1>
+<p>Another major addition over Plan 9 mk is the ability to have remote files in the dependancy graph. A common usage (in my work at least) is to download files from a public http repository or from Amazon S3. This has previously been difficult to do as make/mk had no (easy) way of comparing whether these files were older than the target.</p>
+<pre class="make"><code>somefile.txt: &quot;s3://bucket/path/to/key/file.txt.gz&quot;
+   aws s3 cp $prereq - | gunzip -c - &gt; $target
+
+anotherfile.csv: &quot;https://example.com/data/results.csv&quot;
+   curl $prereq &gt; $target</code></pre>
+<p>Remote files need to be enclosed in double quotes to protect the colon character from being interpreted as the separator between targets, attributes, and prerequisites.</p>
+<p>For http(s) files the <code>Last-Modified</code> header is inspected to determine if the resource is older than the target. If that header doesn’t exist then it is assumed that the resource is older than the target. S3 files utilize the AWS S3 api to determine the last modification time.</p>
+<h1 id="current-state">Current State</h1>
+<p>Functional, but with some bugs and some unimplemented minor features. Give it a try and see what you think!</p>
+<h1 id="license">License</h1>
+<p>This work is provided under the <a href="license.html">BSD 2-clause license</a></p>
+<p>Copyright (c) 2013, <a href="https://github.com/dcjones">Daniel C. Jones</a> - All rights reserved.</p>
+<p>With additional updates by people listed in <a href="contributors.html">contributors</a>.</p>
+</body>
+</html>
