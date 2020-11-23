@@ -1,5 +1,5 @@
 % MK(1) Mk user manual
-% Daniel C. Jones, Connor T. Skennerton
+% Daniel C. Jones
 % November 16, 2020
 
 # NAME

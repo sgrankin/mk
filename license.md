@@ -1,6 +1,8 @@
 Copyright © 2013 Daniel C. Jones <dcjones@cs.washington.edu>
+
 Copyright © 2020 Florian Limberger <flo@purplekraken.com>, 
                  Connor T. Skennerton <c.skennerton@gmail.com>
+
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

@@ -137,7 +137,7 @@ try and see what you think!
 
 This work is provided under the [BSD 2-clause license](license.md)
 
-Copyright (c) 2013, [Daniel C. Jones](https://github.com/dcjones) - All rights reserved. 
+Copyright © 2013, [Daniel C. Jones](https://github.com/dcjones) - All rights reserved. 
 
 With additional updates by people listed in
 [contributors](contributors.md).
