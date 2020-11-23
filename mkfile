@@ -10,7 +10,7 @@ INSTALL=install
 
 
 # Customizations: overwrite the above variables in a local config.mk file
-<|cat config.mk 2>/dev/null || true
+#<|cat config.mk 2>/dev/null || true
 
 sources = expand.go graph.go lex.go mk.go recipe.go remote.go rules.go
 all:V:	$PROG

@@ -1,8 +1,3 @@
-
-<p align="center">
-    <img alt="Logo" src="http://dcjones.github.com/mk/mk.svg">
-</p>
-
 Mk is a reboot of the Plan 9 mk command, which itself is [a successor to
 make](http://www.cs.tufts.edu/~nr/cs257/archive/andrew-hume/mk.pdf).
 
@@ -138,10 +133,10 @@ try and see what you think!
 
 # License
 
-This work is provided under the [BSD 2-clause](https://opensource.org/licenses/BSD-2-Clause) license.
+This work is provided under the [BSD 2-clause license](license.md)
 
 Copyright (c) 2013, [Daniel C. Jones](https://github.com/dcjones) - All rights reserved. 
 
 With additional updates by people listed in
-[contributors.md](contributors.md)
+[contributors.md](contributors.md).
 

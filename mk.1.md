@@ -201,7 +201,7 @@ $stem
 :   if this is a meta-rule, $stem is the string
     that matched % or &.  Otherwise, it is empty.
     For regular expression meta-rules (see below),
-    the variables `stem0', ..., `stem9' are set to
+    the variables `stem0, ..., stem9` are set to
     the corresponding subexpressions.
 
 $target       
