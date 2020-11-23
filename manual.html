@@ -35,8 +35,11 @@
 <p><code>Mk</code> uses the dependency rules specified in mkfile to control the update (usually by compilation) of targets (usually files) from the source files upon which they depend. The mkfile (default <code>mkfile</code>) contains a rule for each target that identifies the files and other targets upon which it depends and a script or recipe, to update the target. The script is run if the target does not exist or if it is older than any of the files it depends on. Mkfile may also contain meta-rules that define actions for updating implicit targets. If no target is specified, the target of the first rule (not meta-rule) in mkfile is updated.</p>
 <p>Options are:</p>
 <dl>
+<dt>-C</dt>
+<dd>Change directory to <code>directory</code> first.
+</dd>
 <dt>-f</dt>
-<dd>use the given file as mkfile. default is <em>mkfile</em>
+<dd>Use the given file as mkfile. default is <em>mkfile</em>
 </dd>
 <dt>-n</dt>
 <dd>print commands without actually executing
@@ -55,6 +58,18 @@
 </dd>
 <dt>-q</dt>
 <dd>don’t print recipes before executing them
+</dd>
+<dt>-color</dt>
+<dd>Boolean flag to force color output on / off.
+</dd>
+<dt>-F</dt>
+<dd>Don’t drop shell arguments when no further arguments are specified.
+</dd>
+<dt>-s</dt>
+<dd>Default shell to use if none are specified via $shell (default: “sh -c”)
+</dd>
+<dt>-l</dt>
+<dd>Maximum number of recursive invocations of a rule. (default 1)
 </dd>
 </dl>
 <h2 id="the-mkfile">The mkfile</h2>
@@ -189,9 +204,9 @@ y.tab.c y.tab.h:        gram.y
 <pre><code>x.tab.h:Pcmp -s:        y.tab.h
         cp y.tab.h x.tab.h</code></pre>
 <h1 id="see-also">SEE ALSO</h1>
-<p>A. Hume, “Mk: a Successor to Make”.</p>
-<p>Andrew G. Hume and Bob Flandrena, “Maintaining Files on Plan 9 with Mk”.</p>
-<p>Most of the content of this manual is copied from the Plan 9 mk manual available here: http://man.cat-v.org/plan_9/1/mk</p>
+<p>A. Hume, “<a href="http://doc.cat-v.org/bell_labs/mk/mk.pdf">Mk: a Successor to Make</a>”.</p>
+<p>Andrew G. Hume and Bob Flandrena, “<a href="http://doc.cat-v.org/plan_9/4th_edition/papers/mk">Maintaining Files on Plan 9 with Mk</a>”.</p>
+<p>Most of the content of this manual is copied from the Plan 9 mk manual available <a href="http://man.cat-v.org/plan_9/1/mk">here</a></p>
 <h1 id="bugs">BUGS</h1>
 </body>
 </html>
