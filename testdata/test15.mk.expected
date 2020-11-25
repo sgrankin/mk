@@ -1,0 +1,1 @@
+awktarget: BEGIN{print "greetings from awk"}

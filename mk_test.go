@@ -111,6 +111,13 @@ func TestBasicMaking(t *testing.T) {
 			errors: "",
 			passes: true,
 		},
+		{
+			// Test alternative recipe shell
+			input:  "testdata/test15.mk",
+			output: "testdata/test15.mk.expected",
+			errors: "",
+			passes: true,
+		},
 	}
 
 	for _, tv := range tests {
