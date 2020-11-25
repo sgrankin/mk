@@ -104,6 +104,13 @@ func TestBasicMaking(t *testing.T) {
 			errors: "",
 			passes: false,
 		},
+		{
+			// Rules can be created by pipeing commands
+			input:  "testdata/test14.mk",
+			output: "testdata/test14.mk.expected",
+			errors: "",
+			passes: true,
+		},
 	}
 
 	for _, tv := range tests {
