@@ -71,6 +71,9 @@
 <dt>-l</dt>
 <dd>Maximum number of recursive invocations of a rule. (default 1)
 </dd>
+<dt>-shell</dt>
+<dd>Change the shell used to execute rules. This can also be set using the <code>shell</code> variable in <code>mkfile</code>
+</dd>
 </dl>
 <h2 id="the-mkfile">The mkfile</h2>
 <p>A mkfile consists of assignments (described under `Environment’) and rules. A rule contains targets and a tail. A target is a literal string and is normally a file name. The tail contains zero or more prerequisites and an optional recipe. Each line of the recipe must begin with white space. A rule takes the form</p>
@@ -80,7 +83,7 @@
 <p>A meta-rule has a target of the form A%B where A and B are (possibly empty) strings. A meta-rule acts as a rule for any potential target whose name matches A%B with % replaced by an arbitrary string, called the stem. In interpreting a meta-rule, the stem is substituted for all occurrences of % in the prerequisite names. In the recipe of a meta-rule, the environment variable <code>$stem</code> contains the string matched by the %. For example, a meta-rule to compile a C program using might be:</p>
 <pre><code>%: %.c
     cc -o $stem $stem.c</code></pre>
-<p>The text of the mkfile is processed as follows. Lines beginning with <code>&lt;</code> followed by a file name are replaced by the contents of the named file. Lines beginning with <code>&lt;|</code> followed by a file name are replaced by the output of the exe- cution of the named file. Blank lines and comments, which run from unquoted <code>#</code> characters to the following newline, are deleted. The character sequence backslash-newline is deleted, so long lines in mkfile may be folded. Non-recipe lines are processed by substituting for <code>{command}</code> the output of the command when run by rc. References to variables are replaced by the variables’ values.</p>
+<p>The text of the mkfile is processed as follows. Lines beginning with <code>&lt;</code> followed by a file name are replaced by the contents of the named file. Lines beginning with <code>&lt;|</code> followed by a file name are replaced by the output of the execution of the named file. Blank lines and comments, which run from unquoted <code>#</code> characters to the following newline, are deleted. The character sequence backslash-newline is deleted, so long lines in mkfile may be folded. Non-recipe lines are processed by substituting for <code>{command}</code> the output of the command when run by rc. References to variables are replaced by the variables’ values.</p>
 <p>Assignments and rules are distinguished by the first unquoted occurrence of <code>:</code> (rule) or <code>=</code> (assignment).</p>
 <p>A later rule may modify or override an existing rule under the following conditions:</p>
 <ul>
@@ -137,6 +140,24 @@ foo: $bar
         $CC -o foo $bar
 bar = b.c</code></pre>
 <p>will compile b.c into foo, if a.c is newer than foo.</p>
+<h3 id="including-other-files">Including other files</h3>
+<p>The contents of other files can be included using <code>&lt;</code>.</p>
+<pre><code>&lt;./config.mk
+
+target: $deps
+    echo $deps</code></pre>
+<p>In the example above <code>./config.mk</code> defines the variable “deps”, which is used as a prerequiste of the rule.</p>
+<h3 id="including-the-output-of-commands">Including the output of commands</h3>
+<p>The output of commands can also be piped into the <code>mkfile</code> using <code>&lt;|</code>. The output is evaluated as <code>mkfile</code> commands and can contain new variable assignments and define new targets and recipies.</p>
+<pre><code>variable = file
+
+&lt;| \
+echo &quot;anothertarget: $variable
+    echo $target $prereq&quot;
+    
+target:
+    echo &quot;$variable&quot;</code></pre>
+<p>In the example above, “anothertarget” is defined by the output of the command, however variable expansion takes place which means that <code>$variable</code> is defined as “file”.</p>
 <h3 id="aggregates">Aggregates</h3>
 <p>Names of the form a(b) refer to member b of the aggregate a. Currently, the only aggregates supported are ar(1) archives.</p>
 <h3 id="attributes">Attributes</h3>
