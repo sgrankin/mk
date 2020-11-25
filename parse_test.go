@@ -228,7 +228,7 @@ func TestParseLocalRegexPrereq(t *testing.T) {
 	if !rule.attributes.regex || !rule.ismeta {
 		t.Error("The rule has not been recognized as a regex")
 	}
-	if !(rule.prereqs[0] == "/wb-boxer/runs/contition_${stem1}_bowtie_k10/mapping.bam.bai") {
+	if !(rule.prereqs[0] == "/runs/contition_${stem1}_bowtie_k10/mapping.bam.bai") {
 		t.Error("The rule does not have the right prerequisite")
 	}
 }
