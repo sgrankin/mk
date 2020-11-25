@@ -221,7 +221,7 @@ func lex(input string) (*lexer, chan token) {
 	// Files without a trailing newline are considered to have one.
 	if len(input) > 0 && input[len(input)-1] != '\n' {
 		input = input + "\n"
-	}	
+	}
 
 	l := &lexer{input: input, output: make(chan token), line: 1, col: 0, indented: true}
 	go l.run()

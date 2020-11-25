@@ -217,3 +217,28 @@ func TestExpandRecipeSigils(t *testing.T) {
 		}
 	}
 }
+
+func TestExpandBackQuoted(t *testing.T) {
+	tests := []expandtv{
+		{
+			input: "seq 1 5`",
+			vars: map[string][]string{
+				"shell": {"sh"},
+			},
+			expandticks: false,
+			want:        []string{"1"},
+		},
+	}
+
+	for i, tv := range tests {
+		got, _ := expandBackQuoted(tv.input, tv.vars)
+
+		if !reflect.DeepEqual(got, tv.want) {
+			t.Errorf("%d: input: %#v, vars: %s. got %s, want %s",
+				i,
+				tv.input, litter.Sdump(tv.vars),
+				litter.Sdump(got),
+				litter.Sdump(tv.want))
+		}
+	}
+}

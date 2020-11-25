@@ -1,5 +1,5 @@
 % MK(1) Mk user manual
-% Daniel C. Jones, Connor T. Skennerton
+% Daniel C. Jones
 % November 16, 2020
 
 # NAME
@@ -25,8 +25,11 @@ rule (not meta-rule) in mkfile is updated.
 
 Options are:
 
+-C
+:   Change directory to `directory` first.
+
 -f
-:   use the given file as mkfile. default is *mkfile*
+:   Use the given file as mkfile. default is *mkfile*
 
 -n
 :   print commands without actually executing
@@ -46,6 +49,17 @@ Options are:
 -q
 :   don't print recipes before executing them
 
+-color
+:   Boolean flag to force color output on / off.
+
+-F
+:   Don't drop shell arguments when no further arguments are specified.
+
+-s 
+:   Default shell to use if none are specified via $shell (default: "sh -c")
+
+-l 
+:   Maximum number of recursive invocations of a rule. (default 1)
 
 ## The mkfile
 
@@ -335,13 +349,11 @@ x.tab.h rule:
 
 
 # SEE ALSO
-A. Hume, "Mk: a Successor to Make".
+A. Hume, "[Mk: a Successor to Make](http://doc.cat-v.org/bell_labs/mk/mk.pdf)".
 
-Andrew G. Hume and Bob Flandrena, "Maintaining Files on
-Plan 9 with Mk".
+Andrew G. Hume and Bob Flandrena, "[Maintaining Files on Plan 9 with Mk](http://doc.cat-v.org/plan_9/4th_edition/papers/mk)".
 
 Most of the content of this manual is copied from the 
-Plan 9 mk manual available here:
-http://man.cat-v.org/plan_9/1/mk
+Plan 9 mk manual available [here](http://man.cat-v.org/plan_9/1/mk)
 
 # BUGS

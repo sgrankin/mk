@@ -1,4 +1,4 @@
-Mk is a reboot of the Plan 9 mk command, which itself is [a successor to
+Mk is a reboot of the Plan 9 `mk` command, which itself is [a successor to
 make](http://www.cs.tufts.edu/~nr/cs257/archive/andrew-hume/mk.pdf).
 
 ## Installation
@@ -17,7 +17,7 @@ terrific ideas, and though some were cherry picked, the OS as a whole never
 really caught on.
 
 Among the gems in Plan 9 was a rewrite of the venerable Unix make
-command, in the form of mk. Simply put, mk is make, but with a large collection
+command, in the form of `mk`. Simply put, `mk` is `make`, but with a large collection
 of relatively minor improvements, adding up to something more consistent,
 elegant, and powerful. To name a few specifics:
 
@@ -70,6 +70,8 @@ This mk stays mostly faithful to Plan 9, but makes a few improvements.
 
 
 ## Usage
+
+*See the [manual](manual.md) for more info*
 
 `mk [options] [target] ...`
 
@@ -135,8 +137,8 @@ try and see what you think!
 
 This work is provided under the [BSD 2-clause license](license.md)
 
-Copyright (c) 2013, [Daniel C. Jones](https://github.com/dcjones) - All rights reserved. 
+Copyright © 2013, [Daniel C. Jones](https://github.com/dcjones) - All rights reserved. 
 
 With additional updates by people listed in
-[contributors.md](contributors.md).
+[contributors](contributors.md).
 
