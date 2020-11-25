@@ -61,6 +61,9 @@ Options are:
 -l 
 :   Maximum number of recursive invocations of a rule. (default 1)
 
+-shell
+:   Change the shell used to execute rules. This can also be set using the `shell` variable in `mkfile`
+
 ## The mkfile
 
 A mkfile consists of assignments (described under `Environment')
@@ -94,8 +97,8 @@ using might be:
 The text of the mkfile is processed as follows.  Lines
 beginning with `<` followed by a file name are replaced by the
 contents of the named file.  Lines beginning with `<|` followed
- by a file name are replaced by the output of the exe-
-cution of the named file.  Blank lines and comments, which
+ by a file name are replaced by the output of the execution of 
+ the named file.  Blank lines and comments, which
 run from unquoted `#` characters to the following newline, are
 deleted.  The character sequence backslash-newline is
 deleted, so long lines in mkfile may be folded.  Non-recipe
@@ -243,6 +246,37 @@ recipe is executed.  For example:
     bar = b.c
 
 will compile b.c into foo, if a.c is newer than foo.
+
+### Including other files
+
+The contents of other files can be included using `<`.
+
+    <./config.mk
+
+    target: $deps
+        echo $deps
+
+In the example above `./config.mk` defines the variable "deps",
+which is used as a prerequiste of the rule.
+
+### Including the output of commands
+
+The output of commands can also be piped into the `mkfile` using
+`<|`. The output is evaluated as `mkfile` commands and can contain
+new variable assignments and define new targets and recipies.
+
+    variable = file
+
+    <| \
+    echo "anothertarget: $variable
+        echo $target $prereq"
+        
+    target:
+        echo "$variable"
+
+In the example above, "anothertarget" is defined by the output
+of the command, however variable expansion takes place which means
+that `$variable` is defined as "file".
 
 ### Aggregates
 Names of the form a(b) refer to member b of the aggregate a.
