@@ -212,7 +212,8 @@ $pid
 :   the process id for the mk executing the recipe.
 
 $prereq       
-:   all the prerequisites for this rule.
+:   all the prerequisites for this rule. Individual prerequisites
+    can be accessed using `prereq1, ..., $prereqN`.
 
 $stem         
 :   if this is a meta-rule, $stem is the string

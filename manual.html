@@ -122,7 +122,7 @@
 <dd>the process id for the mk executing the recipe.
 </dd>
 <dt>$prereq</dt>
-<dd>all the prerequisites for this rule.
+<dd>all the prerequisites for this rule. Individual prerequisites can be accessed using <code>prereq1, ..., $prereqN</code>.
 </dd>
 <dt>$stem</dt>
 <dd>if this is a meta-rule, $stem is the string that matched % or &amp;. Otherwise, it is empty. For regular expression meta-rules (see below), the variables <code>stem0, ..., stem9</code> are set to the corresponding subexpressions.
