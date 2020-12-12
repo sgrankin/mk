@@ -84,6 +84,7 @@ func dorecipe(target string, u *node, e *edge, dryrun bool) bool {
 	for i := range u.prereqs {
 		if u.prereqs[i].r == e.r && u.prereqs[i].v != nil {
 			prereqs = append(prereqs, u.prereqs[i].v.name)
+			vars[fmt.Sprintf("prereq%d", i+1)] = []string{u.prereqs[i].v.name}
 		}
 	}
 	vars["prereq"] = prereqs

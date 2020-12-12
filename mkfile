@@ -16,7 +16,7 @@ sources = expand.go graph.go lex.go mk.go recipe.go remote.go rules.go
 all:V:	$PROG
 
 test:V:
-    go test
+    $GOTOOL test
 
 %.1: %.1.md
     pandoc -s -t man -o $target $prereq
