@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 )
@@ -45,20 +44,13 @@ func updateS3Timestamp(u *node, uri *url.URL) {
 
 	result, err := svc.HeadObject(input)
 	if err != nil {
-		if aerr, ok := err.(awserr.Error); ok {
-			switch aerr.Code() {
-			default:
-				log.Fatal(aerr.Error())
-			}
-		} else {
-			// Print the error, cast err to awserr.Error to get the Code and
-			// Message from an error.
-			log.Fatal(err.Error())
-		}
-		return
+		u.t = time.Unix(0, 0)
+		u.exists = false
+
+	} else {
+		u.t = *result.LastModified
+		u.exists = true
 	}
-	u.t = *result.LastModified
-	u.exists = true
 	u.flags |= nodeFlagProbable
 	//fmt.Println(result)
 }
