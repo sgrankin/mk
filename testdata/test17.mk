@@ -1,6 +1,6 @@
-proto.txt:
-	echo $target
 
-prereq.(\w+):R: proto.${stem1}
-	echo $stem1 <(echo ${stem1})
-    
+prereq.(\w+):R:
+	echo $stem1 $(echo ${stem1})
+
+proto.txt: prereq.txt
+	echo $target

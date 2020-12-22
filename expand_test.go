@@ -203,6 +203,22 @@ func TestExpandRecipeSigils(t *testing.T) {
 			expandticks: false,
 			want:        []string{"s3://runs/contition_a_bowtie_k10/mapping.bam.bai"},
 		},
+		{
+			input: "mkdir -p $target\necho $target",
+			vars: map[string][]string{
+				"target": {"a"},
+			},
+			expandticks: false,
+			want:        []string{"mkdir -p a\necho a"},
+		},
+		{
+			input: "mkdir -p $(dirname $target)\necho $target",
+			vars: map[string][]string{
+				"target": {"a"},
+			},
+			expandticks: false,
+			want:        []string{"mkdir -p $(dirname a)\necho a"},
+		},
 	}
 
 	for i, tv := range tests {

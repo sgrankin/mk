@@ -125,6 +125,13 @@ func TestBasicMaking(t *testing.T) {
 			errors: "",
 			passes: true,
 		},
+		{
+			// Test
+			input:  "testdata/test17.mk",
+			output: "testdata/test17.mk.expected",
+			errors: "",
+			passes: true,
+		},
 	}
 
 	for _, tv := range tests {
