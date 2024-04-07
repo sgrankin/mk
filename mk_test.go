@@ -135,37 +135,38 @@ func TestBasicMaking(t *testing.T) {
 	}
 
 	for _, tv := range tests {
-		// TODO(rjk): Validate generated errors.
-		got, _, err := startMk("-n", "-f", tv.input)
-		if err != nil {
-			if !tv.passes {
-				t.Logf("%s expected failure", tv.input)
-				t.Logf("%s exec failed: %v", tv.input, err)
-			} else {
-				t.Errorf("%s exec failed: %v", tv.input, err)
+		t.Run(tv.input, func(t *testing.T) {
+			t.Parallel()
+			// TODO(rjk): Validate generated errors.
+			got, _, err := startMk("-n", "-f", tv.input)
+			if err != nil {
+				if !tv.passes {
+					t.Logf("%s expected failure", tv.input)
+					t.Logf("%s exec failed: %v", tv.input, err)
+				} else {
+					t.Errorf("%s exec failed: %v", tv.input, err)
+				}
 			}
-		}
 
-		efd, err := os.Open(tv.output)
-		if err != nil {
-			t.Errorf("%s can't open: %v", tv.input, err)
-			continue
-		}
-		want, err := io.ReadAll(io.Reader(efd))
-		if err != nil {
-			t.Errorf("%s can't read: %v", tv.input, err)
-			continue
-		}
-
-		// TODO(rjk): Read expected errors if they exist.
-		if diff := cmp.Diff(string(want), string(got)); diff != "" {
-			if !tv.passes {
-				t.Logf("%s expected failure", tv.input)
-				t.Logf("%s: mismatch (-want +got):\n%s", tv.input, diff)
-			} else {
-				t.Errorf("%s: mismatch (-want +got):\n%s", tv.input, diff)
+			efd, err := os.Open(tv.output)
+			if err != nil {
+				t.Fatalf("%s can't open: %v", tv.input, err)
 			}
-		}
+			want, err := io.ReadAll(io.Reader(efd))
+			if err != nil {
+				t.Fatalf("%s can't read: %v", tv.input, err)
+			}
+
+			// TODO(rjk): Read expected errors if they exist.
+			if diff := cmp.Diff(string(want), string(got)); diff != "" {
+				if !tv.passes {
+					t.Logf("%s expected failure", tv.input)
+					t.Logf("%s: mismatch (-want +got):\n%s", tv.input, diff)
+				} else {
+					t.Errorf("%s: mismatch (-want +got):\n%s", tv.input, diff)
+				}
+			}
+		})
 	}
 }
 
