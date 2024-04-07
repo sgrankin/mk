@@ -371,12 +371,6 @@ func expandShell(shcmd string, args []string) (string, []string) {
 	case len(shellargs) > 0 && dontDropArgs:
 		args = append(shellargs, args...)
 
-	default:
-		// fmt.Println("dropping in expand!")
-	}
-
-	if len(shellargs) > 0 && dontDropArgs {
-	} else {
 	}
 
 	return shell, args

@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -107,7 +107,7 @@ const (
 )
 
 // Build a node's prereqs. Block until completed.
-func mkNodePrereqs(g *graph, u *node, e *edge, prereqs []*node, vars map[string][]string, dryrun bool, required bool) nodeStatus {
+func mkNodePrereqs(g *graph, prereqs []*node, vars map[string][]string, dryrun bool, required bool) nodeStatus {
 	prereqstat := make(chan nodeStatus)
 	pending := 0
 
@@ -200,7 +200,7 @@ func mkNode(g *graph, u *node, vars map[string][]string, dryrun bool, required b
 	}
 
 	prereqs_required := required && (e.r.attributes.virtual || !u.exists)
-	mkNodePrereqs(g, u, e, prereqs, vars, dryrun, prereqs_required)
+	mkNodePrereqs(g, prereqs, vars, dryrun, prereqs_required)
 
 	uptodate := true
 	if !e.r.attributes.virtual {
@@ -227,7 +227,7 @@ func mkNode(g *graph, u *node, vars map[string][]string, dryrun bool, required b
 
 	// make another pass on the prereqs, since we know we need them now
 	if !uptodate {
-		mkNodePrereqs(g, u, e, prereqs, vars, dryrun, true)
+		mkNodePrereqs(g, prereqs, vars, dryrun, true)
 	}
 
 	// execute the recipe, unless the prereqs failed
@@ -347,7 +347,7 @@ func main() {
 	if err != nil {
 		mkError("no mkfile found")
 	}
-	input, _ := ioutil.ReadAll(mkfile)
+	input, _ := io.ReadAll(mkfile)
 	mkfile.Close()
 
 	abspath, err := filepath.Abs(mkfilepath)
@@ -412,7 +412,7 @@ func main() {
 			c, _, err := in.ReadRune()
 			if err != nil {
 				return
-			} else if strings.IndexRune(" \n\t\r", c) >= 0 {
+			} else if strings.ContainsRune(" \n\t\r", c) {
 				continue
 			} else if c == 'y' {
 				break

@@ -2,7 +2,7 @@ package main
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"os"
 	"os/exec"
 	"testing"
@@ -151,7 +151,7 @@ func TestBasicMaking(t *testing.T) {
 			t.Errorf("%s can't open: %v", tv.input, err)
 			continue
 		}
-		want, err := ioutil.ReadAll(efd)
+		want, err := io.ReadAll(io.Reader(efd))
 		if err != nil {
 			t.Errorf("%s can't read: %v", tv.input, err)
 			continue

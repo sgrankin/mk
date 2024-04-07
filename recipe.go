@@ -26,7 +26,7 @@ func stripIndentation(s string, mincol int) string {
 		i := 0
 		for i < len(line) && col < mincol {
 			c, w := utf8.DecodeRuneInString(line[i:])
-			if strings.IndexRune(" \t\n", c) >= 0 {
+			if strings.ContainsRune(" \t\n", c) {
 				col += 1
 				i += w
 			} else {

@@ -41,9 +41,9 @@ type nodeFlag int
 
 const (
 	nodeFlagCycle    nodeFlag = 0x0002
-	nodeFlagReady             = 0x0004
-	nodeFlagProbable          = 0x0100
-	nodeFlagVacuous           = 0x0200
+	nodeFlagReady    nodeFlag = 0x0004
+	nodeFlagProbable nodeFlag = 0x0100
+	nodeFlagVacuous  nodeFlag = 0x0200
 )
 
 // A node in the dependency graph
@@ -365,7 +365,7 @@ func (g *graph) ambiguous(u *node) {
 // Print a trace of rules, k
 func (g *graph) trace(name string, e *edge) {
 	fmt.Fprintf(os.Stderr, "\t%s", name)
-	for true {
+	for {
 		prereqname := ""
 		if e.v != nil {
 			prereqname = e.v.name
