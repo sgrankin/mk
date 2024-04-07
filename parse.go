@@ -53,9 +53,11 @@ type parserStateFun func(*parser, token) parserStateFun
 
 // Parse a mkfile, returning a new ruleSet.
 func parse(input string, name string, path string, env map[string][]string) *ruleSet {
-	rules := &ruleSet{env,
+	rules := &ruleSet{
+		env,
 		make([]rule, 0),
-		make(map[string][]int)}
+		make(map[string][]int),
+	}
 	parseInto(input, name, rules, path)
 	return rules
 }
@@ -388,7 +390,7 @@ func parseRecipe(p *parser, t token) parserStateFun {
 	}
 
 	if t.typ == tokenRecipe {
-		r.recipe = expandRecipeSigils(stripIndentation(t.val, t.col), p.rules.vars)
+		r.recipe = stripIndentation(t.val, t.col)
 	}
 
 	p.rules.add(r)

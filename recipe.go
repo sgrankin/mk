@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"maps"
 	"os"
 	"os/exec"
 	"strings"
@@ -63,8 +64,8 @@ func printIndented(out io.Writer, s string, ind int) {
 }
 
 // Execute a recipe.
-func dorecipe(target string, u *node, e *edge, dryrun bool) bool {
-	vars := make(map[string][]string)
+func dorecipe(target string, u *node, e *edge, vars map[string][]string, dryrun bool) bool {
+	vars = maps.Clone(vars)
 	vars["target"] = []string{target}
 	if e.r.ismeta {
 		if e.r.attributes.regex {
@@ -130,21 +131,23 @@ func dorecipe(target string, u *node, e *edge, dryrun bool) bool {
 // Execute a subprocess (typically a recipe).
 //
 // Args:
-//   program: Program path or name located in PATH
-//   input: String piped into the program's stdin
-//   capture_out: If true, capture and return the program's stdout rather than echoing it.
+//
+//	program: Program path or name located in PATH
+//	input: String piped into the program's stdin
+//	capture_out: If true, capture and return the program's stdout rather than echoing it.
 //
 // Returns
-//   (output, success)
-//   output is an empty string of catputer_out is false, or the collected output from the profram is true.
 //
-//   success is true if the exit code was 0 and false otherwise
+//	(output, success)
+//	output is an empty string of catputer_out is false, or the collected output from the profram is true.
 //
+//	success is true if the exit code was 0 and false otherwise
 func subprocess(program string,
 	args []string,
 	env []string,
 	input string,
-	capture_out bool) (string, bool) {
+	capture_out bool,
+) (string, bool) {
 	program_path, err := exec.LookPath(program)
 	if err != nil {
 		log.Fatal(err)

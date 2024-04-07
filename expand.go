@@ -235,6 +235,7 @@ func expandSigils(input string, vars map[string][]string) []string {
 			expanded += input[i:]
 			break
 		}
+		j += i
 
 		ex, k := expandSigil(input[j+1:], vars)
 		if len(ex) > 0 {
