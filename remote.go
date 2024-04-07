@@ -52,5 +52,5 @@ func updateS3Timestamp(u *node, uri *url.URL) {
 		u.exists = true
 	}
 	u.flags |= nodeFlagProbable
-	//fmt.Println(result)
+	// fmt.Println(result)
 }

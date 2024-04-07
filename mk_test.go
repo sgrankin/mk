@@ -137,7 +137,6 @@ func TestBasicMaking(t *testing.T) {
 	for _, tv := range tests {
 		// TODO(rjk): Validate generated errors.
 		got, _, err := startMk("-n", "-f", tv.input)
-
 		if err != nil {
 			if !tv.passes {
 				t.Logf("%s expected failure", tv.input)
@@ -174,7 +173,6 @@ func TestBasicMaking(t *testing.T) {
 func TestRecipesHaveEnv(t *testing.T) {
 	input := "testdata/test12.mk"
 	got, _, err := startMk("-f", input)
-
 	if err != nil {
 		t.Errorf("%s exec failed: %v", input, err)
 	}

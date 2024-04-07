@@ -145,8 +145,7 @@ func (rs *ruleSet) add(r rule) {
 	k := len(rs.rules) - 1
 	for i := range r.targets {
 		if r.targets[i].rpat == nil {
-			rs.targetrules[r.targets[i].spat] =
-				append(rs.targetrules[r.targets[i].spat], k)
+			rs.targetrules[r.targets[i].spat] = append(rs.targetrules[r.targets[i].spat], k)
 		}
 	}
 }
@@ -187,7 +186,8 @@ func (rs *ruleSet) executeAssignment(ts []token) *assignmentError {
 	if !isValidVarName(assignee) {
 		return &assignmentError{
 			fmt.Sprintf("target of assignment is not a valid variable name: \"%s\"", assignee),
-			ts[0]}
+			ts[0],
+		}
 	}
 
 	// interpret tokens in assignment context

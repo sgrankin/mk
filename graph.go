@@ -207,7 +207,7 @@ func applyrules(rs *ruleSet, g *graph, target string, rulecnt []int) *node {
 
 			var stem string
 			var matches []string
-			var match_vars = make(map[string][]string)
+			match_vars := make(map[string][]string)
 
 			if r.attributes.regex {
 				matches = mat
@@ -317,7 +317,6 @@ func (g *graph) cyclecheck(u *node) {
 		}
 	}
 	u.flags &= ^nodeFlagCycle
-
 }
 
 // Deal with ambiguous rules.

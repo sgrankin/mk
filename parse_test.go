@@ -67,7 +67,7 @@ func TestParseOneRuleMultiPrereqLocalFiles(t *testing.T) {
 // prerequesite; both are local files. The rule has attributes
 // set. Possible attributes are D, E, N, n, Q, R, U, V, X
 func TestParseOneRuleWithAttributeLocalFiles(t *testing.T) {
-	var attribMap = map[string]string{
+	attribMap := map[string]string{
 		"D": "delFailed",
 		"E": "nonstop",
 		"n": "nonvirtual",
@@ -93,7 +93,7 @@ func TestParseOneRuleWithAttributeLocalFiles(t *testing.T) {
 		if rule.prereqs[0] != "a_prereq.csv" {
 			t.Errorf("The prerequesites are not a_prereq.csv")
 		}
-		//t.Log(rule.attributes)
+		// t.Log(rule.attributes)
 		ps := reflect.ValueOf(rule.attributes)
 		f := ps.FieldByName(v)
 
@@ -197,11 +197,14 @@ func TestParseOneRuleHTTPPrereq(t *testing.T) {
 
 // Make sure that we can parse assignments that are across multiple lines
 // like:
-// OFILES = a.o\
-//          b.o
-//          c.o
-//prog: $OFILES
-//    cc -o $target $prereqs
+//
+//	OFILES = a.o\
+//	         b.o
+//	         c.o
+//
+// prog: $OFILES
+//
+//	cc -o $target $prereqs
 func TestParseAssignmentNewLine(t *testing.T) {
 	mkfileAsString := "OFILES=9p1.o\\\n9p1lib.o\nprog: $OFILES\n\techo $target"
 

@@ -15,7 +15,6 @@ type expandtv struct {
 }
 
 func TestExpand(t *testing.T) {
-
 	tests := []expandtv{
 		{
 			input:       "a",
@@ -87,12 +86,12 @@ func TestExpand(t *testing.T) {
 			expandticks: false,
 			want:        []string{"./testdata/foo"},
 		},
-		//This one differs between p9p mk and mk.
-		//Do we want this difference?
+		// This one differs between p9p mk and mk.
+		// Do we want this difference?
 		{
 			input: "\"$targetpath\"",
 			vars: map[string][]string{
-				"targetpath": []string{"./testdata"},
+				"targetpath": {"./testdata"},
 			},
 			expandticks: false,
 			want:        []string{"./testdata"},
