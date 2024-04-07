@@ -231,23 +231,7 @@ func TestParseLocalRegexPrereq(t *testing.T) {
 	if !rule.attributes.regex || !rule.ismeta {
 		t.Error("The rule has not been recognized as a regex")
 	}
-	if !(rule.prereqs[0] == "/runs/contition_${stem1}_bowtie_k10/mapping.bam.bai") {
-		t.Error("The rule does not have the right prerequisite")
-	}
-}
-
-func TestParseS3Prereq(t *testing.T) {
-	mkfileAsString := "data/processed/(\\d+)/mapping_k10.bam.bai:R: \"s3://runs/contition_${stem1}_bowtie_k10/mapping.bam.bai\"\n\taws s3 cp $prereq $target"
-	env := make(map[string][]string)
-	ruleSet := parse(mkfileAsString, "mkfile", "/mkfile", env)
-	if len(ruleSet.rules) != 1 {
-		t.Errorf("There should be 1 rule")
-	}
-	rule := ruleSet.rules[0]
-	if !rule.attributes.regex || !rule.ismeta {
-		t.Error("The rule has not been recognized as a regex")
-	}
-	if !(rule.prereqs[0] == "s3://runs/contition_${stem1}_bowtie_k10/mapping.bam.bai") {
+	if rule.prereqs[0] != "/runs/contition_${stem1}_bowtie_k10/mapping.bam.bai" {
 		t.Error("The rule does not have the right prerequisite")
 	}
 }

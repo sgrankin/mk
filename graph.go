@@ -3,10 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
-	"log"
-	"net/url"
 	"os"
-	"strings"
 	"sync"
 	"time"
 )
@@ -62,31 +59,18 @@ type node struct {
 
 // Update a node's timestamp and 'exists' flag.
 func (u *node) updateTimestamp() {
-	if strings.HasPrefix(u.name, "s3://") || strings.HasPrefix(u.name, "https://") || strings.HasPrefix(u.name, "http://") {
-		up, err := url.Parse(u.name)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		if up.Scheme == "http" || up.Scheme == "https" {
-			updateHttpTimestamp(u)
-		} else if up.Scheme == "s3" {
-			updateS3Timestamp(u, up)
-		}
+	info, err := os.Stat(u.name)
+	if err == nil {
+		u.t = info.ModTime()
+		u.exists = true
+		u.flags |= nodeFlagProbable
 	} else {
-		info, err := os.Stat(u.name)
-		if err == nil {
-			u.t = info.ModTime()
-			u.exists = true
-			u.flags |= nodeFlagProbable
+		_, ok := err.(*os.PathError)
+		if ok {
+			u.t = time.Unix(0, 0)
+			u.exists = false
 		} else {
-			_, ok := err.(*os.PathError)
-			if ok {
-				u.t = time.Unix(0, 0)
-				u.exists = false
-			} else {
-				mkError(err.Error())
-			}
+			mkError(err.Error())
 		}
 	}
 

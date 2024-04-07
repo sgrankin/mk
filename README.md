@@ -3,9 +3,9 @@ make](http://www.cs.tufts.edu/~nr/cs257/archive/andrew-hume/mk.pdf).
 
 ## Installation
 
- 1. Install Go.
- 2. Run `go get github.com/ctSkennerton/mk`
- 3. Make sure `$GOPATH/bin` is in your `PATH`.
+1.  Install Go.
+2.  Run `go get github.com/ctSkennerton/mk`
+3.  Make sure `$GOPATH/bin` is in your `PATH`.
 
 ## Why Plan 9 mk is better than make
 
@@ -21,24 +21,24 @@ command, in the form of `mk`. Simply put, `mk` is `make`, but with a large colle
 of relatively minor improvements, adding up to something more consistent,
 elegant, and powerful. To name a few specifics:
 
-  1. Recipes are delimited by any indentation, not tab characters in particular.
-  2. Phony targets are handled separately from file targets. Your mkfile won't
-     be broken by having a file named 'clean'.
-  3. Attributes instead of weird special targets like `.SECONDARY:`.
-  4. Special variables like `$target`, `$prereq`, and `$stem` in place of
-     make's pointlessly cryptic `$@`, `$^`, and `$*`.
-  5. In addition to suffix rules (e.g. `%.o: %.c`), mk has more powerful regular
-     expression rules.
-  6. Sane handling of rules with multiple targets.
-  7. An optional attribute to delete targets when a recipe fails, so you aren't
-     left with corrupt output.
-  8. Plan 9 mkfiles can not only include other mkfiles, but pipe in the output of
-     recipes. Your mkfile can configure itself by doing something like
-     `<|sh config.sh`.
-  9. A generalized mechanism to determine if a target is out of date, for when
-     timestamps won't cut it.
-  10. Variables are expanded in recipes only if they are defined. That way you
-     usually don't have to escape `$`.
+1. Recipes are delimited by any indentation, not tab characters in particular.
+2. Phony targets are handled separately from file targets. Your mkfile won't
+   be broken by having a file named 'clean'.
+3. Attributes instead of weird special targets like `.SECONDARY:`.
+4. Special variables like `$target`, `$prereq`, and `$stem` in place of
+   make's pointlessly cryptic `$@`, `$^`, and `$*`.
+5. In addition to suffix rules (e.g. `%.o: %.c`), mk has more powerful regular
+   expression rules.
+6. Sane handling of rules with multiple targets.
+7. An optional attribute to delete targets when a recipe fails, so you aren't
+   left with corrupt output.
+8. Plan 9 mkfiles can not only include other mkfiles, but pipe in the output of
+   recipes. Your mkfile can configure itself by doing something like
+   `<|sh config.sh`.
+9. A generalized mechanism to determine if a target is out of date, for when
+   timestamps won't cut it.
+10. Variables are expanded in recipes only if they are defined. That way you
+    usually don't have to escape `$`.
 
 And much more!
 Read [Maintaining Files on Plan 9 with Mk](http://doc.cat-v.org/plan_9/4th_edition/papers/mk)
@@ -48,47 +48,45 @@ for good overview.
 
 This mk stays mostly faithful to Plan 9, but makes a few improvements.
 
-  1. A clean, modern implementation in Go, that doesn't depend on the whole Plan
-     9 stack.
-  1. Parallel by default. Modern computers can build more than one C file at a
-     time. Cases that should not be run in parallel are the exception. Use
-     `-p=1` if this is the case.
-  1. Use Go regular expressions, which are perl-like. The original mk used plan9
-     regex, which few people know or care to learn.
-  1. Regex matches are substituted into rule prerequisites with `$stem1`,
-     `$stem2`, etc, rather than `\1`, `\2`, etc.
-  1. Allow blank lines in recipes. A recipe is any indented block of text, and
-     continues until a non-indented character or the end of the file. (Similar
-     to blocks in Python.)
-  1. Add an 'S' attribute to execute recipes with programs other than sh. This
-     way, you don't have to separate your six line python script into its own
-     file. Just stick it directly in the mkfile.
-  1. Use remote files in Amazon S3 or http(s) URLs as prerequesites or targets 
-  1. Add `$shell` variable which will be sourced as the shell for recipe blocks 
-     unless overriden by an 'S' attribute.
-  1. Pretty colors.
-
+1. A clean, modern implementation in Go, that doesn't depend on the whole Plan
+   9 stack.
+1. Parallel by default. Modern computers can build more than one C file at a
+   time. Cases that should not be run in parallel are the exception. Use
+   `-p=1` if this is the case.
+1. Use Go regular expressions, which are perl-like. The original mk used plan9
+   regex, which few people know or care to learn.
+1. Regex matches are substituted into rule prerequisites with `$stem1`,
+   `$stem2`, etc, rather than `\1`, `\2`, etc.
+1. Allow blank lines in recipes. A recipe is any indented block of text, and
+   continues until a non-indented character or the end of the file. (Similar
+   to blocks in Python.)
+1. Add an 'S' attribute to execute recipes with programs other than sh. This
+   way, you don't have to separate your six line python script into its own
+   file. Just stick it directly in the mkfile.
+1. Add `$shell` variable which will be sourced as the shell for recipe blocks
+   unless overriden by an 'S' attribute.
+1. Pretty colors.
 
 ## Usage
 
-*See the [manual](manual.md) for more info*
+_See the [manual](manual.md) for more info_
 
 `mk [options] [target] ...`
 
 ### Options
 
-  * `-C directory` Change directory to `directory` first.
-  * `-f filename` Use the given file as the mkfile.
-  * `-n` Dry run, print commands without actually executing.
-  * `-r` Force building of the immediate targets.
-  * `-a` Force building the targets and of all their dependencies.
-  * `-p` Maximum number of jobs to execute in parallel (default: # CPU cores)
-  * `-i` Show rules that will execute and prompt before executing.
-  * `-color` Boolean flag to force color on / off.
-  * `-F` Don't drop shell arguments when no further arguments are specified.
-  * `-s name` Default shell to use if none are specified via $shell (default: "sh -c")
-  * `-l int` Maximum number of recursive invocations of a rule. (default 1)
-  * `-q` Don't print recipesbefore executing them.
+- `-C directory` Change directory to `directory` first.
+- `-f filename` Use the given file as the mkfile.
+- `-n` Dry run, print commands without actually executing.
+- `-r` Force building of the immediate targets.
+- `-a` Force building the targets and of all their dependencies.
+- `-p` Maximum number of jobs to execute in parallel (default: # CPU cores)
+- `-i` Show rules that will execute and prompt before executing.
+- `-color` Boolean flag to force color on / off.
+- `-F` Don't drop shell arguments when no further arguments are specified.
+- `-s name` Default shell to use if none are specified via $shell (default: "sh -c")
+- `-l int` Maximum number of recursive invocations of a rule. (default 1)
+- `-q` Don't print recipesbefore executing them.
 
 ## Non-shell recipes
 
@@ -104,30 +102,6 @@ mean.txt:Sjulia: input.txt
             mean(map(parseint, eachline(open("$prereq")))))
 ```
 
-# Remote files
-
-Another major addition over Plan 9 mk is the ability to have remote files in the
-dependancy graph. A common usage (in my work at least) is to download files from
-a public http repository or from Amazon S3. This has previously been difficult to
-do as make/mk had no (easy) way of comparing whether these files were older than
-the target.
-
-```make
-somefile.txt: "s3://bucket/path/to/key/file.txt.gz"
-   aws s3 cp $prereq - | gunzip -c - > $target
-
-anotherfile.csv: "https://example.com/data/results.csv"
-   curl $prereq > $target
-```
-
-Remote files need to be enclosed in double quotes to protect the colon character
-from being interpreted as the separator between targets, attributes, and prerequisites.
-
-For http(s) files the `Last-Modified` header is inspected to determine if the 
-resource is older than the target. If that header doesn't exist then it is
-assumed that the resource is older than the target. S3 files utilize the AWS
-S3 api to determine the last modification time.
-
 # Current State
 
 Functional, but with some bugs and some unimplemented minor features. Give it a
@@ -137,8 +111,7 @@ try and see what you think!
 
 This work is provided under the [BSD 2-clause license](license.md)
 
-Copyright © 2013, [Daniel C. Jones](https://github.com/dcjones) - All rights reserved. 
+Copyright © 2013, [Daniel C. Jones](https://github.com/dcjones) - All rights reserved.
 
 With additional updates by people listed in
 [contributors](contributors.md).
-
