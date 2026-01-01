@@ -247,10 +247,10 @@ func lexTopLevel(l *lexer) lexerStateFun {
 		l.skipRun(" \t\r")
 		// emit a newline token if we are ending a non-empty line.
 		if l.peek() == '\n' && !l.indented {
-			l.next()
 			if l.barewords {
-				return nil
+				l.skip()
 			} else {
+				l.next()
 				l.emit(tokenNewline)
 			}
 		}

@@ -241,7 +241,7 @@ func TestExpandBackQuoted(t *testing.T) {
 				"shell": {"sh"},
 			},
 			expandticks: false,
-			want:        []string{"1"},
+			want:        []string{"1", "2", "3", "4", "5"},
 		},
 	}
 
