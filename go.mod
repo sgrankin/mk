@@ -1,4 +1,4 @@
-module github.com/ctSkennerton/mk
+module github.com/sgrankin/mk
 
 go 1.25.5
 
