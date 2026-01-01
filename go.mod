@@ -1,11 +1,11 @@
 module github.com/ctSkennerton/mk
 
-go 1.22
+go 1.25.5
 
 require (
-	github.com/google/go-cmp v0.4.0
+	github.com/google/go-cmp v0.7.0
 	github.com/mattn/go-isatty v0.0.20
-	github.com/sanity-io/litter v1.2.0
+	github.com/sanity-io/litter v1.5.8
 )
 
 require (
