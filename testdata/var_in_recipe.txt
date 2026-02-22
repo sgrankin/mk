@@ -1,0 +1,24 @@
+# Variables from include files expanded in recipes
+mk -n -f mkfile
+cmp stdout expected
+
+-- mkfile --
+# Variable extracmdarg and deps are set in include.
+# Test if extracmdarg is set for recipes
+<./deps
+
+test3.mk.o: $deps
+	secondprocess ab
+
+one:
+	process bar $extracmdarg
+
+two:
+	$extracmdarg rebar
+-- deps --
+deps = one two
+extracmdarg = gopher
+-- expected --
+two: gopher rebar
+one: process bar gopher
+test3.mk.o: secondprocess ab

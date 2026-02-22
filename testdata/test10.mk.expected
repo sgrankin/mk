@@ -1,1 +1,0 @@
-test10.mk.o: gccgo test10.mk.c

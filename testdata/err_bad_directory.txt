@@ -1,0 +1,7 @@
+# Bad -C directory produces error
+! mk -C /nonexistent_xyz -n -f mkfile
+stderr 'changing directory'
+
+-- mkfile --
+all:V:
+	echo hello

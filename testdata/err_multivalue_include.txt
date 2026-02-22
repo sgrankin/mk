@@ -1,0 +1,7 @@
+# Multi-value include filename produces error
+! mk -n -f mkfile
+stderr 'single value'
+
+-- mkfile --
+multivalue = a b
+< $multivalue

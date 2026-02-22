@@ -1,3 +1,0 @@
-foo.o: generic $stem
-foo.c: gen foo.c
-foo.o: specific foo

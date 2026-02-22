@@ -1,2 +1,0 @@
-foo.c: gen foo.c
-foo.o: compile foo

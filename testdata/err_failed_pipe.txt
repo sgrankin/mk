@@ -1,0 +1,6 @@
+# Failed pipe include produces error
+! mk -n -f mkfile
+stderr 'failed'
+
+-- mkfile --
+<| false

@@ -1,0 +1,6 @@
+# Unterminated quote produces error
+! mk -n -f mkfile
+stderr 'end of file'
+
+-- mkfile --
+x = "unclosed

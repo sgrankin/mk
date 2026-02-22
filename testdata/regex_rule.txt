@@ -1,0 +1,14 @@
+# Regex (R attribute) rule matching
+mk -n -f mkfile
+cmp stdout expected
+
+-- mkfile --
+
+prereq.(\w+):R:
+	echo $stem1 $(echo ${stem1})
+
+proto.txt: prereq.txt
+	echo $target
+-- expected --
+prereq.txt: echo txt $(echo txt)
+proto.txt: echo proto.txt

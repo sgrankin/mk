@@ -1,0 +1,16 @@
+# Variables defined in the mkfile are expanded in dependencies
+mk -n -f mkfile
+cmp stdout expected
+
+-- mkfile --
+# A variable is expanded to decide to run the second rule
+deps = one
+
+test3.mk.o: $deps
+	secondprocess ab
+
+one:
+	process bar
+-- expected --
+one: process bar
+test3.mk.o: secondprocess ab

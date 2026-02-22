@@ -1,0 +1,7 @@
+# Invalid attribute produces error
+! mk -n -f mkfile
+stderr 'attribute'
+
+-- mkfile --
+target:Z:
+	recipe

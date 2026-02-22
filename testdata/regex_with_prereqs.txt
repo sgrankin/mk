@@ -1,0 +1,13 @@
+# Regex rule with prerequisites
+mk -n -p 1 -f mkfile
+cmp stdout expected
+
+-- mkfile --
+(\w+)\.o:R: ${stem1}.c
+	compile ${stem1}
+all:V: foo.o
+foo.c:
+	gen foo.c
+-- expected --
+foo.c: gen foo.c
+foo.o: compile foo

@@ -1,2 +1,0 @@
-all:V:
-	echo hello

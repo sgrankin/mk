@@ -1,0 +1,3 @@
+# Missing mkfile produces error
+! mk -n -f nonexistent.mk
+stderr 'no mkfile found'

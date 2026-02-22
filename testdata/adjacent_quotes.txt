@@ -1,0 +1,10 @@
+# Quotes adjacent to bare words
+mk -n -f mkfile
+cmp stdout expected
+
+-- mkfile --
+x = abc"def"ghi
+all:V:
+	echo $x
+-- expected --
+all: echo abcdefghi

@@ -1,0 +1,26 @@
+# Variables are expanded in include file paths
+mk -n -f mkfile
+cmp stdout expected
+
+-- mkfile --
+# Test if variables are expanded in file names.
+# deps defines deps = one two
+depsfile = deps
+
+<./$depsfile
+
+test3.mk.o: $deps
+	secondprocess ab
+
+one:
+	process bar
+
+two:
+	process rebar
+-- deps --
+deps = one two
+extracmdarg = gopher
+-- expected --
+two: process rebar
+one: process bar
+test3.mk.o: secondprocess ab

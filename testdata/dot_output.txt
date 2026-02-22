@@ -1,0 +1,15 @@
+# Graphviz dot output
+mk -dot -f mkfile
+stdout 'digraph mk'
+stdout '"" -> "test3.mk.o"'
+stdout '"test3.mk.o" -> "one"'
+stdout '"test3.mk.o" -> "two"'
+
+-- mkfile --
+deps = one two
+test3.mk.o: $deps
+	secondprocess $deps
+one:
+	process one
+two:
+	process two

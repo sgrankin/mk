@@ -1,0 +1,14 @@
+# Mkfile variables are expanded in backquote substitution
+mk -n -f mkfile
+cmp stdout expected
+
+-- mkfile --
+# Test that mkfile variables are expanded in backquote substitution.
+
+hello = one two three
+deps = `echo $hello`
+
+test2.mk.o:
+	process $deps
+-- expected --
+test2.mk.o: process one two three

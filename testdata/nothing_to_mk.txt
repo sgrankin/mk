@@ -1,0 +1,9 @@
+# Only meta-rules present, nothing to build
+mk -n -f mkfile
+cmp stdout expected
+
+-- mkfile --
+%.o: %.c
+	compile $stem
+-- expected --
+mk: nothing to mk

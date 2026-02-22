@@ -1,0 +1,11 @@
+# Multiple targets per rule
+mk -n -p 1 -f mkfile
+cmp stdout expected
+
+-- mkfile --
+foo bar baz:
+	process $target
+-- expected --
+foo: process foo
+bar: process bar
+baz: process baz

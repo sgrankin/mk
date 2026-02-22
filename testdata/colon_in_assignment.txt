@@ -1,0 +1,10 @@
+# Non-word tokens (colon) in variable assignment
+mk -n -f mkfile
+cmp stdout expected
+
+-- mkfile --
+x = a:b
+all:V:
+	echo $x
+-- expected --
+all: echo a:b

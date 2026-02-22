@@ -1,0 +1,10 @@
+# Prefix+suffix percent rule
+mk -n -p 1 -f mkfile
+cmp stdout expected
+
+-- mkfile --
+foo%.o:
+	build $stem
+all:V: foobar.o
+-- expected --
+foobar.o: build bar

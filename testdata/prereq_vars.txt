@@ -1,0 +1,23 @@
+# $prereqN variables in recipes
+mk -n -f mkfile
+cmp stdout expected
+
+-- mkfile --
+
+<./deps
+
+test3.mk.o: $deps
+	secondprocess $prereq2 $prereq1
+
+one:
+	process bar $extracmdarg
+
+two:
+	$extracmdarg rebar
+-- deps --
+deps = one two
+extracmdarg = gopher
+-- expected --
+two: gopher rebar
+one: process bar gopher
+test3.mk.o: secondprocess two one

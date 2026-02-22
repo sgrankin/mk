@@ -1,0 +1,23 @@
+# Include file sets variables used in rules
+mk -n -f mkfile
+cmp stdout expected
+
+-- mkfile --
+# Variable deps is set in include.
+<./deps
+
+test3.mk.o: $deps
+	secondprocess ab
+
+one:
+	process bar
+
+two:
+	process rebar
+-- deps --
+deps = one two
+extracmdarg = gopher
+-- expected --
+two: process rebar
+one: process bar
+test3.mk.o: secondprocess ab

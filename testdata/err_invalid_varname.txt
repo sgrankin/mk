@@ -1,0 +1,6 @@
+# Invalid variable name produces error
+! mk -n -f mkfile
+stderr 'not a valid variable name'
+
+-- mkfile --
+1bad = value

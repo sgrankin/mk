@@ -1,0 +1,6 @@
+# Targets without colon produces error
+! mk -n -f mkfile
+stderr 'targets'
+
+-- mkfile --
+target1 target2

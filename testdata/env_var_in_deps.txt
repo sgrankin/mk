@@ -1,0 +1,18 @@
+# Environment variables are expanded in dependencies
+# TEST_MAIN=mk is set by the test harness environment.
+# The empty 'mk' archive file satisfies the 'mk' dependency (treated as up-to-date).
+mk -n -f mkfile
+cmp stdout expected
+
+-- mkfile --
+# TEST_MAIN is set by the test harness.
+# Test that environment variables are epxanded.
+test2.mk.o: $TEST_MAIN
+	secondprocess $prereq $stem $target
+
+# TEST_MAIN is mk
+mk:
+	process bar $target
+-- mk --
+-- expected --
+test2.mk.o: secondprocess mk $stem test2.mk.o

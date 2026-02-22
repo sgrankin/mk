@@ -1,0 +1,10 @@
+# -q flag hides recipe details
+mk -n -q -p 1 -f mkfile
+cmp stdout expected
+
+-- mkfile --
+all:V: dep
+dep:
+	build dep
+-- expected --
+dep: ...

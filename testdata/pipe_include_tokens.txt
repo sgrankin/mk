@@ -1,0 +1,10 @@
+# Pipe include with = token in command
+mk -n -f mkfile
+cmp stdout expected
+
+-- mkfile --
+<| echo x=1
+all:V:
+	echo $x
+-- expected --
+all: echo 1

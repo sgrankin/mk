@@ -1,0 +1,6 @@
+# Empty pipe include produces error
+! mk -n -f mkfile
+stderr 'empty pipe include'
+
+-- mkfile --
+<|

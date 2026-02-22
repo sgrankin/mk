@@ -1,0 +1,10 @@
+# Simple rule dry-run
+mk -n -f mkfile
+cmp stdout expected
+
+-- mkfile --
+# comment
+test1.mk.o:
+	process test1.mk
+-- expected --
+test1.mk.o: process test1.mk

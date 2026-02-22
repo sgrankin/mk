@@ -1,0 +1,9 @@
+# Ambiguous rules produce error
+! mk -n -f mkfile
+stderr 'ambiguous'
+
+-- mkfile --
+a:
+	recipe1
+a:
+	recipe2

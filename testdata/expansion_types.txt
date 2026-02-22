@@ -1,0 +1,37 @@
+# Assorted expansion types
+# TODO: fix variable expansion edge cases (e.g. $targetpathab not expanding)
+mk -n -f mkfile
+cmp stdout expected
+
+-- mkfile --
+# Assorted expansion types.
+targets = rupert ruxpin
+targetpath = ./testdata
+joinedbincmds = ${targets:%=$targetpath/%}
+suffix = o
+prefix = name
+suffixed = ${targets:%=%.$suffix}
+suffixes = o ab d
+multisuffixed = ${targets:%=%.$suffixes}
+
+# all:V: $joinedbincmds
+all:V:
+	process1 $joinedbincmds
+	process2 ab$targetpath
+	process3 $targetpathab
+	process4 $targetpath/foo
+	process5 ${targetpath}/foo
+	process6 "$targetpath"
+	process7 $prefix.$suffix
+	process8 $suffixed
+	process9 $multisuffixed
+-- expected --
+all: process1 ./testdata/rupert ./testdata/ruxpin
+      process2 ab./testdata
+      process3 $targetpathab
+      process4 ./testdata/foo
+      process5 ./testdata/foo
+      process6 "./testdata"
+      process7 name.o
+      process8 rupert.o ruxpin.o
+      process9 rupert.o ab d ruxpin.o ab d

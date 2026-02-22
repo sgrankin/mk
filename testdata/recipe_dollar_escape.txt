@@ -1,0 +1,14 @@
+# $$ and \$ escapes in recipes
+mk -n -f mkfile
+cmp stdout expected
+
+-- mkfile --
+x=world
+all:V:
+	echo \$HOME
+	echo hello${x}end
+	echo 1$$2
+-- expected --
+all: echo $HOME
+      echo helloworldend
+      echo 1$2

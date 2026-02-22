@@ -7,7 +7,7 @@ A build tool reimplementing Plan 9's `mk` in Go, with improvements (parallel exe
 ```bash
 go build          # build ./mk binary
 go test           # run all tests
-go test -run TestBasicMaking/testdata/test5.mk  # run a single test vector
+go test -run TestScript/basic_rule  # run a single script test
 ```
 
 ## Architecture
@@ -26,13 +26,26 @@ Single `package main`, procedural style. Pipeline: **Lexer → Parser → Graph 
 
 ## Test Pattern
 
-Integration tests compare `mk -n` (dry-run) output against golden files:
-- `testdata/testN.mk` — input mkfile
-- `testdata/testN.mk.expected` — expected dry-run output
+Integration tests use `rsc.io/script/scripttest` with txtar files in `testdata/*.txt`. Each file is a self-contained test combining script commands, mkfile content, and expected output.
 
-Tests use `TestMain` with `TEST_MAIN=mk` env var to re-exec the test binary as `mk` itself. Tests run in parallel.
+Tests use `TestMain` with `TEST_MAIN=mk` env var to re-exec the test binary as `mk` itself. The `mk` command is registered in the script engine via `script.Program`.
 
-To add a test: create `testdata/testN.mk` + `testdata/testN.mk.expected`, add a `testvector` entry in `mk_test.go`.
+To add a test: create `testdata/descriptive_name.txt`:
+```txtar
+# Description of what this tests
+mk -n -f mkfile
+cmp stdout expected
+
+-- mkfile --
+target:
+	recipe
+-- expected --
+target: recipe
+```
+
+Run a single script test: `go test -run TestScript/basic_rule`
+
+A few tests remain as Go tests in `mk_test.go`: `TestRecipesHaveEnv` (programmatic env inspection) and `TestInteractiveMode*` (stdin piping).
 
 ## Pre-commit Checklist
 

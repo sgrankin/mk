@@ -1,0 +1,7 @@
+# Bad regex pattern in rule produces error
+! mk -n -f mkfile
+stderr 'regular expression'
+
+-- mkfile --
+[invalid:R:
+	recipe

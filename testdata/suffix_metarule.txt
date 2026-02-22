@@ -1,0 +1,13 @@
+# Percent suffix metarules
+mk -n -p 1 -f mkfile
+cmp stdout expected
+
+-- mkfile --
+all:V: result.o
+%.o: %.c
+	compile $stem
+result.c:
+	generate result.c
+-- expected --
+result.c: generate result.c
+result.o: compile result

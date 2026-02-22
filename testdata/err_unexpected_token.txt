@@ -1,0 +1,6 @@
+# Unexpected token in target produces error
+! mk -n -f mkfile
+stderr 'syntax error'
+
+-- mkfile --
+target < file

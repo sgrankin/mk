@@ -1,0 +1,6 @@
+# Parse syntax error
+! mk -n -f mkfile
+stderr 'syntax error'
+
+-- mkfile --
+: bad rule

@@ -1,0 +1,6 @@
+# Bad token in prerequisites produces error
+! mk -n -f mkfile
+stderr 'prerequisites'
+
+-- mkfile --
+target:V: < file

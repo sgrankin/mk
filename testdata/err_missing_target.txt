@@ -1,0 +1,6 @@
+# Missing target produces error
+! mk -n -f mkfile
+stderr 'don''t know how to make'
+
+-- mkfile --
+all:V: nonexistent_file

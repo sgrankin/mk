@@ -1,0 +1,20 @@
+# Multi-value variable as deps
+mk -n -f mkfile
+cmp stdout expected
+
+-- mkfile --
+# A variable is expanded to decide to run two sub-depenencies
+deps = one two
+
+test3.mk.o: $deps
+	secondprocess ab
+
+one:
+	process bar
+
+two:
+	process rebar
+-- expected --
+two: process rebar
+one: process bar
+test3.mk.o: secondprocess ab

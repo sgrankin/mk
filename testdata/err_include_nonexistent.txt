@@ -1,0 +1,6 @@
+# Including nonexistent file produces error
+! mk -n -f mkfile
+stderr 'cannot open'
+
+-- mkfile --
+< /nonexistent_file_xyz

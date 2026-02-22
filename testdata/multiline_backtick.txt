@@ -1,0 +1,16 @@
+# Multiline backtick expansion generates multiple targets
+mk -n -p 1 -f mkfile
+cmp stdout expected
+
+-- mkfile --
+# Test that multiline output is correctly expanded to multiple targets.
+
+deps = `printf 'hello\nworld'`
+
+all:V: $deps
+
+$deps:V:
+	process $target
+-- expected --
+hello: process hello
+world: process world

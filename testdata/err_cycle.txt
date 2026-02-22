@@ -1,0 +1,9 @@
+# Cycle in dependency graph produces error
+! mk -n -f mkfile
+stderr 'cycle'
+
+-- mkfile --
+a: b
+	build a
+b: a
+	build b

@@ -1,0 +1,10 @@
+# shell variable in mkfile
+mk -n -f mkfile
+cmp stdout expected
+
+-- mkfile --
+shell = sh -e
+all:V:
+	echo hello
+-- expected --
+all: echo hello

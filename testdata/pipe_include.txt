@@ -1,0 +1,12 @@
+# Rules can be created by piping commands
+mk -n -f mkfile
+cmp stdout expected
+
+-- mkfile --
+# expand a command that defines a rule
+
+<| \
+echo 'target:
+    echo $target $prereq'
+-- expected --
+target: echo target 

@@ -1,0 +1,6 @@
+# Bad token in redirect include produces error
+! mk -n -f mkfile
+stderr 'parsing include'
+
+-- mkfile --
+< =

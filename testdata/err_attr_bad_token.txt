@@ -1,0 +1,6 @@
+# Bad token in attributes produces error
+! mk -n -f mkfile
+stderr 'attributes'
+
+-- mkfile --
+target: < file

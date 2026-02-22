@@ -1,0 +1,15 @@
+# Concrete rule takes priority over meta-rule
+mk -n -p 1 -f mkfile
+cmp stdout expected
+
+-- mkfile --
+%.o: %.c
+	generic $stem
+foo.o: foo.c
+	specific foo
+foo.c:
+	gen foo.c
+-- expected --
+foo.o: generic $stem
+foo.c: gen foo.c
+foo.o: specific foo

@@ -1,0 +1,10 @@
+# -r flag does shallow rebuild of specified target
+mk -n -r -p 1 -f mkfile dep
+cmp stdout expected
+
+-- mkfile --
+all:V: dep
+dep:
+	build dep
+-- expected --
+dep: build dep

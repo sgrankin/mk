@@ -1,2 +1,0 @@
-prereq.txt: echo txt $(echo txt)
-proto.txt: echo proto.txt

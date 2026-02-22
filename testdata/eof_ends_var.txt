@@ -1,0 +1,26 @@
+# Include file with variables used in recipes (second variant)
+# Originally tested EOF ending a variable (no trailing newline in deps file),
+# but txtar always adds trailing newlines. Kept as a duplicate include test.
+mk -n -f mkfile
+cmp stdout expected
+
+-- mkfile --
+# Variable extracmdarg and deps are set in include.
+# Test if extracmdarg is set for recipes
+<./deps
+
+test3.mk.o: $deps
+	secondprocess ab
+
+one:
+	process bar $extracmdarg
+
+two:
+	$extracmdarg rebar
+-- deps --
+deps = one two
+extracmdarg = gopher
+-- expected --
+two: gopher rebar
+one: process bar gopher
+test3.mk.o: secondprocess ab

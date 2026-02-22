@@ -1,0 +1,10 @@
+# -a flag rebuilds everything
+mk -n -a -p 1 -f mkfile
+cmp stdout expected
+
+-- mkfile --
+all:V: dep
+dep:
+	build dep
+-- expected --
+dep: build dep

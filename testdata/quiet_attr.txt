@@ -1,0 +1,9 @@
+# Q attribute hides recipe details
+mk -n -f mkfile
+cmp stdout expected
+
+-- mkfile --
+all:VQ:
+	this recipe is hidden
+-- expected --
+all: ...
