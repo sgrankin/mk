@@ -303,6 +303,7 @@ func main() {
 	var dryrun bool
 	var shallowrebuild bool
 	var quiet bool
+	var dotOutput bool
 
 	flag.StringVar(&directory, "C", "", "directory to change in to")
 	flag.StringVar(&mkfilepath, "f", "mkfile", "use the given file as mkfile")
@@ -313,6 +314,7 @@ func main() {
 	flag.IntVar(&maxRuleCnt, "l", 1, "maximum number of times a specific rule can be applied (recursion)")
 	flag.BoolVar(&interactive, "i", false, "prompt before executing rules")
 	flag.BoolVar(&quiet, "q", false, "don't print recipes before executing them")
+	flag.BoolVar(&dotOutput, "dot", false, "print dependency graph in graphviz dot format and exit")
 	flag.BoolVar(&color, "color", isatty.IsTerminal(os.Stdout.Fd()), "turn color on/off")
 	flag.StringVar(&defaultShell, "shell", "sh -e", "default shell to use if none are specified via $shell")
 	flag.BoolVar(&dontDropArgs, "F", false, "don't drop shell arguments when no further arguments are specified")
@@ -385,6 +387,12 @@ func main() {
 
 	// Keep a global reference to the total state of mk variables.
 	GlobalMkState = rs.vars
+
+	if dotOutput {
+		g := buildgraph(rs, "")
+		g.visualize(os.Stdout)
+		return
+	}
 
 	if interactive {
 		g := buildgraph(rs, "")

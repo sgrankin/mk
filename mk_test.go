@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -203,6 +204,35 @@ outer:
 			}
 		}
 		t.Errorf("%s: output missing %s", input, ekv)
+	}
+}
+
+func TestDotOutput(t *testing.T) {
+	t.Parallel()
+	got, _, err := startMk("-dot", "-f", "testdata/test5.mk")
+	if err != nil {
+		t.Fatalf("exec failed: %v", err)
+	}
+
+	output := string(got)
+
+	// Check structure: header, footer, and expected edges.
+	if !strings.HasPrefix(output, "digraph mk {\n") {
+		t.Errorf("missing digraph header, got: %s", output)
+	}
+	if !strings.HasSuffix(output, "}\n") {
+		t.Errorf("missing digraph footer, got: %s", output)
+	}
+
+	wantEdges := []string{
+		`"" -> "test3.mk.o";`,
+		`"test3.mk.o" -> "one";`,
+		`"test3.mk.o" -> "two";`,
+	}
+	for _, edge := range wantEdges {
+		if !strings.Contains(output, edge) {
+			t.Errorf("missing edge %q in output:\n%s", edge, output)
+		}
 	}
 }
 
