@@ -1,0 +1,8 @@
+# Recipe failure sets node status to failed
+# mk exits 0 even when a recipe fails
+mk -p 1 -f mkfile
+stdout 'all: false'
+
+-- mkfile --
+all:V:
+	false

@@ -1,0 +1,9 @@
+# Prereq failure propagates status through build graph
+mk -p 1 -f mkfile
+stdout 'dep: false'
+
+-- mkfile --
+all:V: dep
+	echo building all
+dep:V:
+	false

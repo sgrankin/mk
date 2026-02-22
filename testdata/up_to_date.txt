@@ -1,0 +1,10 @@
+# Target newer than prereq — nothing to rebuild
+exec touch prereq.txt
+sleep 200ms
+exec touch target.txt
+mk -p 1 -f mkfile
+! stdout .
+
+-- mkfile --
+target.txt: prereq.txt
+	echo rebuilding

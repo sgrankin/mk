@@ -1,0 +1,8 @@
+# X attribute runs recipe with exclusive subprocess lock
+mk -p 1 -f mkfile
+stdout 'all: echo exclusive'
+stdout '^exclusive$'
+
+-- mkfile --
+all:VX:
+	echo exclusive

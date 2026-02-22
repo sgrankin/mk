@@ -1,0 +1,8 @@
+# Basic recipe execution (not dry-run)
+mk -p 1 -f mkfile
+stdout 'all: echo hello'
+stdout '^hello$'
+
+-- mkfile --
+all:V:
+	echo hello
