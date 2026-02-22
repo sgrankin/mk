@@ -161,13 +161,7 @@ func (l *lexer) accept(valid string) bool {
 
 // Skip the next rune if it is in the valid string. Return true if it was
 // skipped.
-func (l *lexer) ignore(valid string) bool {
-	if strings.ContainsRune(valid, l.peek()) {
-		l.skip()
-		return true
-	}
-	return false
-}
+
 
 // Consume characters from the valid string until the next is not.
 func (l *lexer) acceptRun(valid string) int {

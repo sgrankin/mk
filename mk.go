@@ -96,12 +96,12 @@ func finishExclusiveSubproc() {
 // Ansi color codes.
 const (
 	ansiTermDefault   = "\033[0m"
-	ansiTermBlack     = "\033[30m"
+	// ansiTermBlack   = "\033[30m"
 	ansiTermRed       = "\033[31m"
-	ansiTermGreen     = "\033[32m"
-	ansiTermYellow    = "\033[33m"
+	// ansiTermGreen  = "\033[32m"
+	// ansiTermYellow = "\033[33m"
 	ansiTermBlue      = "\033[34m"
-	ansiTermMagenta   = "\033[35m"
+	// ansiTermMagenta = "\033[35m"
 	ansiTermBright    = "\033[1m"
 	ansiTermUnderline = "\033[4m"
 )
@@ -268,23 +268,6 @@ func mkPrintError(msg string) {
 	}
 }
 
-func mkPrintSuccess(msg string) {
-	if !color {
-		fmt.Println(msg)
-	} else {
-		fmt.Printf("%s%s%s\n", ansiTermGreen, msg, ansiTermDefault)
-	}
-}
-
-func mkPrintMessage(msg string) {
-	mkMsgMutex.Lock()
-	if !color {
-		fmt.Println(msg)
-	} else {
-		fmt.Printf("%s%s%s\n", ansiTermBlue, msg, ansiTermDefault)
-	}
-	mkMsgMutex.Unlock()
-}
 
 func mkPrintRecipe(target string, recipe string, quiet bool) {
 	mkMsgMutex.Lock()
