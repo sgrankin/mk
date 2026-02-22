@@ -1,0 +1,61 @@
+# mk — Go port of Plan 9 mk
+
+A build tool reimplementing Plan 9's `mk` in Go, with improvements (parallel execution, pcre-like regex rules, flexible indentation, alternative recipe shells).
+
+## Quick Reference
+
+```bash
+go build          # build ./mk binary
+go test           # run all tests
+go test -run TestBasicMaking/testdata/test5.mk  # run a single test vector
+```
+
+## Architecture
+
+Single `package main`, procedural style. Pipeline: **Lexer → Parser → Graph → Executor**.
+
+| File | Purpose |
+|------|---------|
+| `mk.go` | Entry point (`main`), CLI flags, parallel build orchestration |
+| `lex.go` | Lexer — channel-based token stream, state machine |
+| `parse.go` | Parser — recursive descent, executes assignments on-the-fly |
+| `expand.go` | Variable/backtick expansion, pattern substitution |
+| `graph.go` | Dependency graph construction, cycle detection |
+| `recipe.go` | Recipe execution, shell subprocess management |
+| `rules.go` | Rule structs, attributes (D,E,N,n,Q,R,U,V,X,S,P) |
+
+## Test Pattern
+
+Integration tests compare `mk -n` (dry-run) output against golden files:
+- `testdata/testN.mk` — input mkfile
+- `testdata/testN.mk.expected` — expected dry-run output
+
+Tests use `TestMain` with `TEST_MAIN=mk` env var to re-exec the test binary as `mk` itself. Tests run in parallel.
+
+To add a test: create `testdata/testN.mk` + `testdata/testN.mk.expected`, add a `testvector` entry in `mk_test.go`.
+
+## Pre-commit Checklist
+
+Before committing, all of the following must pass:
+
+```bash
+go test ./...              # all tests must pass
+go vet ./...               # must be clean
+go tool staticcheck ./...  # must be clean (pinned in go.mod)
+go tool govulncheck ./...  # no known vulnerabilities (pinned in go.mod)
+```
+
+Address any gopls diagnostics (type errors, unused imports, etc.) visible in changed files.
+
+All changed/added code must be covered by tests. Check uncovered lines:
+```bash
+go test -coverprofile=cover.out ./...; awk -f cover-uncovered.awk cover.out
+```
+Output is one line per file with uncovered line ranges (e.g. `expand.go: 54-58,90-92`).
+
+## Conventions
+
+- No external runtime dependencies — only stdlib at runtime.
+- Errors use `mkError()` (fprintf to stderr + os.Exit(1)), not panic.
+- Global state for color, shell, rebuild flags.
+- `\x01` separates array elements in environment variables (Plan 9 rc convention).
