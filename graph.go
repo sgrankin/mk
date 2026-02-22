@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 	"sync"
 	"time"
 )
@@ -47,7 +48,6 @@ const (
 type node struct {
 	r         *rule             // rule to be applied
 	name      string            // target name
-	prog      string            // custom program to compare times
 	t         time.Time         // file modification time
 	exists    bool              // does a non-virtual target exist
 	prereqs   []*edge           // prerequisite rules
@@ -90,7 +90,13 @@ func (g *graph) newnode(name string) *node {
 // Print a graph in graphviz format.
 func (g *graph) visualize(w io.Writer) {
 	fmt.Fprintln(w, "digraph mk {")
-	for t, u := range g.nodes {
+	targets := make([]string, 0, len(g.nodes))
+	for t := range g.nodes {
+		targets = append(targets, t)
+	}
+	slices.Sort(targets)
+	for _, t := range targets {
+		u := g.nodes[t]
 		for i := range u.prereqs {
 			if u.prereqs[i].v != nil {
 				fmt.Fprintf(w, "    \"%s\" -> \"%s\";\n", t, u.prereqs[i].v.name)

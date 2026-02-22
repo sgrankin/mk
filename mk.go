@@ -108,6 +108,25 @@ const (
 
 // Build a node's prereqs. Block until completed.
 func mkNodePrereqs(g *graph, prereqs []*node, vars map[string][]string, dryrun bool, required bool) nodeStatus {
+	// When limited to a single process, build sequentially to preserve order.
+	if subprocsAllowed == 1 {
+		status := nodeStatusDone
+		for i := range prereqs {
+			prereqs[i].mutex.Lock()
+			switch prereqs[i].status {
+			case nodeStatusReady, nodeStatusNop:
+				prereqs[i].mutex.Unlock()
+				mkNode(g, prereqs[i], vars, dryrun, required)
+			default:
+				prereqs[i].mutex.Unlock()
+			}
+			if prereqs[i].status == nodeStatusFailed {
+				status = nodeStatusFailed
+			}
+		}
+		return status
+	}
+
 	prereqstat := make(chan nodeStatus)
 	pending := 0
 
@@ -267,7 +286,6 @@ func mkPrintError(msg string) {
 		os.Stderr.WriteString(ansiTermDefault)
 	}
 }
-
 
 func mkPrintRecipe(target string, recipe string, quiet bool) {
 	mkMsgMutex.Lock()

@@ -16,6 +16,7 @@ type testvector struct {
 	output string
 	errors string
 	passes bool
+	args   []string // extra arguments to pass to mk
 }
 
 // For each test vector, confirm that it matches
@@ -134,11 +135,12 @@ func TestBasicMaking(t *testing.T) {
 			passes: true,
 		},
 		{
-			// Test
+			// Test multiline backtick expansion; -p 1 for deterministic order
 			input:  "testdata/test18.mk",
 			output: "testdata/test18.mk.expected",
 			errors: "",
 			passes: true,
+			args:   []string{"-p", "1"},
 		},
 	}
 
@@ -146,7 +148,8 @@ func TestBasicMaking(t *testing.T) {
 		t.Run(tv.input, func(t *testing.T) {
 			t.Parallel()
 			// TODO(rjk): Validate generated errors.
-			got, _, err := startMk("-n", "-f", tv.input)
+			args := append([]string{"-n", "-f", tv.input}, tv.args...)
+			got, _, err := startMk(args...)
 			if err != nil {
 				if !tv.passes {
 					t.Logf("%s expected failure", tv.input)

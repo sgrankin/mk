@@ -53,6 +53,10 @@ go test -coverprofile=cover.out ./...; awk -f cover-uncovered.awk cover.out
 ```
 Output is one line per file with uncovered line ranges (e.g. `expand.go: 54-58,90-92`).
 
+## Code Review
+
+Before finalizing a change, review the diff with Sonnet. Focus the review on things mechanical checks can't catch: correctness, test quality, design issues, flaky tests, and subtle bugs. Don't duplicate work already covered by the pre-commit checklist (test runs, vet, staticcheck, coverage).
+
 ## Conventions
 
 - No external runtime dependencies — only stdlib at runtime.
