@@ -1,0 +1,2 @@
+multivalue = a b
+< $multivalue

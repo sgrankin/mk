@@ -369,11 +369,7 @@ func parseRecipe(p *parser, t token) parserStateFun {
 					}
 
 					patstr := fmt.Sprintf("^%s(.*)%s$", left, right)
-					rpat, err := regexp.Compile(patstr)
-					if err != nil {
-						msg := fmt.Sprintf("error compiling suffix rule. This is a bug. Error: %s", err)
-						p.basicErrorAtToken(msg, p.tokenbuf[k])
-					}
+					rpat := regexp.MustCompile(patstr) // QuoteMeta output is always valid regex
 					r.targets[len(r.targets)-1].rpat = rpat
 					r.targets[len(r.targets)-1].issuffix = true
 					r.ismeta = true

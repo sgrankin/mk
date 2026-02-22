@@ -167,6 +167,64 @@ func TestExpand(t *testing.T) {
 				"ruxpin bear.adventure",
 			},
 		},
+		// Backtick with expandBackticks=false → literal
+		{
+			input:       "`echo hello`",
+			vars:        map[string][]string{},
+			expandticks: false,
+			want:        []string{"`echo hello`"},
+		},
+		// Escaped space
+		{
+			input:       `\ a`,
+			vars:        map[string][]string{},
+			expandticks: false,
+			want:        []string{" a"},
+		},
+		// Escaped tab
+		{
+			input:       "\\\ta",
+			vars:        map[string][]string{},
+			expandticks: false,
+			want:        []string{"\ta"},
+		},
+		// $$ → literal $
+		{
+			input:       "$$",
+			vars:        map[string][]string{},
+			expandticks: false,
+			want:        []string{"$"},
+		},
+		// ${unclosed — missing }
+		{
+			input:       "${unclosed",
+			vars:        map[string][]string{},
+			expandticks: false,
+			want:        []string{"${unclosed"},
+		},
+		// ${missing:%=.o} — namelist with nonexistent var
+		{
+			input:       "${missing:%=%.o}",
+			vars:        map[string][]string{},
+			expandticks: false,
+			want:        []string{},
+		},
+		// $nonexistent — bare var not in vars or env
+		{
+			input:       "$nonexistent_var_xyz",
+			vars:        map[string][]string{},
+			expandticks: false,
+			want:        []string{"$nonexistent_var_xyz"},
+		},
+		// Namelist with pattern that doesn't match all values (else branch)
+		{
+			input: "${targets:foo%=bar%}",
+			vars: map[string][]string{
+				"targets": {"fooX", "other"},
+			},
+			expandticks: false,
+			want:        []string{"barX", "other"},
+		},
 	}
 
 	//	failing := tests[11:]
@@ -218,6 +276,12 @@ func TestExpandRecipeSigils(t *testing.T) {
 			expandticks: false,
 			want:        []string{"mkdir -p $(dirname a)\necho a"},
 		},
+		// backslash + non-$ char → preserved
+		{
+			input: "echo \\n",
+			vars:  map[string][]string{},
+			want:  []string{"echo \\n"},
+		},
 	}
 
 	for i, tv := range tests {
@@ -230,6 +294,85 @@ func TestExpandRecipeSigils(t *testing.T) {
 				litter.Sdump(got),
 				litter.Sdump(tv.want[0]))
 		}
+	}
+}
+
+func TestExpandDoubleQuotedEdgeCases(t *testing.T) {
+	tests := []struct {
+		input string
+		want  string
+		wantN int
+	}{
+		// Unterminated double quote
+		{"abc", "abc", 3},
+		// Backslash at end of input
+		{"abc\\", "abc\\", 4},
+		// Backslash-escaped char inside (not at end), terminated by "
+		{"abc\\x\"", "abc\\x", 6},
+	}
+
+	for i, tt := range tests {
+		got, n := expandDoubleQuoted(tt.input, map[string][]string{}, false)
+		if got != tt.want || n != tt.wantN {
+			t.Errorf("%d: expandDoubleQuoted(%q) = (%q, %d), want (%q, %d)",
+				i, tt.input, got, n, tt.want, tt.wantN)
+		}
+	}
+}
+
+func TestExpandSingleQuotedEdgeCases(t *testing.T) {
+	// Unterminated single quote
+	got, n := expandSingleQuoted("abc")
+	if got != "abc" || n != 3 {
+		t.Errorf("expandSingleQuoted(%q) = (%q, %d), want (%q, %d)",
+			"abc", got, n, "abc", 3)
+	}
+}
+
+func TestExpandBackQuotedEdgeCases(t *testing.T) {
+	// Unterminated backtick
+	got, n := expandBackQuoted("cmd without closing", map[string][]string{
+		"shell": {"sh"},
+	})
+	if len(got) != 1 || got[0] != "cmd without closing" || n != len("cmd without closing") {
+		t.Errorf("expandBackQuoted(unterminated) = (%v, %d), want ([%q], %d)",
+			got, n, "cmd without closing", len("cmd without closing"))
+	}
+}
+
+func TestExpandSuffixesBackslashPercent(t *testing.T) {
+	// \% → literal %
+	got := expandSuffixes(`\%`, "stem")
+	if got != "%" {
+		t.Errorf("expandSuffixes(`\\%%`, stem) = %q, want %q", got, "%")
+	}
+
+	// Mixed: literal \% and real %
+	got = expandSuffixes(`\%.o`, "stem")
+	if got != "%.o" {
+		t.Errorf("expandSuffixes(`\\%%.o`, stem) = %q, want %q", got, "%.o")
+	}
+}
+
+func TestExpandSigilEnvLookup(t *testing.T) {
+	// Valid varname not in vars but in env → env lookup path (lines 213-215)
+	t.Setenv("MK_TEST_ENV_VAR_XYZ", "envvalue")
+	got := expand("$MK_TEST_ENV_VAR_XYZ", map[string][]string{}, false)
+	if len(got) != 1 || got[0] != "envvalue" {
+		t.Errorf("expand env var: got %v, want [envvalue]", got)
+	}
+
+	// Bracketed invalid varname in env → lines 221-223
+	t.Setenv("1bad", "badval")
+	got = expand("${1bad}", map[string][]string{}, false)
+	if len(got) != 1 || got[0] != "badval" {
+		t.Errorf("expand invalid varname in env: got %v, want [badval]", got)
+	}
+
+	// Bracketed invalid varname not in env → line 225
+	got = expand("${2nonexistent_xyzzy}", map[string][]string{}, false)
+	if len(got) != 1 || got[0] != "${2nonexistent_xyzzy}" {
+		t.Errorf("expand invalid varname not in env: got %v, want [${2nonexistent_xyzzy}]", got)
 	}
 }
 

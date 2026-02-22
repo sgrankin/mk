@@ -214,8 +214,7 @@ func mkNode(g *graph, u *node, vars map[string][]string, dryrun bool, required b
 
 	// this should have been caught during graph building
 	if e == nil {
-		wd, _ := os.Getwd()
-		mkError(fmt.Sprintf("don't know how to make %s in %s", u.name, wd))
+		panic("unreachable: no edge found for node " + u.name)
 	}
 
 	prereqs_required := required && (e.r.attributes.virtual || !u.exists)
@@ -232,8 +231,6 @@ func mkNode(g *graph, u *node, vars map[string][]string, dryrun bool, required b
 					uptodate = false
 				}
 			}
-		} else if required {
-			uptodate = false
 		}
 	} else {
 		uptodate = false

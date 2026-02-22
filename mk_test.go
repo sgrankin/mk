@@ -187,6 +187,89 @@ func TestBasicMaking(t *testing.T) {
 			passes: true,
 			args:   []string{"-q", "-p", "1"},
 		},
+		{
+			// -a rebuild-all flag
+			input:  "testdata/test25.mk",
+			output: "testdata/test25.mk.expected",
+			errors: "",
+			passes: true,
+			args:   []string{"-a", "-p", "1"},
+		},
+		{
+			// -r shallow-rebuild flag
+			input:  "testdata/test26.mk",
+			output: "testdata/test26.mk.expected",
+			errors: "",
+			passes: true,
+			args:   []string{"-r", "-p", "1", "dep"},
+		},
+		{
+			// Concrete rule overrides meta-rule
+			input:  "testdata/test27.mk",
+			output: "testdata/test27.mk.expected",
+			errors: "",
+			passes: true,
+			args:   []string{"-p", "1"},
+		},
+		{
+			// shell variable in mkfile
+			input:  "testdata/test28.mk",
+			output: "testdata/test28.mk.expected",
+			errors: "",
+			passes: true,
+		},
+		{
+			// Suffix rule with prefix (foo%.o)
+			input:  "testdata/test29.mk",
+			output: "testdata/test29.mk.expected",
+			errors: "",
+			passes: true,
+			args:   []string{"-p", "1"},
+		},
+		{
+			// Assignment with non-word tokens (colon) in value
+			input:  "testdata/test30.mk",
+			output: "testdata/test30.mk.expected",
+			errors: "",
+			passes: true,
+		},
+		{
+			// Adjacent quotes in bare word
+			input:  "testdata/test31.mk",
+			output: "testdata/test31.mk.expected",
+			errors: "",
+			passes: true,
+		},
+		{
+			// -F flag (don't drop shell arguments)
+			input:  "testdata/test33.mk",
+			output: "testdata/test33.mk.expected",
+			errors: "",
+			passes: true,
+			args:   []string{"-F"},
+		},
+		{
+			// Regex rule with prereqs
+			input:  "testdata/test34.mk",
+			output: "testdata/test34.mk.expected",
+			errors: "",
+			passes: true,
+			args:   []string{"-p", "1"},
+		},
+		{
+			// Single quotes in bare word (lexer coverage)
+			input:  "testdata/test35.mk",
+			output: "testdata/test35.mk.expected",
+			errors: "",
+			passes: true,
+		},
+		{
+			// Pipe include with = token in command (parser coverage)
+			input:  "testdata/test36.mk",
+			output: "testdata/test36.mk.expected",
+			errors: "",
+			passes: true,
+		},
 	}
 
 	for _, tv := range tests {
@@ -295,11 +378,17 @@ func TestMain(m *testing.M) {
 }
 
 func startMk(args ...string) ([]byte, []byte, error) {
+	return startMkWithStdin("", args...)
+}
+
+func startMkWithStdin(stdin string, args ...string) ([]byte, []byte, error) {
 	outbuffy := new(bytes.Buffer)
 	errbuffy := new(bytes.Buffer)
 
 	mkcmd := exec.Command(os.Args[0], args...)
 	mkcmd.Env = append(os.Environ(), "TEST_MAIN=mk")
+
+	mkcmd.Stdin = strings.NewReader(stdin)
 
 	mkcmd.Stdout = outbuffy
 	mkcmd.Stderr = errbuffy
@@ -307,6 +396,47 @@ func startMk(args ...string) ([]byte, []byte, error) {
 	// log.Println("mkcmd", mkcmd)
 	err := mkcmd.Run()
 	return outbuffy.Bytes(), errbuffy.Bytes(), err
+}
+
+func TestInteractiveMode(t *testing.T) {
+	t.Parallel()
+	// Leading whitespace covers the whitespace-skip path in the interactive loop
+	got, _, err := startMkWithStdin(" y\n", "-i", "-n", "-p", "1", "-f", "testdata/test32.mk")
+	if err != nil {
+		t.Fatalf("exec failed: %v", err)
+	}
+
+	output := string(got)
+	want := "dep: build dep\nProceed? dep: build dep\n"
+	if output != want {
+		t.Errorf("mismatch:\n  got:  %q\n  want: %q", output, want)
+	}
+}
+
+func TestInteractiveModeDecline(t *testing.T) {
+	t.Parallel()
+	got, _, err := startMkWithStdin("n\n", "-i", "-n", "-p", "1", "-f", "testdata/test32.mk")
+	if err != nil {
+		t.Fatalf("exec failed: %v", err)
+	}
+
+	output := string(got)
+	want := "dep: build dep\nProceed? "
+	if output != want {
+		t.Errorf("mismatch:\n  got:  %q\n  want: %q", output, want)
+	}
+}
+
+func TestInteractiveModeEOF(t *testing.T) {
+	t.Parallel()
+	// Empty stdin → EOF on ReadRune → returns without building
+	got, _, _ := startMkWithStdin("", "-i", "-n", "-p", "1", "-f", "testdata/test32.mk")
+
+	output := string(got)
+	want := "dep: build dep\nProceed? "
+	if output != want {
+		t.Errorf("mismatch:\n  got:  %q\n  want: %q", output, want)
+	}
 }
 
 func TestErrorCases(t *testing.T) {
@@ -341,6 +471,76 @@ func TestErrorCases(t *testing.T) {
 			name:        "parse syntax error",
 			args:        []string{"-n", "-f", "testdata/test_err_syntax.mk"},
 			errContains: "syntax error",
+		},
+		{
+			name:        "invalid attribute",
+			args:        []string{"-n", "-f", "testdata/test_err_invalid_attr.mk"},
+			errContains: "attribute",
+		},
+		{
+			name:        "invalid varname assignment",
+			args:        []string{"-n", "-f", "testdata/test_err_invalid_varname.mk"},
+			errContains: "not a valid variable name",
+		},
+		{
+			name:        "include nonexistent file",
+			args:        []string{"-n", "-f", "testdata/test_err_include_nonexistent.mk"},
+			errContains: "cannot open",
+		},
+		{
+			name:        "empty pipe include",
+			args:        []string{"-n", "-f", "testdata/test_err_empty_pipe.mk"},
+			errContains: "empty pipe include",
+		},
+		{
+			name:        "failed pipe include",
+			args:        []string{"-n", "-f", "testdata/test_err_failed_pipe.mk"},
+			errContains: "failed",
+		},
+		{
+			name:        "unterminated quote",
+			args:        []string{"-n", "-f", "testdata/test_err_unterminated_quote.mk"},
+			errContains: "end of file",
+		},
+		{
+			name:        "ambiguous rules",
+			args:        []string{"-n", "-f", "testdata/test_err_ambiguous.mk"},
+			errContains: "ambiguous",
+		},
+		{
+			name:        "regex rule bad pattern",
+			args:        []string{"-n", "-f", "testdata/test_err_bad_regex.mk"},
+			errContains: "regular expression",
+		},
+		{
+			name:        "unexpected token in target",
+			args:        []string{"-n", "-f", "testdata/test_err_unexpected_token.mk"},
+			errContains: "syntax error",
+		},
+		{
+			name:        "targets without colon",
+			args:        []string{"-n", "-f", "testdata/test_err_targets_no_colon.mk"},
+			errContains: "targets",
+		},
+		{
+			name:        "bad token in attributes",
+			args:        []string{"-n", "-f", "testdata/test_err_attr_bad_token.mk"},
+			errContains: "attributes",
+		},
+		{
+			name:        "bad token in prerequisites",
+			args:        []string{"-n", "-f", "testdata/test_err_prereq_bad_token.mk"},
+			errContains: "prerequisites",
+		},
+		{
+			name:        "bad token in redirect include",
+			args:        []string{"-n", "-f", "testdata/test_err_redir_bad_token.mk"},
+			errContains: "parsing include",
+		},
+		{
+			name:        "multi-value include filename",
+			args:        []string{"-n", "-f", "testdata/test_err_multivalue_include.mk"},
+			errContains: "single value",
 		},
 	}
 
