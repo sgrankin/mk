@@ -1,0 +1,2 @@
+result.c: generate result.c
+result.o: compile result

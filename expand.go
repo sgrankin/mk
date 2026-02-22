@@ -147,7 +147,7 @@ func expandSigil(input string, vars map[string][]string) ([]string, int) {
 	namelist_pattern := expandSigil_namelist_pattern
 
 	if c == '$' { // escaping of "$" with "$$"
-		return []string{"$"}, 2
+		return []string{"$"}, w
 	} else if c == '{' { // match bracketed expansions: ${foo}, or ${foo:a%b=c%d}
 		j := strings.IndexRune(input[w:], '}')
 		if j < 0 {

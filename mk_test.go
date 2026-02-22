@@ -142,6 +142,51 @@ func TestBasicMaking(t *testing.T) {
 			passes: true,
 			args:   []string{"-p", "1"},
 		},
+		{
+			// Suffix/percent metarules
+			input:  "testdata/test19.mk",
+			output: "testdata/test19.mk.expected",
+			errors: "",
+			passes: true,
+			args:   []string{"-p", "1"},
+		},
+		{
+			// $$ and \$ recipe escapes
+			input:  "testdata/test20.mk",
+			output: "testdata/test20.mk.expected",
+			errors: "",
+			passes: true,
+		},
+		{
+			// Multi-target rules
+			input:  "testdata/test21.mk",
+			output: "testdata/test21.mk.expected",
+			errors: "",
+			passes: true,
+			args:   []string{"-p", "1"},
+		},
+		{
+			// Quiet Q attribute
+			input:  "testdata/test22.mk",
+			output: "testdata/test22.mk.expected",
+			errors: "",
+			passes: true,
+		},
+		{
+			// "Nothing to mk" — only meta-rules present
+			input:  "testdata/test23.mk",
+			output: "testdata/test23.mk.expected",
+			errors: "",
+			passes: true,
+		},
+		{
+			// -q quiet flag
+			input:  "testdata/test24.mk",
+			output: "testdata/test24.mk.expected",
+			errors: "",
+			passes: true,
+			args:   []string{"-q", "-p", "1"},
+		},
 	}
 
 	for _, tv := range tests {
@@ -260,9 +305,56 @@ func startMk(args ...string) ([]byte, []byte, error) {
 	mkcmd.Stderr = errbuffy
 
 	// log.Println("mkcmd", mkcmd)
-	if err := mkcmd.Run(); err != nil {
-		return nil, nil, err
+	err := mkcmd.Run()
+	return outbuffy.Bytes(), errbuffy.Bytes(), err
+}
+
+func TestErrorCases(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		args        []string
+		errContains string
+	}{
+		{
+			name:        "cycle detection",
+			args:        []string{"-n", "-f", "testdata/test_err_cycle.mk"},
+			errContains: "cycle",
+		},
+		{
+			name:        "missing target",
+			args:        []string{"-n", "-f", "testdata/test_err_missing.mk"},
+			errContains: "don't know how to make",
+		},
+		{
+			name:        "bad -C directory",
+			args:        []string{"-C", "/nonexistent_xyz", "-n", "-f", "testdata/test1.mk"},
+			errContains: "changing directory",
+		},
+		{
+			name:        "missing mkfile",
+			args:        []string{"-n", "-f", "testdata/nonexistent.mk"},
+			errContains: "no mkfile found",
+		},
+		{
+			name:        "parse syntax error",
+			args:        []string{"-n", "-f", "testdata/test_err_syntax.mk"},
+			errContains: "syntax error",
+		},
 	}
 
-	return outbuffy.Bytes(), errbuffy.Bytes(), nil
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			_, stderr, err := startMk(tt.args...)
+			if err == nil {
+				t.Fatalf("expected error but got none")
+			}
+			got := string(stderr)
+			if !strings.Contains(got, tt.errContains) {
+				t.Errorf("stderr = %q, want substring %q", got, tt.errContains)
+			}
+		})
+	}
 }
