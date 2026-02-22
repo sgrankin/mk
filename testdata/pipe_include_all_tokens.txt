@@ -1,0 +1,10 @@
+# Pipe include accepts colon, redir, and pipe tokens as command args
+mk -n -f mkfile
+cmp stdout expected
+
+-- mkfile --
+<| sh -c 'echo x=hello' : < /dev/null <| extra
+all:V:
+	echo $x
+-- expected --
+all: echo hello

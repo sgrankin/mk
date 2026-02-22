@@ -1,5 +1,5 @@
 # Include file sets variables used in rules
-mk -n -f mkfile
+mk -n -p 1 -f mkfile
 cmp stdout expected
 
 -- mkfile --
@@ -18,6 +18,6 @@ two:
 deps = one two
 extracmdarg = gopher
 -- expected --
-two: process rebar
 one: process bar
+two: process rebar
 test3.mk.o: secondprocess ab

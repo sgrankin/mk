@@ -1,0 +1,10 @@
+# Backslash escape inside double-quoted string
+mk -n -f mkfile
+cmp stdout expected
+
+-- mkfile --
+x = "hello\tworld"
+all:V:
+	echo $x
+-- expected --
+all: echo hello\tworld

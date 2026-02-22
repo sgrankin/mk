@@ -1,0 +1,14 @@
+# Vacuous meta-rule prereqs are pruned from the graph
+mk -n -p 1 -f mkfile
+cmp stdout expected
+
+-- mkfile --
+all:V: foo.o
+	echo done
+foo.o:V:
+	echo building foo.o
+%.o: %.c
+	compile $prereq
+-- expected --
+foo.o: echo building foo.o
+all: echo done

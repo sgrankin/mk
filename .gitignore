@@ -62,3 +62,4 @@ out/
 
 # Vim swapfile
 *.swp
+.tmp/

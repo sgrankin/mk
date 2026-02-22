@@ -1,0 +1,9 @@
+# Shell attribute with args in both shcmd and extra args
+mk -n -f mkfile
+cmp stdout expected
+
+-- mkfile --
+all:VS"sh -e" -c:
+	echo hello
+-- expected --
+all: echo hello

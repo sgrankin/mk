@@ -1,0 +1,9 @@
+# Color output adds ANSI escape codes to recipes
+mk -color -n -f mkfile
+stdout '\x1b\[34m\x1b\[1m\x1b\[4mall\x1b\[0m'
+stdout '\x1b\[34mecho hello'
+stdout '\x1b\[0m'
+
+-- mkfile --
+all:V:
+	echo hello
