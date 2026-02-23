@@ -1,0 +1,13 @@
+# -t flag: touch targets instead of executing recipes
+cp target target
+mk -t -a -p 1 -f mkfile target
+# Recipe should NOT have executed (no "recipe ran" in stdout)
+! stdout 'recipe ran'
+# But target should still exist (was touched, not deleted)
+exists target
+
+-- mkfile --
+target:
+	echo recipe ran
+-- target --
+original content

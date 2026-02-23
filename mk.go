@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/mattn/go-isatty"
 )
@@ -55,6 +56,9 @@ var (
 
 	// Keep going after errors (-k flag).
 	keepgoing bool
+
+	// Touch targets instead of executing recipes (-t flag).
+	touchmode bool
 
 	// Set when any recipe fails; checked to stop new recipes when -k is not set.
 	buildFailed atomic.Bool
@@ -264,26 +268,40 @@ func mkNode(g *graph, u *node, vars map[string][]string, dryrun bool, required b
 
 	// execute the recipe, unless the prereqs failed
 	if !uptodate && finalstatus != nodeStatusFailed && len(e.r.recipe) > 0 {
-		if e.r.attributes.exclusive {
-			reserveExclusiveSubproc()
-		} else {
-			reserveSubproc()
-		}
-
-		if !dorecipe(u.name, u, e, vars, dryrun) {
-			finalstatus = nodeStatusFailed
-			buildFailed.Store(true)
-			// D attribute: delete the target file when the recipe fails.
-			if e.r.attributes.delFailed {
-				os.Remove(u.name)
+		if touchmode && !e.r.attributes.virtual {
+			// Touch mode: update the target's timestamp without running the recipe.
+			now := time.Now()
+			if !u.exists {
+				f, err := os.Create(u.name)
+				if err == nil {
+					f.Close()
+				}
+			} else {
+				os.Chtimes(u.name, now, now)
 			}
-		}
-		u.updateTimestamp()
+			u.updateTimestamp()
+		} else if !touchmode {
+			if e.r.attributes.exclusive {
+				reserveExclusiveSubproc()
+			} else {
+				reserveSubproc()
+			}
 
-		if e.r.attributes.exclusive {
-			finishExclusiveSubproc()
-		} else {
-			finishSubproc()
+			if !dorecipe(u.name, u, e, vars, dryrun) {
+				finalstatus = nodeStatusFailed
+				buildFailed.Store(true)
+				// D attribute: delete the target file when the recipe fails.
+				if e.r.attributes.delFailed {
+					os.Remove(u.name)
+				}
+			}
+			u.updateTimestamp()
+
+			if e.r.attributes.exclusive {
+				finishExclusiveSubproc()
+			} else {
+				finishSubproc()
+			}
 		}
 	} else if finalstatus != nodeStatusFailed {
 		finalstatus = nodeStatusNop
@@ -344,6 +362,7 @@ func main() {
 	flag.StringVar(&directory, "C", "", "directory to change in to")
 	flag.StringVar(&mkfilepath, "f", "mkfile", "use the given file as mkfile")
 	flag.BoolVar(&dryrun, "n", false, "print commands without actually executing")
+	flag.BoolVar(&touchmode, "t", false, "touch targets instead of executing recipes")
 	flag.BoolVar(&shallowrebuild, "r", false, "force building of just targets")
 	flag.BoolVar(&rebuildall, "a", false, "force building of all dependencies")
 	flag.BoolVar(&keepgoing, "k", false, "continue building after errors")
