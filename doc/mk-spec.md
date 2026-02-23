@@ -429,7 +429,7 @@ These are set by mk and available in recipes:
 List variables are exported to the environment using a separator character.
 For `sh`, the separator is space (` `). For `rc`, it is `\x01` (SOH).
 
-**[DIVERGENCE]** Our implementation always uses `\x01` (Plan 9 rc convention).
+**[DIVERGENCE]** Our implementation always uses space.
 
 ## 12. Command-Line Flags
 
@@ -463,7 +463,7 @@ Plan 9 flags not implemented: `-e` (explain why targets are out of date).
 |------|--------|----------------------|
 | Backtick timing | Expanded at lex time | Expanded at eval time (in `expand.go`) |
 | Shell interface | Pluggable Shell struct (sh, rc) | Fixed sh with `S` attribute for per-rule override |
-| Environment separator | Shell-dependent (space for sh, \x01 for rc) | Always \x01 |
+| Environment separator | Shell-dependent (space for sh, \x01 for rc) | Always space |
 | Shell variable | `MKSHELL` changes shell globally | Uses `shell` variable |
 | Archive members | `lib(member)` syntax with special handling | Not supported |
 | Rule replacement | Later identical rule header replaces earlier | Reports ambiguous error |

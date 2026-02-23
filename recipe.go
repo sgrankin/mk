@@ -123,11 +123,9 @@ func dorecipe(target string, u *node, e *edge, vars map[string][]string, dryrun 
 			vars[k] = v
 		}
 	}
-	// "\x01" is a magic constant that Plan9 rc uses to separate elements in an array.
-	// TODO(rjk): Do the right thing for other shells that have arrays.
 	env := os.Environ()
 	for k, v := range vars {
-		env = append(env, k+"="+strings.Join(v, "\x01"))
+		env = append(env, k+"="+strings.Join(v, " "))
 	}
 
 	_, success := subprocess(

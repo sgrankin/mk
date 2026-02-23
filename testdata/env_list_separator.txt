@@ -1,0 +1,12 @@
+# List variables are space-separated in the environment,
+# so shell word splitting works correctly in recipes.
+mk -q -f mkfile
+stdout '^one$'
+stdout '^two$'
+stdout '^three$'
+
+-- mkfile --
+items = one two three
+
+all:V:
+	for x in $items; do echo $x; done
