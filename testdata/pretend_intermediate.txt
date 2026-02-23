@@ -1,0 +1,17 @@
+# Pretending: missing intermediate doesn't trigger rebuild if target is newer
+# prog.o doesn't exist but prog is newer than prog.c, so no rebuild needed.
+cp prog prog
+cp prog.c prog.c
+mk -n -p 1 -f mkfile
+# Nothing should be rebuilt (no output in dry-run)
+! stdout .
+
+-- mkfile --
+prog: prog.o
+	link prog.o
+prog.o: prog.c
+	cc prog.c
+-- prog --
+binary
+-- prog.c --
+source

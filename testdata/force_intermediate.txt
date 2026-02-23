@@ -1,0 +1,16 @@
+# -a flag forces rebuilding even when intermediate is missing but target is newer
+cp prog prog
+cp prog.c prog.c
+mk -a -n -p 1 -f mkfile
+stdout 'cc prog.c'
+stdout 'link prog.o'
+
+-- mkfile --
+prog: prog.o
+	link prog.o
+prog.o: prog.c
+	cc prog.c
+-- prog --
+binary
+-- prog.c --
+source
