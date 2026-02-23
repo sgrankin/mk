@@ -1,7 +1,5 @@
-# Prereq failure in parallel mode exercises the channel status path.
-# Note: mk currently discards mkNodePrereqs return value, so the parent
-# target still builds even though the prereq failed.
-mk -p 2 -f mkfile
+# Prereq failure in parallel mode propagates through channel status path
+! mk -p 2 -f mkfile
 stdout 'dep: false'
 
 -- mkfile --

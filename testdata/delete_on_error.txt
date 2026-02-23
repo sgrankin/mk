@@ -1,12 +1,10 @@
 # D attribute: delete target file when recipe fails
-# TODO: D attribute not yet implemented — target is not deleted on error.
-# TODO: mk also doesn't exit non-zero on recipe failure.
 cp target target
-mk -p 1 -f mkfile target
-exists target
+! mk -a -p 1 -f mkfile target
+! exists target
 
 -- mkfile --
-target:DV:
+target:D:
 	false
 -- target --
 original content

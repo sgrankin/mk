@@ -218,7 +218,9 @@ func mkNode(g *graph, u *node, vars map[string][]string, dryrun bool, required b
 	}
 
 	prereqs_required := required && (e.r.attributes.virtual || !u.exists)
-	mkNodePrereqs(g, prereqs, vars, dryrun, prereqs_required)
+	if mkNodePrereqs(g, prereqs, vars, dryrun, prereqs_required) == nodeStatusFailed {
+		finalstatus = nodeStatusFailed
+	}
 
 	uptodate := true
 	if !e.r.attributes.virtual {
@@ -243,7 +245,9 @@ func mkNode(g *graph, u *node, vars map[string][]string, dryrun bool, required b
 
 	// make another pass on the prereqs, since we know we need them now
 	if !uptodate {
-		mkNodePrereqs(g, prereqs, vars, dryrun, true)
+		if mkNodePrereqs(g, prereqs, vars, dryrun, true) == nodeStatusFailed {
+			finalstatus = nodeStatusFailed
+		}
 	}
 
 	// execute the recipe, unless the prereqs failed
@@ -256,6 +260,10 @@ func mkNode(g *graph, u *node, vars map[string][]string, dryrun bool, required b
 
 		if !dorecipe(u.name, u, e, vars, dryrun) {
 			finalstatus = nodeStatusFailed
+			// D attribute: delete the target file when the recipe fails.
+			if e.r.attributes.delFailed {
+				os.Remove(u.name)
+			}
 		}
 		u.updateTimestamp()
 
@@ -438,6 +446,9 @@ func main() {
 
 	g := buildgraph(rs, "")
 	mkNode(g, g.root, rs.vars, dryrun, true)
+	if g.root.status == nodeStatusFailed {
+		os.Exit(1)
+	}
 }
 
 var GlobalMkState map[string][]string

@@ -1,5 +1,5 @@
 # Prereq failure propagates status through build graph
-mk -p 1 -f mkfile
+! mk -p 1 -f mkfile
 stdout 'dep: false'
 
 -- mkfile --
