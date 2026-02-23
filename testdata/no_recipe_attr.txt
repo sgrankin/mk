@@ -1,0 +1,14 @@
+# N attribute: target need not exist and has no recipe.
+# Without N, mk would error on a missing target with no recipe.
+mk -n -p 1 -f mkfile all
+cmp stdout expected
+
+-- mkfile --
+dep:N: source
+all:V: dep
+	echo building
+source:
+	echo making source
+-- expected --
+source: echo making source
+all: echo building
