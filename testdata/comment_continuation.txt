@@ -1,0 +1,12 @@
+# Backslash at end of comment continues the comment to the next line
+mk -n -f mkfile
+cmp stdout expected
+
+-- mkfile --
+# This comment continues \
+# to the next line, but the second # is part of the continuation
+VAR=hello
+all:V:
+	echo $VAR
+-- expected --
+all: echo hello

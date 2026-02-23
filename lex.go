@@ -303,7 +303,16 @@ func lexAssign(l *lexer) lexerStateFun {
 
 func lexComment(l *lexer) lexerStateFun {
 	l.skip() // '#'
-	l.skipUntil("\n")
+	for {
+		l.skipUntil("\n")
+		// Check if the character before the newline is a backslash.
+		// If so, the comment continues on the next line (Plan 9 convention).
+		if l.pos > 0 && l.input[l.pos-1] == '\\' {
+			l.skip() // skip the newline
+			continue
+		}
+		break
+	}
 	return lexTopLevel
 }
 

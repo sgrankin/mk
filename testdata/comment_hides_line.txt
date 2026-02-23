@@ -1,0 +1,11 @@
+# Backslash-continued comment swallows the next line entirely
+mk -n -f mkfile
+cmp stdout expected
+
+-- mkfile --
+# This comment eats the next line \
+VAR=should_be_hidden
+all:V:
+	echo ${VAR}
+-- expected --
+all: echo ${VAR}
