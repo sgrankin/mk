@@ -1,0 +1,16 @@
+# A rule with prereqs but no recipe adds those prereqs to
+# other rules with the same target that have recipes.
+# $prereq should include prereqs from both rules.
+cp extra_dep extra_dep
+cp source source
+mk -n -p 1 -f mkfile
+cmp stdout expected
+
+-- mkfile --
+result: extra_dep
+result: source
+	build $prereq
+-- extra_dep --
+-- source --
+-- expected --
+result: build extra_dep source

@@ -82,10 +82,12 @@ func dorecipe(target string, u *node, e *edge, vars map[string][]string, dryrun 
 	// newprereq
 
 	prereqs := make([]string, 0)
+	nprereq := 0
 	for i := range u.prereqs {
-		if u.prereqs[i].r == e.r && u.prereqs[i].v != nil {
+		if u.prereqs[i].v != nil {
 			prereqs = append(prereqs, u.prereqs[i].v.name)
-			vars[fmt.Sprintf("prereq%d", i+1)] = []string{u.prereqs[i].v.name}
+			nprereq++
+			vars[fmt.Sprintf("prereq%d", nprereq)] = []string{u.prereqs[i].v.name}
 		}
 	}
 	vars["prereq"] = prereqs
