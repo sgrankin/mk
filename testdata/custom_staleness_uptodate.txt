@@ -1,0 +1,14 @@
+# P attribute: custom program says target is up to date (exit 0 = fresh)
+cp target target
+cp dep dep
+mk -p 1 -f mkfile target
+# Recipe should NOT run since custom program says up to date
+! stdout 'rebuilding'
+
+-- mkfile --
+target:Psh -c 'exit 0': dep
+	echo rebuilding
+-- target --
+content
+-- dep --
+content

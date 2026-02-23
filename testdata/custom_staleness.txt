@@ -1,0 +1,15 @@
+# P attribute: custom staleness program determines if target is out of date.
+# The program receives (target, prereq) and exits non-zero if out of date.
+cp target target
+cp dep dep
+# Our custom program always says "out of date" (exit 1)
+mk -p 1 -f mkfile target
+stdout 'rebuilding'
+
+-- mkfile --
+target:Psh -c 'exit 1': dep
+	echo rebuilding
+-- target --
+content
+-- dep --
+content

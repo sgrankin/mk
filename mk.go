@@ -241,6 +241,16 @@ func mkNode(g *graph, u *node, vars map[string][]string, dryrun bool, required b
 		u.updateTimestamp()
 		if !u.exists && required {
 			uptodate = false
+		} else if len(e.r.command) > 0 && (u.exists || required) {
+			// P attribute: use custom program for staleness checking.
+			for i := range prereqs {
+				args := append(e.r.command[1:], u.name, prereqs[i].name)
+				_, ok := subprocess(e.r.command[0], args, os.Environ(), "", false)
+				if !ok {
+					uptodate = false
+					break
+				}
+			}
 		} else if u.exists || required {
 			for i := range prereqs {
 				if u.t.Before(prereqs[i].t) || prereqs[i].status == nodeStatusDone {
