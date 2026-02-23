@@ -1,0 +1,11 @@
+# A virtual target with no prerequisites always executes its recipe,
+# even if a file with the same name exists
+cp target target
+mk -p 1 -f mkfile
+stdout 'running'
+
+-- mkfile --
+target:V:
+	echo running
+-- target --
+existing file content
