@@ -97,6 +97,11 @@ Two forms:
 
 In recipes, `\$` also produces a literal `$` (shell escaping).
 
+If a variable is not defined in mk's variable table or the environment, the
+reference is preserved literally (e.g., `$undefined` remains `$undefined` in
+the output). This differs from make, which expands undefined variables to the
+empty string.
+
 ### 2.7 Line Classification
 
 The first unquoted occurrence of `:`, `=`, or `<` determines the line type:
@@ -230,17 +235,75 @@ in Plan 9 mk. `$newmember` is always empty because we do not support the
 |------|------|--------|
 | `D` | Delete | Remove target file if recipe fails |
 | `E` | Errors | Don't pass `-e` to shell; continue on errors |
-| `N` | No-recipe | Target need not exist and has no recipe |
-| `n` | No-virtual | Metarule matches only non-virtual prereqs |
-| `P` | Program | Custom out-of-date test: `Pprog:` runs `prog target prereq` |
+| `N` | No-recipe | Suppress error for non-existent target with no recipe |
+| `n` | No-virtual | Metarule only matches targets that exist on disk |
+| `P` | Program | Custom staleness test (see below) |
 | `Q` | Quiet | Don't print recipe before execution |
-| `R` | Regexp | Target is a regular expression |
-| `U` | Update | Force target timestamp update even if not changed |
+| `R` | Regexp | Target is a regular expression (see §7.2) |
+| `U` | Update | Force target timestamp update after recipe runs |
 | `V` | Virtual | Target is not a file; always considered out of date |
 
 **[DIVERGENCE]** Our implementation adds:
-- `S` — Shell: specify alternative shell for this rule (e.g., `S"awk"`)
+- `S` — Shell: specify alternative shell for this rule (see below)
 - `X` — Exclusive: recipe acquires all parallel job slots before executing
+
+#### N (No-recipe)
+
+Normally, mk reports an error when a target does not exist on disk and no
+rule provides a recipe to create it. The `N` attribute suppresses this error.
+This is used in the Plan 9 archive pattern where one rule establishes a
+dependency and a separate rule provides the recipe:
+
+```
+lib.a(foo.o):N: foo.o       # foo.o dependency, no recipe — N prevents error
+lib.a: lib.a(foo.o)         # this rule has the archiving recipe
+    ar rv lib.a foo.o
+```
+
+#### n (No-virtual)
+
+A metarule with the `n` attribute does not match targets that exist only as
+virtual targets (no file on disk, no concrete rule). It only matches targets
+that are "real" — either the file exists or a concrete (non-meta, non-virtual)
+rule matched the target. This prevents metarules from generating spurious
+build steps for abstract targets.
+
+#### P (Program)
+
+The `P` attribute replaces the default timestamp-based staleness check with a
+custom command. The attribute consumes the remaining attribute text as the
+command:
+
+```
+target:Pcheck-stale arg: prereq1 prereq2
+    recipe
+```
+
+For each prerequisite, mk runs `check-stale arg target prereqN`. If the
+command exits **non-zero**, the target is considered out of date.
+
+#### U (Update)
+
+After a recipe runs, mk re-reads the target's modification time from disk.
+If the recipe didn't modify the file, dependents might not see it as updated.
+The `U` attribute forces the target's timestamp to "now" after the recipe
+completes, ensuring dependents are rebuilt regardless.
+
+#### S (Shell) **[DIVERGENCE]**
+
+Specifies an alternative shell for this rule's recipe. The attribute consumes
+the remaining attribute text:
+
+```
+all:VS"python3":
+    import sys; print(sys.version)
+```
+
+#### X (Exclusive) **[DIVERGENCE]**
+
+The recipe acquires all parallel job slots before executing, ensuring no other
+recipes run concurrently. Useful for recipes that are themselves parallel or
+that must not overlap with other work (e.g., a link step).
 
 ### 6.5 No-Recipe Rules
 
@@ -387,11 +450,12 @@ optimization.
 
 ### 9.3 Parallel Execution
 
-`$NPROC` controls the maximum number of concurrent recipes (default:
-number of available processors).
+The maximum number of concurrent recipes is determined by (in priority order):
+the `-p` flag, the `$NPROC` environment variable, or the number of available
+processors.
 
 Recipes for independent prerequisites execute in parallel. The `$nproc`
-variable tells each recipe its slot number.
+variable tells each recipe its 0-based slot number.
 
 ### 9.4 Recipe Output
 
@@ -483,15 +547,15 @@ in the mkfile.
 | `-k` | Continue after errors (keep going) |
 | `-n` | Dry run (print recipes without executing) |
 | `-q` | Don't print recipes before execution |
-| `-r` | Shallow rebuild (only direct prerequisites) |
+| `-r` | Force rebuild of specified targets only (not their prerequisites) |
 | `-t` | Touch targets instead of executing recipes |
 | `-w target` | Treat `target` as recently modified |
 
 **[DIVERGENCE]** Our implementation adds:
-- `-p N` — Set parallelism level (default: number of CPUs)
+- `-p N` — Set parallelism level (default: `$NPROC` env, then number of CPUs)
 - `-l N` — Max times a specific rule can be applied (default: 1)
 - `-C dir` — Change to `dir` before reading mkfile
-- `-F` — Don't drop shell args when no further arguments specified
+- `-F` — Keep shell flags (e.g., `-e`) even when the shell is invoked with no recipe arguments. By default, flags like `-e` are dropped when the shell has no command arguments, since some shells (like `sh -e`) treat bare flag invocations differently from `sh -e -c 'cmd'`. Use `-F` for shells like `rc` where flags like `-v` are meaningful without arguments.
 - `-I` — Interactive mode: prompt before executing rules
 - `-dot` — Print dependency graph in Graphviz dot format and exit
 - `-color` — Enable/disable color output (default: auto-detect TTY)
