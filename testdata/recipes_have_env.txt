@@ -1,0 +1,10 @@
+# Recipes receive mk variables as environment variables
+mk -p 1 -f mkfile
+stdout 'bar=thebigness'
+stdout 'TEST_MAIN=mk'
+stdout 'shell=sh'
+
+-- mkfile --
+bar = thebigness
+all:V:
+	env
