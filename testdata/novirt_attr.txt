@@ -1,0 +1,15 @@
+# n attribute: metarule only matches file targets, not virtual-only ones.
+# The %.o metarule with n only matches when %.c exists on disk.
+mk -n -p 1 -f mkfile
+cmp stdout expected
+
+-- mkfile --
+%.o:n: %.c
+	compile $stem.c
+all:V: foo.o
+	echo done
+-- foo.c --
+source code
+-- expected --
+foo.o: compile foo.c
+all: echo done
