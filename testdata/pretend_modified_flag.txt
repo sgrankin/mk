@@ -1,0 +1,15 @@
+# -w flag: pretend a file was recently modified, forcing dependents to rebuild
+cp dep dep
+cp target target
+mk -w dep -n -p 1 -f mkfile
+cmp stdout expected
+
+-- mkfile --
+target: dep
+	echo rebuilding target
+-- dep --
+dep content
+-- target --
+target content
+-- expected --
+target: echo rebuilding target

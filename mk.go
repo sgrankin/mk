@@ -60,6 +60,9 @@ var (
 	// Touch targets instead of executing recipes (-t flag).
 	touchmode bool
 
+	// Pretend this target was recently modified (-w flag).
+	pretendModified string
+
 	// Set when any recipe fails; checked to stop new recipes when -k is not set.
 	buildFailed atomic.Bool
 )
@@ -366,6 +369,7 @@ func main() {
 	flag.BoolVar(&shallowrebuild, "r", false, "force building of just targets")
 	flag.BoolVar(&rebuildall, "a", false, "force building of all dependencies")
 	flag.BoolVar(&keepgoing, "k", false, "continue building after errors")
+	flag.StringVar(&pretendModified, "w", "", "pretend `target` was recently modified")
 	flag.IntVar(&subprocsAllowed, "p", runtime.NumCPU(), "maximum number of jobs to execute in parallel")
 	flag.IntVar(&maxRuleCnt, "l", 1, "maximum number of times a specific rule can be applied (recursion)")
 	flag.BoolVar(&interactive, "i", false, "prompt before executing rules")
@@ -478,6 +482,15 @@ func main() {
 	}
 
 	g := buildgraph(rs, "")
+
+	// -w flag: pretend a target was recently modified.
+	if pretendModified != "" {
+		if n, ok := g.nodes[pretendModified]; ok {
+			n.t = time.Now()
+			n.flags |= nodeFlagProbable
+		}
+	}
+
 	mkNode(g, g.root, rs.vars, dryrun, true)
 	if g.root.status == nodeStatusFailed {
 		os.Exit(1)
