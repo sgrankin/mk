@@ -36,8 +36,7 @@ Characters matching `WORDCHR` are: alphanumerics, underscore, and any character
 with code point > 127 (Unicode). All ASCII punctuation terminates a word in
 variable-name contexts.
 
-**[DIVERGENCE]** Our `nonBareRunes` is much smaller: `" \t\n\r\\=:#'\"$"`. Notably,
-backtick is missing — see §2.5.
+**[DIVERGENCE]** Our `nonBareRunes` is much smaller: `` " \t\n\r\\=:#'\"$` ``.
 
 ### 2.3 Quoting
 
@@ -58,10 +57,9 @@ forming a single token: `foo'bar'"baz"` → `foobarbaz`.
 A `#` character outside quotes begins a comment. Everything from `#` to the
 end of the line is discarded.
 
-In Plan 9 mk, if the last non-whitespace character before the newline is `\`,
+If the last non-whitespace character before the newline is `\`,
 the comment-ending newline is treated as a continuation (the next line is also
-discarded). **[DIVERGENCE]** Our implementation does not propagate continuation
-through comments.
+discarded).
 
 ### 2.5 Backtick (Command Substitution)
 
@@ -82,13 +80,8 @@ The output is then subject to normal word splitting.
 Backtick can appear in the middle of a bare word: `foo`echo bar`` produces
 `foobar` (the output of `echo bar` is `bar`, concatenated with `foo`).
 
-**[DIVERGENCE]** Our implementation:
-- Does NOT support rc-style `` `{cmd} `` — only sh-style `` `cmd` ``.
-- Backtick is NOT in `nonBareRunes`, so `lexBareWord` consumes it as a regular
-  character, making the backtick-in-bareword path (lex.go:370-372) dead code.
-  **This is a bug.** Adding `` ` `` to `nonBareRunes` would fix it.
-- Expansion happens in `expand.go`, not at lex time. This is architecturally
-  different but functionally equivalent for most cases.
+**[DIVERGENCE]** Expansion happens in `expand.go`, not at lex time. This is
+architecturally different but functionally equivalent for most cases.
 
 ### 2.6 Variable References
 
@@ -232,7 +225,7 @@ Available in recipes (set by mk before execution):
 
 **[DIVERGENCE]** Our implementation adds:
 - `S` — Shell: specify alternative shell for this rule (e.g., `S"awk"`)
-- `X` — (purpose TBD from source)
+- `X` — Exclusive: recipe acquires all parallel job slots before executing
 
 ### 6.5 No-Recipe Rules
 
@@ -361,7 +354,8 @@ If a target is up to date with respect to the transitive prerequisites
 rather than rebuilding it. This is useful for archives where object files
 are deleted after archiving.
 
-The `-i` flag disables this optimization.
+The `-i` flag forces rebuild of missing intermediates, disabling this
+optimization.
 
 ### 9.3 Parallel Execution
 
@@ -442,36 +436,36 @@ For `sh`, the separator is space (` `). For `rc`, it is `\x01` (SOH).
 | Flag | Effect |
 |------|--------|
 | `-a` | Force rebuild of all targets (ignore timestamps) |
-| `-e` | Explain why targets are out of date |
+| `-f file` | Use `file` instead of `mkfile` |
 | `-i` | Force rebuild of missing intermediates |
 | `-k` | Continue after errors (keep going) |
 | `-n` | Dry run (print recipes without executing) |
 | `-q` | Don't print recipes before execution |
 | `-r` | Shallow rebuild (only direct prerequisites) |
 | `-t` | Touch targets instead of executing recipes |
-| `-w file` | Treat `file` as recently modified |
-| `-f file` | Use `file` instead of `mkfile` |
+| `-w target` | Treat `target` as recently modified |
 
 **[DIVERGENCE]** Our implementation adds:
-- `-p N` — Set parallelism level
-- `-F` — Don't drop shell args
-- `-dot` — Output Graphviz dot format
-- `-C` / `-noC` — Enable/disable color output
+- `-p N` — Set parallelism level (default: number of CPUs)
+- `-l N` — Max times a specific rule can be applied (default: 1)
+- `-C dir` — Change to `dir` before reading mkfile
+- `-F` — Don't drop shell args when no further arguments specified
+- `-I` — Interactive mode: prompt before executing rules
+- `-dot` — Print dependency graph in Graphviz dot format and exit
+- `-color` — Enable/disable color output (default: auto-detect TTY)
+- `-shell cmd` — Default shell (default: `sh -e`)
+
+Plan 9 flags not implemented: `-e` (explain why targets are out of date).
 
 ## Appendix A: Known Divergences Summary
 
 | Area | Plan 9 | Our Go Implementation |
 |------|--------|----------------------|
-| Backtick in bare words | `` ` `` terminates bare words (not in WORDCHR) | `` ` `` consumed as bare char (**BUG**) |
-| rc-style backtick | `` `{cmd} `` supported | Not supported |
-| Backtick timing | Expanded at lex time | Expanded at eval time |
-| Comment continuation | `\` at end of comment propagates | Not implemented |
-| Shell interface | Pluggable Shell struct (sh, rc) | Fixed sh with `S` attribute override |
+| Backtick timing | Expanded at lex time | Expanded at eval time (in `expand.go`) |
+| Shell interface | Pluggable Shell struct (sh, rc) | Fixed sh with `S` attribute for per-rule override |
 | Environment separator | Shell-dependent (space for sh, \x01 for rc) | Always \x01 |
-| `MKSHELL` | Changes shell globally | Uses `shell` variable |
-| `n` attribute | NOVIRT — metarule skips virtual-only targets | Supported |
-| `E` attribute | NOMINUSE — don't pass -e to shell | Supported |
+| Shell variable | `MKSHELL` changes shell globally | Uses `shell` variable |
 | Archive members | `lib(member)` syntax with special handling | Not supported |
-| `P` attribute | Custom out-of-date program | Not supported |
-| Missing intermediates | Pretending mechanism | Not implemented |
+| Rule replacement | Later identical rule header replaces earlier | Reports ambiguous error |
 | Recipe display | `front()` truncates to 5 fields | No truncation |
+| `-e` flag | Explain why targets are out of date | Not implemented |
