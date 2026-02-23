@@ -1,0 +1,14 @@
+# No-effect rules (empty recipe + no prereqs) are skipped during graph building
+mk -n -p 1 -f mkfile all
+cmp stdout expected
+
+-- mkfile --
+foo:
+%:
+foo:V:
+	echo building foo
+all:V: foo
+	echo done
+-- expected --
+foo: echo building foo
+all: echo done

@@ -1,0 +1,15 @@
+# Ambiguous recipes with prereqs show trace including prereq names
+! mk -n -p 1 -f mkfile
+stderr 'ambiguous recipes for a'
+stderr '<-.*- b'
+stderr '<-.*- c'
+
+-- mkfile --
+a: b
+	recipe1
+a: c
+	recipe2
+b: d
+	recipe_b
+c:
+d:
