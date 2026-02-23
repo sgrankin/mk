@@ -358,8 +358,10 @@ func parseRecipe(p *parser, t token) parserStateFun {
 				}
 				r.targets[len(r.targets)-1].rpat = rpat
 			} else {
-				idx := strings.IndexRune(targetstr, '%')
+				// Check for % (match anything) or & (match anything except / and .)
+				idx := strings.IndexAny(targetstr, "%&")
 				if idx >= 0 {
+					metaChar := targetstr[idx]
 					var left, right string
 					if idx > 0 {
 						left = regexp.QuoteMeta(targetstr[:idx])
@@ -368,7 +370,15 @@ func parseRecipe(p *parser, t token) parserStateFun {
 						right = regexp.QuoteMeta(targetstr[idx+1:])
 					}
 
-					patstr := fmt.Sprintf("^%s(.*)%s$", left, right)
+					// % matches .+, & matches [^./]+
+					var middle string
+					if metaChar == '&' {
+						middle = "([^./]+)"
+					} else {
+						middle = "(.*)"
+					}
+
+					patstr := fmt.Sprintf("^%s%s%s$", left, middle, right)
 					rpat := regexp.MustCompile(patstr) // QuoteMeta output is always valid regex
 					r.targets[len(r.targets)-1].rpat = rpat
 					r.targets[len(r.targets)-1].issuffix = true

@@ -260,11 +260,11 @@ func expandRecipeSigils(input string, vars map[string][]string) string {
 	return expanded
 }
 
-// Expand all unescaped '%' characters.
+// Expand all unescaped '%' and '&' characters with the stem.
 func expandSuffixes(input string, stem string) string {
 	expanded := make([]byte, 0)
 	for i := 0; i < len(input); {
-		j := strings.IndexAny(input[i:], "\\%")
+		j := strings.IndexAny(input[i:], "\\%&")
 		if j < 0 {
 			expanded = append(expanded, input[i:]...)
 			break
@@ -272,14 +272,14 @@ func expandSuffixes(input string, stem string) string {
 
 		c, w := utf8.DecodeRuneInString(input[j:])
 		expanded = append(expanded, input[i:j]...)
-		if c == '%' {
+		if c == '%' || c == '&' {
 			expanded = append(expanded, stem...)
 			i = j + w
 		} else {
 			j += w
 			c, w := utf8.DecodeRuneInString(input[j:])
-			if c == '%' {
-				expanded = append(expanded, '%')
+			if c == '%' || c == '&' {
+				expanded = append(expanded, byte(c))
 				i = j + w
 			}
 		}

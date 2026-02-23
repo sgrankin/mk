@@ -1,0 +1,13 @@
+# The & metarule pattern matches anything except / and .
+# Unlike %, it restricts to simple names (no path separators or dots)
+mk -n -p 1 -f mkfile foo.o
+cmp stdout expected
+
+-- mkfile --
+&.o: &.c
+	cc -o $target $stem.c
+foo.c:
+	generate foo.c
+-- expected --
+foo.c: generate foo.c
+foo.o: cc -o foo.o foo.c
