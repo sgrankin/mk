@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -420,7 +421,7 @@ func main() {
 	flag.BoolVar(&rebuildall, "a", false, "force building of all dependencies")
 	flag.BoolVar(&keepgoing, "k", false, "continue building after errors")
 	flag.StringVar(&pretendModified, "w", "", "pretend `target` was recently modified")
-	flag.IntVar(&subprocsAllowed, "p", runtime.NumCPU(), "maximum number of jobs to execute in parallel")
+	flag.IntVar(&subprocsAllowed, "p", -1, "maximum number of jobs to execute in parallel")
 	flag.IntVar(&maxRuleCnt, "l", 1, "maximum number of times a specific rule can be applied (recursion)")
 	flag.BoolVar(&interactive, "I", false, "prompt before executing rules")
 	flag.BoolVar(&forceIntermediate, "i", false, "force rebuild of missing intermediates")
@@ -432,6 +433,19 @@ func main() {
 	flag.BoolVar(&dontDropArgs, "F", false, "don't drop shell arguments when no further arguments are specified")
 	// TODO(rjk): P9P mk command line compatability.
 	flag.Parse()
+
+	// Resolve parallelism: -p flag > $NPROC env > NumCPU
+	if subprocsAllowed < 0 {
+		if nproc := os.Getenv("NPROC"); nproc != "" {
+			if n, err := strconv.Atoi(nproc); err == nil && n > 0 {
+				subprocsAllowed = n
+			} else {
+				mkError(fmt.Sprintf("invalid $NPROC value: %q", nproc))
+			}
+		} else {
+			subprocsAllowed = runtime.NumCPU()
+		}
+	}
 
 	if directory != "" {
 		err := os.Chdir(directory)

@@ -1,0 +1,9 @@
+# $NPROC env var controls default parallelism.
+# When set, mk uses it instead of NumCPU.
+env NPROC=2
+mk -f mkfile
+stdout 'nproc: [01]'
+
+-- mkfile --
+all:V:
+	echo nproc: $nproc
