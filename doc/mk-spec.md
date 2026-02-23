@@ -188,7 +188,14 @@ the form is `targets : prerequisites`.
 ### 6.2 Recipe Execution
 
 The entire recipe is passed to the shell as a single script (not line-by-line
-like make). The first whitespace character on each line is stripped.
+like make). Leading whitespace is stripped from each recipe line, up to the
+indentation level of the first line of the recipe. This allows recipes to be
+indented with any consistent whitespace.
+
+**[DIVERGENCE]** Plan 9 mk strips exactly one leading whitespace character per
+recipe line. Our implementation strips up to the indentation column of the
+first recipe line, which better supports indentation-sensitive languages like
+Python.
 
 By default, the shell is invoked with `-e` (exit on error). The `E` attribute
 overrides this.

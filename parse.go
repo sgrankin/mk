@@ -370,12 +370,12 @@ func parseRecipe(p *parser, t token) parserStateFun {
 						right = regexp.QuoteMeta(targetstr[idx+1:])
 					}
 
-					// % matches .* (any stem), & matches [^./]+ (no slashes or dots)
+					// % matches .+ (one or more of anything), & matches [^./]+ (no slashes or dots)
 					var middle string
 					if metaChar == '&' {
 						middle = "([^./]+)"
 					} else {
-						middle = "(.*)"
+						middle = "(.+)"
 					}
 
 					patstr := fmt.Sprintf("^%s%s%s$", left, middle, right)
