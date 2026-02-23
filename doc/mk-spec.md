@@ -454,7 +454,6 @@ For `sh`, the separator is space (` `). For `rc`, it is `\x01` (SOH).
 - `-dot` — Print dependency graph in Graphviz dot format and exit
 - `-color` — Enable/disable color output (default: auto-detect TTY)
 - `-shell cmd` — Default shell (default: `sh -e`)
-
 - `-e` — Explain why targets are out of date (prints staleness decisions to stderr)
 
 ## Appendix A: Known Divergences Summary
