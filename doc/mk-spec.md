@@ -221,8 +221,7 @@ Available in recipes (set by mk before execution):
 | `$nproc` | Slot number (0-based) of this parallel job |
 | `$pid` | Process ID of mk |
 
-**[DIVERGENCE]** `$prereqN` (numbered prerequisites) is an extension not present
-in Plan 9 mk. `$newmember` is always empty because we do not support the
+**[DIVERGENCE]** `$newmember` is always empty because we do not support the
 `lib(member)` archive syntax.
 
 ### 6.4 Attributes
@@ -555,10 +554,16 @@ in the mkfile.
 
 | Area | Plan 9 | Our Go Implementation |
 |------|--------|----------------------|
-| Backtick timing | Expanded at lex time | Expanded at eval time (in `expand.go`) |
+| Word characters | `WORDCHR`: all non-ASCII-punctuation | `nonBareRunes`: smaller set (`` \t\n\r\\=:#'"$` ``) |
+| Backtick timing | Expanded at lex time | Expanded at eval time |
+| Recipe indentation | Strips one leading whitespace char | Strips up to first line's indentation column |
 | Shell interface | Pluggable Shell struct (sh, rc) | Fixed sh with `S` attribute for per-rule override |
+| Shell variable | `MKSHELL` changes shell globally | `shell` variable; `-shell` flag; `S` attribute |
 | Environment separator | Shell-dependent (space for sh, \x01 for rc) | Always space |
-| Shell variable | `MKSHELL` changes shell globally | Uses `shell` variable |
-| Archive members | `lib(member)` syntax with special handling | Not supported |
+| Archive members | `lib(member)` syntax with special handling | Not supported (`$newmember` always empty) |
 | Recipe display | `front()` truncates to 5 fields | No truncation |
+| Regex syntax | Plan 9 `regexp(6)` | Go RE2 (no backreferences or lookaheads) |
 | `-e` flag | Explain pretend/intermediate logic only | Explains all staleness decisions |
+| Parallelism | `$NPROC` env var | `-p` flag > `$NPROC` env > NumCPU |
+| Additional attributes | — | `S` (per-rule shell), `X` (exclusive execution) |
+| Additional flags | — | `-p`, `-l`, `-C`, `-F`, `-I`, `-dot`, `-color`, `-shell`, `-e` |
