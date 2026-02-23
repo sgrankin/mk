@@ -1,0 +1,11 @@
+# Namelist substitution: ${var:A%B=C%D} transforms each word
+mk -n -p 1 -f mkfile
+cmp stdout expected
+
+-- mkfile --
+SRC=a.c b.c c.c
+OBJ=${SRC:%.c=%.o}
+all:V:
+	echo $OBJ
+-- expected --
+all: echo a.o b.o c.o
