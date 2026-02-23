@@ -1,0 +1,9 @@
+# $alltarget: all targets of the rule.
+mk -p 1 -f mkfile a
+stdout 'alltarget: a b'
+
+-- mkfile --
+a b: dep
+	echo alltarget: $alltarget
+dep:V:
+	true

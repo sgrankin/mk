@@ -64,9 +64,11 @@ func printIndented(out io.Writer, s string, ind int) {
 }
 
 // Execute a recipe.
-func dorecipe(target string, u *node, e *edge, vars map[string][]string, dryrun bool) bool {
+func dorecipe(target string, u *node, e *edge, vars map[string][]string, dryrun bool, nproc int) bool {
 	vars = maps.Clone(vars)
 	vars["target"] = []string{target}
+	vars["nproc"] = []string{fmt.Sprintf("%d", nproc)}
+	vars["pid"] = []string{fmt.Sprintf("%d", os.Getpid())}
 	if e.r.ismeta {
 		if e.r.attributes.regex {
 			for i := range e.matches {
@@ -77,20 +79,31 @@ func dorecipe(target string, u *node, e *edge, vars map[string][]string, dryrun 
 		}
 	}
 
-	// TODO: other variables to set
-	// alltargets
-	// newprereq
+	// alltarget: all targets of the rule
+	alltarget := make([]string, 0, len(e.r.targets))
+	for i := range e.r.targets {
+		alltarget = append(alltarget, e.r.targets[i].spat)
+	}
+	vars["alltarget"] = alltarget
 
 	prereqs := make([]string, 0)
-	nprereq := 0
+	newprereq := make([]string, 0)
+	nprereqN := 0
 	for i := range u.prereqs {
 		if u.prereqs[i].v != nil {
 			prereqs = append(prereqs, u.prereqs[i].v.name)
-			nprereq++
-			vars[fmt.Sprintf("prereq%d", nprereq)] = []string{u.prereqs[i].v.name}
+			nprereqN++
+			vars[fmt.Sprintf("prereq%d", nprereqN)] = []string{u.prereqs[i].v.name}
+			// newprereq: prereqs that were rebuilt (out of date)
+			if u.prereqs[i].v.status == nodeStatusDone {
+				newprereq = append(newprereq, u.prereqs[i].v.name)
+			}
 		}
 	}
 	vars["prereq"] = prereqs
+	vars["newprereq"] = newprereq
+	// newmember: archive member names from newprereq (not supported — no lib(member) syntax)
+	vars["newmember"] = []string{}
 
 	// Setup the shell in vars.
 	sh, args := expandShell(defaultShell, []string{})

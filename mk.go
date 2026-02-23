@@ -74,13 +74,16 @@ var (
 )
 
 // Wait until there is an available subprocess slot.
-func reserveSubproc() {
+// Returns the 0-based slot number assigned to this job.
+func reserveSubproc() int {
 	subprocsRunningCond.L.Lock()
 	for subprocsRunning >= subprocsAllowed {
 		subprocsRunningCond.Wait()
 	}
+	slot := subprocsRunning
 	subprocsRunning++
 	subprocsRunningCond.L.Unlock()
+	return slot
 }
 
 // Free up another subprocess to run.
@@ -320,13 +323,15 @@ func mkNode(g *graph, u *node, vars map[string][]string, dryrun bool, required b
 			}
 			u.updateTimestamp()
 		} else if !touchmode {
+			var nproc int
 			if e.r.attributes.exclusive {
 				reserveExclusiveSubproc()
+				nproc = 0
 			} else {
-				reserveSubproc()
+				nproc = reserveSubproc()
 			}
 
-			if !dorecipe(u.name, u, e, vars, dryrun) {
+			if !dorecipe(u.name, u, e, vars, dryrun, nproc) {
 				finalstatus = nodeStatusFailed
 				buildFailed.Store(true)
 				// D attribute: delete the target file when the recipe fails.

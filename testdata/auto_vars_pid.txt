@@ -1,0 +1,7 @@
+# $pid: process ID of mk.
+mk -p 1 -f mkfile
+stdout 'pid: [0-9]+'
+
+-- mkfile --
+all:V:
+	echo pid: $pid

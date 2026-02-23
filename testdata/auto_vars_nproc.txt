@@ -1,0 +1,8 @@
+# $nproc: 0-based job slot number.
+# With -p 1, all jobs run in slot 0.
+mk -p 1 -f mkfile
+stdout 'slot: 0'
+
+-- mkfile --
+all:V:
+	echo slot: $nproc

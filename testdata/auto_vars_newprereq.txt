@@ -1,0 +1,15 @@
+# $newprereq: only out-of-date prerequisites.
+# dep1 is virtual (always rebuilt), dep2 exists and is up to date.
+mk -p 1 -f mkfile target
+stdout 'new: dep1'
+! stdout 'dep2'
+
+-- mkfile --
+target:V: dep1 dep2
+	echo new: $newprereq
+dep1:V:
+	true
+dep2:
+	echo making dep2
+-- dep2 --
+exists
