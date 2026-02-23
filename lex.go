@@ -11,7 +11,10 @@ type tokenType int
 const eof rune = '\000'
 
 // Rune's that cannot be part of a bare (unquoted) string.
-const nonBareRunes = " \t\n\r\\=:#'\"$"
+// Backtick must be here so lexBareWord transitions to lexBackQuotedWord
+// instead of consuming it as a bare character. This matches Plan 9 mk's
+// WORDCHR which excludes backtick from word characters.
+const nonBareRunes = " \t\n\r\\=:#'\"$`"
 
 // Return true if the string contains whitespace only.
 func onlyWhitespace(s string) bool {

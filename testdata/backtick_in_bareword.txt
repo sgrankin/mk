@@ -1,0 +1,10 @@
+# Backtick in the middle of a bare word: prefix`cmd`suffix concatenates
+mk -n -f mkfile
+cmp stdout expected
+
+-- mkfile --
+VAR=foo`echo bar`baz
+all:V:
+	echo $VAR
+-- expected --
+all: echo foobarbaz

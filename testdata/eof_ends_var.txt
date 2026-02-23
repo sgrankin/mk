@@ -1,7 +1,7 @@
 # Include file with variables used in recipes (second variant)
 # Originally tested EOF ending a variable (no trailing newline in deps file),
 # but txtar always adds trailing newlines. Kept as a duplicate include test.
-mk -n -f mkfile
+mk -n -p 1 -f mkfile
 cmp stdout expected
 
 -- mkfile --
@@ -21,6 +21,6 @@ two:
 deps = one two
 extracmdarg = gopher
 -- expected --
-two: gopher rebar
 one: process bar gopher
+two: gopher rebar
 test3.mk.o: secondprocess ab
