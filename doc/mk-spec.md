@@ -66,25 +66,21 @@ discarded).
 
 ### 2.5 Backtick (Command Substitution)
 
-Backtick substitution executes a shell command and substitutes its output.
+Backtick substitution executes a shell command and replaces the expression
+with its output, which is then subject to normal word splitting.
 
-In Plan 9 mk (lex.c `bquote()`), backtick expansion happens **at lex time**
-during line assembly (`assline()`). The lexer encounters `` ` ``, then:
+Two forms are supported:
+- `` `cmd` `` — sh-style: the command runs until the closing backtick.
+- `` `{cmd} `` — rc-style: the command runs until the closing `}`.
 
-1. Skips whitespace after the opening backtick.
-2. If the next character is `{`, uses `}` as the terminator (rc-style: `` `{cmd} ``).
-3. Otherwise, uses `` ` `` as the terminator (sh-style: `` `cmd` ``).
-4. Reads until the terminator, handling nested quotes (`'`, `"`, `\`).
-5. Executes the command via `execsh()`.
-6. The command's output replaces the backtick expression in the line buffer.
+Backtick expressions can appear adjacent to bare words:
+`foo`echo bar`` produces `foobar`.
 
-The output is then subject to normal word splitting.
+In Plan 9 mk, backtick expansion happens at lex time during line assembly.
 
-Backtick can appear in the middle of a bare word: `foo`echo bar`` produces
-`foobar` (the output of `echo bar` is `bar`, concatenated with `foo`).
-
-**[DIVERGENCE]** Expansion happens in `expand.go`, not at lex time. This is
-architecturally different but functionally equivalent for most cases.
+**[DIVERGENCE]** Our implementation expands backticks during variable expansion,
+not at lex time. This is architecturally different but functionally equivalent
+for most cases.
 
 ### 2.6 Variable References
 
@@ -439,7 +435,7 @@ After ambiguity resolution, attributes from rules are propagated to nodes:
 
 ## 9. Execution
 
-### 9.1 Work Algorithm (`work` in mk.c)
+### 9.1 Work Algorithm
 
 For each node (depth-first):
 
@@ -481,39 +477,18 @@ In Plan 9 mk, the `front()` function truncates long recipe displays to
 
 ## 10. Shell Interface
 
-### 10.1 Shell Structure
+Recipes are passed to a shell for execution. The shell receives the recipe
+text on standard input (recipes cannot read their own stdin).
 
-Plan 9 mk supports pluggable shells via the `Shell` struct:
+The default shell is `sh` invoked with `-e` (exit on error). The `E` attribute
+removes the `-e` flag for a specific rule.
 
-```c
-typedef struct Shell {
-    char *name;
-    char *termchars;    // chars that terminate assignment attributes
-    int   iws;          // inter-word separator in environment
-    char *(*charin)();  // find unescaped chars in string
-    char *(*expandquote)(); // extract escaped token
-    int   (*escapetoken)(); // input escaped token
-    char *(*copyq)();   // handle quoted strings
-    int   (*matchname)(); // does name match
-} Shell;
-```
+In Plan 9 mk, the `MKSHELL` variable selects between pluggable shell
+implementations (`sh` and `rc`), each with its own quoting and escaping rules.
 
-The default is `sh` (Bourne shell). Plan 9 also supports `rc`.
-
-### 10.2 sh Shell Conventions
-
-- `shcharin()`: Searches for unescaped characters, respecting `\`, `'`, `"` quoting.
-- `shexpandquote()`: Handles `\x` (single char escape), `'...'`, `"..."`.
-- `shescapetoken()`: Input processing for escaped tokens during lexing.
-- `shcopyq()`: Copies quoted strings including backtick strings `` `...` ``.
-- `termchars`: `"'= \t` — characters that terminate assignment attributes.
-
-### 10.3 MKSHELL Variable
-
-Setting `MKSHELL` changes the shell used for subsequent recipe execution.
-
-**[DIVERGENCE]** Our implementation uses a `shell` variable and supports
-per-rule shell override via the `S` attribute.
+**[DIVERGENCE]** Our implementation uses a `shell` mk variable to change the
+shell for subsequent rules. The `S` attribute overrides the shell for a single
+rule. The `-shell` flag sets the default shell from the command line.
 
 ## 11. Environment
 
