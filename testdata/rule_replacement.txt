@@ -1,0 +1,12 @@
+# When two rules have identical headers and both have recipes,
+# the later rule replaces the earlier one.
+# TODO: Currently reports ambiguous instead of replacing. Plan 9 mk
+# replaces the earlier rule at parse time.
+! mk -n -p 1 -f mkfile
+stderr 'ambiguous'
+
+-- mkfile --
+all:V:
+	echo first
+all:V:
+	echo second
