@@ -1,0 +1,18 @@
+# -i flag: force rebuild of missing intermediates
+# Without -i, mk pretends prog.o exists when prog is newer than prog.c.
+# With -i, mk forces rebuilding the missing prog.o.
+cp prog prog
+cp prog.c prog.c
+mk -i -n -p 1 -f mkfile
+stdout 'cc prog.c'
+stdout 'link prog.o'
+
+-- mkfile --
+prog: prog.o
+	link prog.o
+prog.o: prog.c
+	cc prog.c
+-- prog --
+binary
+-- prog.c --
+source

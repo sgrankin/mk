@@ -63,6 +63,9 @@ var (
 	// Pretend this target was recently modified (-w flag).
 	pretendModified string
 
+	// Force rebuild of missing intermediates (-i flag).
+	forceIntermediate bool
+
 	// Set when any recipe fails; checked to stop new recipes when -k is not set.
 	buildFailed atomic.Bool
 )
@@ -231,7 +234,7 @@ func mkNode(g *graph, u *node, vars map[string][]string, dryrun bool, required b
 		panic("unreachable: no edge found for node " + u.name)
 	}
 
-	prereqs_required := required && (e.r.attributes.virtual || !u.exists)
+	prereqs_required := required && (e.r.attributes.virtual || !u.exists || forceIntermediate)
 	if mkNodePrereqs(g, prereqs, vars, dryrun, prereqs_required) == nodeStatusFailed {
 		finalstatus = nodeStatusFailed
 	}
@@ -382,7 +385,8 @@ func main() {
 	flag.StringVar(&pretendModified, "w", "", "pretend `target` was recently modified")
 	flag.IntVar(&subprocsAllowed, "p", runtime.NumCPU(), "maximum number of jobs to execute in parallel")
 	flag.IntVar(&maxRuleCnt, "l", 1, "maximum number of times a specific rule can be applied (recursion)")
-	flag.BoolVar(&interactive, "i", false, "prompt before executing rules")
+	flag.BoolVar(&interactive, "I", false, "prompt before executing rules")
+	flag.BoolVar(&forceIntermediate, "i", false, "force rebuild of missing intermediates")
 	flag.BoolVar(&quiet, "q", false, "don't print recipes before executing them")
 	flag.BoolVar(&dotOutput, "dot", false, "print dependency graph in graphviz dot format and exit")
 	flag.BoolVar(&color, "color", isatty.IsTerminal(os.Stdout.Fd()), "turn color on/off")

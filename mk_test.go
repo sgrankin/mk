@@ -70,7 +70,7 @@ func startMkWithStdin(stdin string, args ...string) ([]byte, []byte, error) {
 func TestInteractiveMode(t *testing.T) {
 	t.Parallel()
 	// Leading whitespace covers the whitespace-skip path in the interactive loop
-	got, _, err := startMkWithStdin(" y\n", "-i", "-n", "-p", "1", "-f", "testdata/test32.mk")
+	got, _, err := startMkWithStdin(" y\n", "-I", "-n", "-p", "1", "-f", "testdata/test32.mk")
 	if err != nil {
 		t.Fatalf("exec failed: %v", err)
 	}
@@ -84,7 +84,7 @@ func TestInteractiveMode(t *testing.T) {
 
 func TestInteractiveModeDecline(t *testing.T) {
 	t.Parallel()
-	got, _, err := startMkWithStdin("n\n", "-i", "-n", "-p", "1", "-f", "testdata/test32.mk")
+	got, _, err := startMkWithStdin("n\n", "-I", "-n", "-p", "1", "-f", "testdata/test32.mk")
 	if err != nil {
 		t.Fatalf("exec failed: %v", err)
 	}
@@ -99,7 +99,7 @@ func TestInteractiveModeDecline(t *testing.T) {
 func TestInteractiveModeEOF(t *testing.T) {
 	t.Parallel()
 	// Empty stdin → EOF on ReadRune → returns without building
-	got, _, _ := startMkWithStdin("", "-i", "-n", "-p", "1", "-f", "testdata/test32.mk")
+	got, _, _ := startMkWithStdin("", "-I", "-n", "-p", "1", "-f", "testdata/test32.mk")
 
 	output := string(got)
 	want := "dep: build dep\nProceed? "
