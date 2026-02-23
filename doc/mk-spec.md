@@ -466,6 +466,5 @@ Plan 9 flags not implemented: `-e` (explain why targets are out of date).
 | Environment separator | Shell-dependent (space for sh, \x01 for rc) | Always space |
 | Shell variable | `MKSHELL` changes shell globally | Uses `shell` variable |
 | Archive members | `lib(member)` syntax with special handling | Not supported |
-| Rule replacement | Later identical rule header replaces earlier | Reports ambiguous error |
 | Recipe display | `front()` truncates to 5 fields | No truncation |
 | `-e` flag | Explain why targets are out of date | Not implemented |
