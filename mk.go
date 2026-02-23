@@ -368,7 +368,15 @@ func main() {
 		}
 	}
 
-	targets := flag.Args()
+	// Separate command-line variable overrides (VAR=value) from targets.
+	var targets []string
+	for _, arg := range flag.Args() {
+		if i := strings.Index(arg, "="); i > 0 && isValidVarName(arg[:i]) {
+			rs.vars[arg[:i]] = expand(arg[i+1:], rs.vars, true)
+		} else {
+			targets = append(targets, arg)
+		}
+	}
 
 	// build the first non-meta rule in the makefile, if none are given explicitly
 	if len(targets) == 0 {

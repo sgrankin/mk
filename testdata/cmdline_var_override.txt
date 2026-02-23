@@ -1,10 +1,10 @@
 # Variables set on the command line override mkfile assignments
-# TODO: Not yet implemented — VAR=value is treated as a target name.
-# Plan 9 mk supports command-line variable overrides.
-! mk -n -p 1 -f mkfile VAR=override
-stderr 'VAR=override'
+mk -n -p 1 -f mkfile VAR=override
+cmp stdout expected
 
 -- mkfile --
 VAR=original
 all:V:
 	echo $VAR
+-- expected --
+all: echo override
