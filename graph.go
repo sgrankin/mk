@@ -158,8 +158,8 @@ func applyrules(rs *ruleSet, g *graph, target string, rulecnt []int) *node {
 				continue
 			}
 
-			// skip rules that have no effect
-			if r.recipe == "" && len(r.prereqs) == 0 {
+			// skip rules that have no effect (but keep N-attributed rules)
+			if r.recipe == "" && len(r.prereqs) == 0 && !r.attributes.forcedTimestamp {
 				continue
 			}
 
@@ -188,8 +188,14 @@ func applyrules(rs *ruleSet, g *graph, target string, rulecnt []int) *node {
 			continue
 		}
 
-		// skip rules that have no effect
-		if r.recipe == "" && len(r.prereqs) == 0 {
+		// skip rules that have no effect (but keep N-attributed rules)
+		if r.recipe == "" && len(r.prereqs) == 0 && !r.attributes.forcedTimestamp {
+			continue
+		}
+
+		// n attribute: skip metarule if the target is virtual-only
+		// (doesn't exist on disk and no concrete rule matched)
+		if r.attributes.nonvirtual && !u.exists && u.flags&nodeFlagProbable == 0 {
 			continue
 		}
 

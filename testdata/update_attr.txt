@@ -1,11 +1,15 @@
 # U attribute: target is considered updated even if recipe doesn't modify it.
-# Within a single build, this is already handled by status propagation
-# (nodeStatusDone triggers dependent rebuilds).
+# After the recipe runs, the target's timestamp is forced to now, so
+# dependents see it as rebuilt even if the file's mtime didn't change.
+#
+# We test this by having a target whose recipe doesn't modify its own file.
+# With U, the dependent should still see it as updated and rebuild.
 mk -p 1 -f mkfile target
+stdout 'building dep'
 stdout 'building target'
 
 -- mkfile --
-target:U: dep
+target: dep
 	echo building target
-dep:V:
+dep:UV:
 	echo building dep

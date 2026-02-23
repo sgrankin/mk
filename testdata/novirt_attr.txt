@@ -1,15 +1,33 @@
-# n attribute: metarule only matches file targets, not virtual-only ones.
-# The %.o metarule with n only matches when %.c exists on disk.
-mk -n -p 1 -f mkfile
-cmp stdout expected
+# n attribute: metarule only matches targets that exist on disk.
+# With n, the %.o metarule skips bar.o (doesn't exist) even though bar.c does.
+# Without n, the metarule matches bar.o regardless.
 
--- mkfile --
+# With n: foo.o exists → metarule matches → edge in graph.
+#         bar.o doesn't exist → metarule skips → no edge.
+mk -dot -f mkfile.n
+stdout '"foo.o" -> "foo.c"'
+! stdout '"bar.o" -> "bar.c"'
+
+# Without n: both targets matched → both edges in graph.
+mk -dot -f mkfile.non
+stdout '"foo.o" -> "foo.c"'
+stdout '"bar.o" -> "bar.c"'
+
+-- mkfile.n --
 %.o:n: %.c
 	compile $stem.c
-all:V: foo.o
+all:V: foo.o bar.o
 	echo done
+
+-- mkfile.non --
+%.o: %.c
+	compile $stem.c
+all:V: foo.o bar.o
+	echo done
+
+-- foo.o --
+old object
 -- foo.c --
-source code
--- expected --
-foo.o: compile foo.c
-all: echo done
+source
+-- bar.c --
+source

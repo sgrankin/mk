@@ -1,14 +1,33 @@
-# N attribute: target need not exist and has no recipe.
-# Without N, mk would error on a missing target with no recipe.
-mk -n -p 1 -f mkfile all
-cmp stdout expected
+# N attribute: suppress "don't know how to make" error for recipe-less targets.
+# A target with N that doesn't exist and has no recipe should not error.
 
--- mkfile --
+# Without N, a missing target with no rule is an error.
+! mk -n -p 1 -f mkfile.noN
+stderr 'don.t know how to make'
+
+# With N and no prereqs: dep doesn't exist, no recipe, no prereqs — OK.
+mk -n -p 1 -f mkfile.N all
+stdout 'all: echo building'
+
+# With N and prereqs (canonical Plan 9 usage): dep has prereq but no recipe.
+mk -n -p 1 -f mkfile.Nprereq all
+cmp stdout expected.Nprereq
+
+-- mkfile.noN --
+all:V: dep
+	echo building
+
+-- mkfile.N --
+dep:N:
+all:V: dep
+	echo building
+
+-- mkfile.Nprereq --
 dep:N: source
 all:V: dep
 	echo building
 source:
 	echo making source
--- expected --
+-- expected.Nprereq --
 source: echo making source
 all: echo building

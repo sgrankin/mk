@@ -13,7 +13,7 @@ import (
 type attribSet struct {
 	delFailed       bool // delete targets when the recipe fails
 	nonstop         bool // don't stop if the recipe fails
-	forcedTimestamp bool // update timestamp whether the recipe does or not
+	forcedTimestamp bool // N: target need not exist and has no recipe
 	nonvirtual      bool // a meta-rule that will only match files
 	quiet           bool // don't print the recipe
 	regex           bool // regular expression meta-rule
@@ -109,7 +109,8 @@ type ruleSet struct {
 	vars  map[string][]string
 	rules []rule
 	// map a target to an array of indexes into rules
-	targetrules map[string][]int
+	targetrules    map[string][]int
+	unexportedVars map[string]bool // variables marked with =U= (not exported to recipe env)
 }
 
 // Read attributes for an array of strings, updating the rule.
@@ -215,7 +216,8 @@ type assignmentError struct {
 }
 
 // Parse and execute assignment operation.
-func (rs *ruleSet) executeAssignment(ts []token) *assignmentError {
+// If unexported is true, the variable is marked as not exported to recipe environments.
+func (rs *ruleSet) executeAssignment(ts []token, unexported bool) *assignmentError {
 	assignee := ts[0].val
 	if !isValidVarName(assignee) {
 		return &assignmentError{
@@ -245,6 +247,12 @@ func (rs *ruleSet) executeAssignment(ts []token) *assignmentError {
 	}
 
 	rs.vars[assignee] = vals
+
+	if unexported {
+		rs.unexportedVars[assignee] = true
+	} else {
+		delete(rs.unexportedVars, assignee)
+	}
 
 	return nil
 }

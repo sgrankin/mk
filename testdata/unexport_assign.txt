@@ -1,0 +1,30 @@
+# =U= assignment: variable is available in mk expansion but not exported
+# to the recipe's environment.
+
+mk -p 1 -f mkfile
+# mk-expanded value should appear
+stdout 'mk: secret_value'
+# Shell env should NOT contain SECRET (it's unexported)
+! stdout 'env: SECRET='
+# Shell env should contain EXPORTED
+stdout 'env: EXPORTED=exported_value'
+
+# Reassigning with plain = should restore export behavior.
+mk -p 1 -f mkfile.reexport
+stdout 'env: SECRET=now_exported'
+
+-- mkfile --
+SECRET =U= secret_value
+EXPORTED = exported_value
+
+all:V:
+	echo mk: $SECRET
+	env | grep '^SECRET=' | sed 's/^/env: /' || true
+	env | grep '^EXPORTED=' | sed 's/^/env: /' || true
+
+-- mkfile.reexport --
+SECRET =U= hidden
+SECRET = now_exported
+
+all:V:
+	env | grep '^SECRET=' | sed 's/^/env: /' || true

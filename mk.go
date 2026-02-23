@@ -212,7 +212,7 @@ func mkNode(g *graph, u *node, vars map[string][]string, dryrun bool, required b
 
 	// there's no rules.
 	if len(u.prereqs) == 0 {
-		if !(u.r != nil && u.r.attributes.virtual) && !u.exists {
+		if !(u.r != nil && (u.r.attributes.virtual || u.r.attributes.forcedTimestamp)) && !u.exists {
 			wd, _ := os.Getwd()
 			mkError(fmt.Sprintf("don't know how to make %s in %s\n", u.name, wd))
 		}
@@ -334,7 +334,13 @@ func mkNode(g *graph, u *node, vars map[string][]string, dryrun bool, required b
 					os.Remove(u.name)
 				}
 			}
-			u.updateTimestamp()
+			// U attribute: force timestamp so dependents see the target as updated
+			// even if the recipe didn't modify the file.
+			if finalstatus != nodeStatusFailed && e.r.attributes.update {
+				u.t = time.Now()
+			} else {
+				u.updateTimestamp()
+			}
 
 			if e.r.attributes.exclusive {
 				finishExclusiveSubproc()
@@ -496,6 +502,7 @@ func main() {
 
 	// Keep a global reference to the total state of mk variables.
 	GlobalMkState = rs.vars
+	GlobalUnexportedVars = rs.unexportedVars
 
 	if dotOutput {
 		g := buildgraph(rs, "")
@@ -539,3 +546,4 @@ func main() {
 }
 
 var GlobalMkState map[string][]string
+var GlobalUnexportedVars map[string]bool

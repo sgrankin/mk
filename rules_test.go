@@ -62,9 +62,10 @@ func TestEquivRecipe(t *testing.T) {
 func TestExecuteAssignment(t *testing.T) {
 	// Valid assignment with non-word tokens in value
 	rs := &ruleSet{
-		vars:        map[string][]string{},
-		rules:       []rule{},
-		targetrules: map[string][]int{},
+		vars:           map[string][]string{},
+		rules:          []rule{},
+		targetrules:    map[string][]int{},
+		unexportedVars: map[string]bool{},
 	}
 	tokens := []token{
 		{typ: tokenWord, val: "x"},
@@ -72,7 +73,7 @@ func TestExecuteAssignment(t *testing.T) {
 		{typ: tokenColon, val: ":"},
 		{typ: tokenWord, val: "b"},
 	}
-	err := rs.executeAssignment(tokens)
+	err := rs.executeAssignment(tokens, false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -86,7 +87,7 @@ func TestExecuteAssignment(t *testing.T) {
 		{typ: tokenColon, val: ":"},
 		{typ: tokenWord, val: "val"},
 	}
-	err = rs.executeAssignment(nonWordStart)
+	err = rs.executeAssignment(nonWordStart, false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -98,7 +99,7 @@ func TestExecuteAssignment(t *testing.T) {
 	badName := []token{
 		{typ: tokenWord, val: "1bad"},
 	}
-	err = rs.executeAssignment(badName)
+	err = rs.executeAssignment(badName, false)
 	if err == nil {
 		t.Error("expected error for invalid variable name")
 	}

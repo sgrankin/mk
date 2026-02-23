@@ -125,6 +125,10 @@ func dorecipe(target string, u *node, e *edge, vars map[string][]string, dryrun 
 	}
 	env := os.Environ()
 	for k, v := range vars {
+		// =U= variables are available for mk expansion but not exported to recipes.
+		if GlobalUnexportedVars[k] {
+			continue
+		}
 		env = append(env, k+"="+strings.Join(v, " "))
 	}
 

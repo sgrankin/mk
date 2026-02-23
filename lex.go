@@ -30,6 +30,7 @@ const (
 	tokenColon
 	tokenAssign
 	tokenRecipe
+	tokenAssignU // =U= unexport assignment
 )
 
 func (typ tokenType) String() string {
@@ -50,6 +51,8 @@ func (typ tokenType) String() string {
 		return "[Assign]"
 	case tokenRecipe:
 		return "[Recipe]"
+	case tokenAssignU:
+		return "[AssignU]"
 	}
 	return "[MysteryToken]"
 }
@@ -296,8 +299,14 @@ func lexColon(l *lexer) lexerStateFun {
 }
 
 func lexAssign(l *lexer) lexerStateFun {
-	l.next()
-	l.emit(tokenAssign)
+	l.next() // consume '='
+	if l.peek() == 'U' && l.peekN(1) == '=' {
+		l.next() // consume 'U'
+		l.next() // consume '='
+		l.emit(tokenAssignU)
+	} else {
+		l.emit(tokenAssign)
+	}
 	return lexTopLevel
 }
 

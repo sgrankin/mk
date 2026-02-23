@@ -13,11 +13,12 @@ import (
 )
 
 type parser struct {
-	l        *lexer   // underlying lexer
-	name     string   // name of the file being parsed
-	path     string   // full path of the file being parsed
-	tokenbuf []token  // tokens consumed on the current statement
-	rules    *ruleSet // current ruleSet
+	l          *lexer   // underlying lexer
+	name       string   // name of the file being parsed
+	path       string   // full path of the file being parsed
+	tokenbuf   []token  // tokens consumed on the current statement
+	rules      *ruleSet // current ruleSet
+	unexported bool     // next assignment is =U= (unexported)
 }
 
 // Pretty errors.
@@ -54,9 +55,10 @@ type parserStateFun func(*parser, token) parserStateFun
 // Parse a mkfile, returning a new ruleSet.
 func parse(input string, name string, path string, env map[string][]string) *ruleSet {
 	rules := &ruleSet{
-		env,
-		make([]rule, 0),
-		make(map[string][]int),
+		vars:           env,
+		rules:          make([]rule, 0),
+		targetrules:    make(map[string][]int),
+		unexportedVars: make(map[string]bool),
 	}
 	parseInto(input, name, rules, path)
 	return rules
@@ -65,7 +67,7 @@ func parse(input string, name string, path string, env map[string][]string) *rul
 // Parse a mkfile inserting rules and variables into a given ruleSet.
 func parseInto(input string, name string, rules *ruleSet, path string) {
 	l, tokens := lex(input)
-	p := &parser{l, name, path, []token{}, rules}
+	p := &parser{l: l, name: name, path: path, tokenbuf: []token{}, rules: rules}
 	oldmkfiledir := p.rules.vars["mkfiledir"]
 	p.rules.vars["mkfiledir"] = []string{filepath.Dir(path)}
 	state := parseTopLevel
@@ -215,6 +217,10 @@ func parseEqualsOrTarget(p *parser, t token) parserStateFun {
 	case tokenAssign:
 		return parseAssignment
 
+	case tokenAssignU:
+		p.unexported = true
+		return parseAssignment
+
 	case tokenWord:
 		p.push(t)
 		return parseTargets
@@ -235,10 +241,11 @@ func parseEqualsOrTarget(p *parser, t token) parserStateFun {
 func parseAssignment(p *parser, t token) parserStateFun {
 	switch t.typ {
 	case tokenNewline:
-		err := p.rules.executeAssignment(p.tokenbuf)
+		err := p.rules.executeAssignment(p.tokenbuf, p.unexported)
 		if err != nil {
 			p.basicErrorAtToken(err.what, err.where)
 		}
+		p.unexported = false
 		p.clear()
 		return parseTopLevel
 
