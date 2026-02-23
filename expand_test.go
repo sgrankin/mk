@@ -330,13 +330,23 @@ func TestExpandSingleQuotedEdgeCases(t *testing.T) {
 }
 
 func TestExpandBackQuotedEdgeCases(t *testing.T) {
-	// Unterminated backtick
+	// Unterminated sh-style backtick
 	got, n := expandBackQuoted("cmd without closing", map[string][]string{
 		"shell": {"sh"},
 	})
 	if len(got) != 1 || got[0] != "cmd without closing" || n != len("cmd without closing") {
-		t.Errorf("expandBackQuoted(unterminated) = (%v, %d), want ([%q], %d)",
+		t.Errorf("expandBackQuoted(unterminated sh) = (%v, %d), want ([%q], %d)",
 			got, n, "cmd without closing", len("cmd without closing"))
+	}
+
+	// Unterminated rc-style backtick: `{cmd with no closing brace
+	input := "{cmd without closing"
+	got, n = expandBackQuoted(input, map[string][]string{
+		"shell": {"sh"},
+	})
+	if len(got) != 1 || got[0] != input || n != len(input) {
+		t.Errorf("expandBackQuoted(unterminated rc) = (%v, %d), want ([%q], %d)",
+			got, n, input, len(input))
 	}
 }
 
