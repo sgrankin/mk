@@ -567,3 +567,106 @@ in the mkfile.
 | Parallelism | `$NPROC` env var | `-p` flag > `$NPROC` env > NumCPU |
 | Additional attributes | — | `S` (per-rule shell), `X` (exclusive execution) |
 | Additional flags | — | `-p`, `-l`, `-C`, `-F`, `-I`, `-dot`, `-color`, `-shell`, `-e` |
+
+## Appendix B: Examples
+
+### Basic mkfile
+
+```
+CC=cc
+CFLAGS=-Wall -O2
+OBJ=main.o util.o
+
+prog: $OBJ
+    $CC $CFLAGS -o $target $prereq
+
+%.o: %.c
+    $CC $CFLAGS -c $stem.c
+```
+
+The first rule (`prog`) is the default target. The `%.o: %.c` metarule
+compiles any `.c` file into a `.o` file, with `$stem` set to the matching
+filename without extension.
+
+### Virtual targets
+
+```
+all:V: prog docs
+
+clean:V:
+    rm -f *.o prog
+
+test:V: prog
+    ./prog --test
+```
+
+Virtual targets are not files. Without `V`, mk would skip `clean` if a file
+named `clean` existed.
+
+### Conditional compilation with pipe include
+
+```
+<|sh -c 'if pkg-config --exists libpng; then echo "HAVE_PNG=1"; fi'
+
+prog: main.o
+    $CC -o $target $prereq
+```
+
+### Unexported variables
+
+```
+SECRET =U= my-api-key
+CONFIG = production
+
+deploy:V:
+    echo "deploying $CONFIG"   # CONFIG is in env; SECRET is not
+```
+
+`$SECRET` is available in mk variable expansion but is not placed in the
+environment for recipes.
+
+### Custom staleness with P attribute
+
+```
+result.txt:Psh -c '[ "$1" -ot "$2" ] && exit 1; exit 0': input.txt
+    process input.txt > result.txt
+```
+
+The `P` command receives `target prereq` as arguments. Non-zero exit means
+out of date.
+
+### Per-rule shell with S attribute
+
+```
+report.txt:VS"python3":
+    import json, sys
+    data = json.load(open('data.json'))
+    print(f"Records: {len(data)}")
+
+all:V: report.txt
+    cat report.txt
+```
+
+### Regex metarule
+
+```
+([^/]+)\.o:R: \1.c
+    cc -c -o $target $stem1.c
+```
+
+The regex is anchored (`^...$`). `\1` in prerequisites and `$stem1` in
+recipes reference the first capture group.
+
+### Parallel builds with exclusive linking
+
+```
+%.o: %.c
+    cc -c -o $target $stem.c
+
+prog:X: main.o util.o io.o
+    cc -o $target $prereq
+```
+
+Object files compile in parallel. The `X` attribute on `prog` ensures the
+link step waits for all slots, preventing it from running while compilations
+are still in progress.
