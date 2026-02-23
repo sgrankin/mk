@@ -6,7 +6,7 @@
 mk - maintain (make) related files
 
 # SYNOPSIS
-`mk [ -f mkfile ] ...  [ option ... ] [ target ... ]`
+`mk [-f mkfile] [-C dir] [-p N] [-l N] [-w target] [-shell prog] [-s prog] [-color] [-F] [-n] [-t] [-r] [-a] [-k] [-i] [-I] [-e] [-q] [-dot] [target ...] [var=value ...]`
 
 
 # DESCRIPTION
@@ -25,50 +25,66 @@ rule (not meta-rule) in mkfile is updated.
 
 Options are:
 
--C
-:   Change directory to `directory` first.
+-C *dir*
+:   Change directory to *dir* first.
 
--f
-:   Use the given file as mkfile. default is *mkfile*
+-f *file*
+:   Use the given file as mkfile. Default is `mkfile`.
 
 -n
-:   print commands without actually executing
+:   Print commands without actually executing.
+
+-t
+:   Touch targets instead of executing recipes.
 
 -r
-:   force building of just targets
+:   Force building of just targets.
 
 -a
-:   force building of all dependencies
+:   Force building of all dependencies.
 
--p
-:   maximum number of jobs to execute in parallel. Default is the number of CPUs
+-k
+:   Continue building after errors.
+
+-w *target*
+:   Pretend *target* was recently modified.
+
+-p *N*
+:   Maximum number of jobs to execute in parallel. Default is the number of CPUs.
+
+-l *N*
+:   Maximum number of times a specific rule can be applied (recursion). Default is 1.
+
+-I
+:   Prompt before executing rules.
 
 -i
-:   prompt before executing rules
+:   Force rebuild of missing intermediates.
+
+-e
+:   Explain why targets are out of date.
 
 -q
-:   don't print recipes before executing them
+:   Don't print recipes before executing them.
+
+-dot
+:   Print dependency graph in graphviz dot format and exit.
 
 -color
-:   Boolean flag to force color output on / off.
+:   Force color output on/off.
 
 -F
 :   Don't drop shell arguments when no further arguments are specified.
 
--s 
-:   Default shell to use if none are specified via $shell (default: "sh -c")
-
--l 
-:   Maximum number of recursive invocations of a rule. (default 1)
-
--shell
-:   Change the shell used to execute rules. This can also be set using the `shell` variable in `mkfile`
+-shell *prog*
+:   Default shell to use if none are specified via `$shell`. Default is `sh -e`.
+    This can also be set using the `shell` variable in `mkfile`.
 
 ## The mkfile
 
 A mkfile consists of assignments (described under `Environment')
- and rules. A rule contains targets and a tail. A target
-  is a literal string and is normally a file name.  The
+and rules. A rule contains targets and a tail. A target
+is a literal string and is normally a file name.  The
 tail contains zero or more prerequisites and an optional
 recipe.  Each line of the recipe must
 begin with white space.  A rule takes the form
@@ -88,7 +104,7 @@ meta-rule, the stem is substituted for all occurrences of %
 in the prerequisite names.  In the recipe of a meta-rule,
 the environment variable `$stem` contains the string matched
 by the %.  For example, a meta-rule to compile a C program
-using might be:
+might be:
 
     %: %.c
         cc -o $stem $stem.c
@@ -97,13 +113,13 @@ using might be:
 The text of the mkfile is processed as follows.  Lines
 beginning with `<` followed by a file name are replaced by the
 contents of the named file.  Lines beginning with `<|` followed
- by a file name are replaced by the output of the execution of 
- the named file.  Blank lines and comments, which
+by a file name are replaced by the output of the execution of
+the named file.  Blank lines and comments, which
 run from unquoted `#` characters to the following newline, are
 deleted.  The character sequence backslash-newline is
 deleted, so long lines in mkfile may be folded.  Non-recipe
-lines are processed by substituting for `{command}` the output
-of the command when run by rc. References to variables
+lines are processed by substituting for `` `{command} `` the output
+of the command when run by the shell. References to variables
 are replaced by the variables' values.
 
 Assignments and rules are distinguished by the first
@@ -117,7 +133,7 @@ the following conditions:
     clause is added to the prerequisites of the other rule.
     If either or both targets are virtual, the recipe is
     always executed.
--   If the targets of the rules match exactly and the 
+-   If the targets of the rules match exactly and the
     prerequisites do not match and both rules contain recipes,
     `mk` reports an "ambiguous recipe" error.
 -   If the target and prerequisites of both rules match
@@ -167,8 +183,6 @@ is updated the date stamp is set to the most recent date
 stamp of its prerequisites.  Otherwise, if a target does not
 exist as a file, its date stamp is set to the most recent
 date stamp of its prerequisites, or zero if it has no prerequisites.
-For URLs the `Last-Modified` header returned from a HTTP HEAD request
-is used to determine if the target is up to date.
 Otherwise, the target is the name of a file and
 the target's date stamp is always that file's modification
 date.  The date stamp is computed when the target is needed
@@ -178,62 +192,62 @@ Nonexistent targets that have prerequisites and are themselves
 prerequisites are treated specially.  Such a target `t`
 is given the date stamp of its most recent prerequisite and
 if this causes all the targets which have `t` as a prerequisite
-to be up to date, `t` is considered up to date.  Otherwise, 
-`t` is made in the normal fashion.  
+to be up to date, `t` is considered up to date.  Otherwise,
+`t` is made in the normal fashion.
 
 Files may be made in any order that respects the preceding
 restrictions.
 
 A recipe is executed by supplying the recipe as standard
-input to the command, `sh`, unless The `S` attribute is set,
-which defines an alternative program to run the recipe
+input to the command `sh`, unless the `S` attribute is set,
+which defines an alternative program to run the recipe.
 
 The environment is augmented by the following variables:
 
-$alltarget    
-:   all the targets of this rule.
+$alltarget
+:   All the targets of this rule.
 
-$newprereq    
-:   the prerequisites that caused this rule to execute.
+$newprereq
+:   The prerequisites that caused this rule to execute.
 
-$newmember    
-:   the prerequisites that are members of an
+$newmember
+:   The prerequisites that are members of an
     aggregate that caused this rule to execute.
     When the prerequisites of a rule are members
-    of an aggregate, $newprereq contains the name
+    of an aggregate, `$newprereq` contains the name
     of the aggregate and out of date members,
-    while $newmember contains only the name of the
+    while `$newmember` contains only the name of the
     members.
 
-$nproc        
-:   the process slot for this recipe.  It satisfies 0≤$nproc<$NPROC.
+$nproc
+:   The process slot for this recipe.  It satisfies 0 ≤ `$nproc` < `$NPROC`.
 
-$pid          
-:   the process id for the mk executing the recipe.
+$pid
+:   The process id for the mk executing the recipe.
 
-$prereq       
-:   all the prerequisites for this rule. Individual prerequisites
-    can be accessed using `prereq1, ..., $prereqN`.
+$prereq
+:   All the prerequisites for this rule. Individual prerequisites
+    can be accessed using `$prereq1`, ..., `$prereqN`.
 
-$stem         
-:   if this is a meta-rule, $stem is the string
-    that matched % or &.  Otherwise, it is empty.
+$stem
+:   If this is a meta-rule, `$stem` is the string
+    that matched `%` or `&`.  Otherwise, it is empty.
     For regular expression meta-rules (see below),
-    the variables `stem0, ..., stem9` are set to
+    the variables `$stem0`, ..., `$stem9` are set to
     the corresponding subexpressions.
 
-$target       
-:   the targets for this rule that need to be remade.
+$target
+:   The targets for this rule that need to be remade.
 
 These variables are available only during the execution of a
 recipe, not while evaluating the mkfile.
 
 Unless the rule has the Q attribute, the recipe is printed
 prior to execution with recognizable environment variables
-expanded.  Commands returning nonempty status
+expanded.  Commands returning non-zero status
 cause `mk` to terminate.
 
-Recipes and backquoted commands in places such as assignments 
+Recipes and backquoted commands in places such as assignments
 execute in a copy of mk's environment; changes they
 make to environment variables are not visible from mk.
 
@@ -258,20 +272,20 @@ The contents of other files can be included using `<`.
         echo $deps
 
 In the example above `./config.mk` defines the variable "deps",
-which is used as a prerequiste of the rule.
+which is used as a prerequisite of the rule.
 
 ### Including the output of commands
 
 The output of commands can also be piped into the `mkfile` using
 `<|`. The output is evaluated as `mkfile` commands and can contain
-new variable assignments and define new targets and recipies.
+new variable assignments and define new targets and recipes.
 
     variable = file
 
     <| \
     echo "anothertarget: $variable
         echo $target $prereq"
-        
+
     target:
         echo "$variable"
 
@@ -288,51 +302,55 @@ The colon separating the target from the prerequisites may
 be immediately followed by attributes and another colon.
 The attributes are:
 
-D    
+D
 :   If the recipe exits with a non-null status, the target
     is deleted.
 
-E    
+E
 :   Continue execution if the recipe draws errors.
 
-N    
+N
 :   If there is no recipe, the target has its time updated.
 
-n    
+n
 :   The rule is a meta-rule that cannot be a target of a
     virtual rule.  Only files match the pattern in the
     target.
 
-P    
-:   The characters after the P until the terminating : are
-    taken as a program name.  It will be invoked as rc -c
-    prog 'arg1' 'arg2' and should return a null exit status
-    if and only if arg1 is up to date with respect to arg2.
+P
+:   The characters after the P until the terminating `:` are
+    taken as a program name.  It will be invoked as
+    `prog target prereq` and should return a null exit status
+    if and only if the target is up to date with respect to the prerequisite.
     Date stamps are still propagated in the normal way.
     This attribute is not compatible with the S attribute.
 
-S
-:   Characters after S until the terminating : are taken as
-    a program name. This program will be used to execute the
-    recipe. This attrbiute is not compatible with the P attribute.
-
-Q    
+Q
 :   The recipe is not printed prior to execution.
 
-R    
+R
 :   The rule is a meta-rule using regular expressions.  In
-    the rule, % has no special meaning.  The target is
+    the rule, `%` has no special meaning.  The target is
     interpreted as a regular expression as defined in
     regexp(6). The prerequisites may contain references to
-    subexpressions in form \n.
+    subexpressions in form `\n`.
 
-U    
+S
+:   Characters after S until the terminating `:` are taken as
+    a program name. This program will be used to execute the
+    recipe. This attribute is not compatible with the P attribute.
+
+U
 :   The targets are considered to have been updated even if
     the recipe did not do so.
 
-V    
+V
 :   The targets of this rule are marked as virtual.  They
     are distinct from files of the same name.
+
+X
+:   The recipe is executed exclusively — it will not run concurrently
+    with any other recipe.
 
 # EXAMPLES
 A simple mkfile to compile a program:
@@ -388,7 +406,7 @@ A. Hume, "[Mk: a Successor to Make](http://doc.cat-v.org/bell_labs/mk/mk.pdf)".
 
 Andrew G. Hume and Bob Flandrena, "[Maintaining Files on Plan 9 with Mk](http://doc.cat-v.org/plan_9/4th_edition/papers/mk)".
 
-Most of the content of this manual is copied from the 
-Plan 9 mk manual available [here](http://man.cat-v.org/plan_9/1/mk)
+Most of the content of this manual is copied from the
+Plan 9 mk manual available [here](http://man.cat-v.org/plan_9/1/mk).
 
 # BUGS
