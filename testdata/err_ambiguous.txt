@@ -1,9 +1,12 @@
-# Ambiguous rules produce error
+# Ambiguous rules produce error when two rules with different
+# headers can both build the same target.
 ! mk -n -f mkfile
 stderr 'ambiguous'
 
 -- mkfile --
-a:
+a: b
 	recipe1
-a:
+a: c
 	recipe2
+-- b --
+-- c --

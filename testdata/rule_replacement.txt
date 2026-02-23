@@ -1,9 +1,8 @@
 # When two rules have identical headers and both have recipes,
 # the later rule replaces the earlier one.
-# TODO: Currently reports ambiguous instead of replacing. Plan 9 mk
-# replaces the earlier rule at parse time.
-! mk -n -p 1 -f mkfile
-stderr 'ambiguous'
+mk -n -f mkfile
+stdout 'echo second'
+! stdout 'echo first'
 
 -- mkfile --
 all:V:

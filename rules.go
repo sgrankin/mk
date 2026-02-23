@@ -61,6 +61,30 @@ type rule struct {
 	line       int       // line number on which the rule is defined
 }
 
+// Identical rule headers: same targets, attributes, and prerequisites.
+func (r *rule) sameHeader(r2 *rule) bool {
+	if len(r.targets) != len(r2.targets) {
+		return false
+	}
+	for i := range r.targets {
+		if r.targets[i].spat != r2.targets[i].spat {
+			return false
+		}
+	}
+	if r.attributes != r2.attributes {
+		return false
+	}
+	if len(r.prereqs) != len(r2.prereqs) {
+		return false
+	}
+	for i := range r.prereqs {
+		if r.prereqs[i] != r2.prereqs[i] {
+			return false
+		}
+	}
+	return true
+}
+
 // Equivalent recipes.
 func (r *rule) equivRecipe(r2 *rule) bool {
 	if r.recipe != r2.recipe {
@@ -140,7 +164,17 @@ func (r *rule) parseAttribs(inputs []string) *attribError {
 }
 
 // Add a rule to the rule set.
+// If a rule with an identical header (targets, attributes, prerequisites) and
+// a recipe already exists, the new rule replaces it (Plan 9 convention).
 func (rs *ruleSet) add(r rule) {
+	if r.recipe != "" {
+		for i := range rs.rules {
+			if rs.rules[i].recipe != "" && r.sameHeader(&rs.rules[i]) {
+				rs.rules[i] = r
+				return
+			}
+		}
+	}
 	rs.rules = append(rs.rules, r)
 	k := len(rs.rules) - 1
 	for i := range r.targets {
