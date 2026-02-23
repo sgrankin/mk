@@ -1,0 +1,11 @@
+# -k flag: continue building independent targets after an error
+! mk -k -p 1 -f mkfile
+# With -k, b should still build even though a failed
+stdout 'building b'
+
+-- mkfile --
+all:V: a b
+a:V:
+	false
+b:V:
+	echo building b

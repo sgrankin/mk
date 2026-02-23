@@ -10,6 +10,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"github.com/mattn/go-isatty"
 )
@@ -51,6 +52,12 @@ var (
 	// This limits recursion of both meta- and non-meta-rules!
 	// Maybe, this shouldn't affect meta-rules?!
 	maxRuleCnt int = 1
+
+	// Keep going after errors (-k flag).
+	keepgoing bool
+
+	// Set when any recipe fails; checked to stop new recipes when -k is not set.
+	buildFailed atomic.Bool
 )
 
 // Wait until there is an available subprocess slot.
@@ -250,6 +257,11 @@ func mkNode(g *graph, u *node, vars map[string][]string, dryrun bool, required b
 		}
 	}
 
+	// Without -k, stop building when any recipe has failed.
+	if !keepgoing && buildFailed.Load() {
+		finalstatus = nodeStatusFailed
+	}
+
 	// execute the recipe, unless the prereqs failed
 	if !uptodate && finalstatus != nodeStatusFailed && len(e.r.recipe) > 0 {
 		if e.r.attributes.exclusive {
@@ -260,6 +272,7 @@ func mkNode(g *graph, u *node, vars map[string][]string, dryrun bool, required b
 
 		if !dorecipe(u.name, u, e, vars, dryrun) {
 			finalstatus = nodeStatusFailed
+			buildFailed.Store(true)
 			// D attribute: delete the target file when the recipe fails.
 			if e.r.attributes.delFailed {
 				os.Remove(u.name)
@@ -333,6 +346,7 @@ func main() {
 	flag.BoolVar(&dryrun, "n", false, "print commands without actually executing")
 	flag.BoolVar(&shallowrebuild, "r", false, "force building of just targets")
 	flag.BoolVar(&rebuildall, "a", false, "force building of all dependencies")
+	flag.BoolVar(&keepgoing, "k", false, "continue building after errors")
 	flag.IntVar(&subprocsAllowed, "p", runtime.NumCPU(), "maximum number of jobs to execute in parallel")
 	flag.IntVar(&maxRuleCnt, "l", 1, "maximum number of times a specific rule can be applied (recursion)")
 	flag.BoolVar(&interactive, "i", false, "prompt before executing rules")

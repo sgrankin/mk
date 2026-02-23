@@ -1,0 +1,10 @@
+# Without -k, mk stops after first recipe failure
+! mk -p 1 -f mkfile
+! stdout 'building b'
+
+-- mkfile --
+all:V: a b
+a:V:
+	false
+b:V:
+	echo building b
