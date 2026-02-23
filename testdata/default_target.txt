@@ -1,0 +1,12 @@
+# When no target is specified on the command line, mk builds the first
+# non-metarule target
+mk -n -p 1 -f mkfile
+cmp stdout expected
+
+-- mkfile --
+first:V:
+	echo first
+second:V:
+	echo second
+-- expected --
+first: echo first
