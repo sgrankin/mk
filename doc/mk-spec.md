@@ -358,8 +358,22 @@ in the target).
 ### 7.2 Regex Metarules
 
 With the `R` attribute, the target is interpreted as a regular expression.
+The pattern is automatically anchored: `^pattern$` is used for matching, so
+the regex must match the entire target name.
+
 Prerequisites can reference subexpressions with `\1` through `\9`.
-Recipe variables `$stem1` through `$stem9` provide the same matches.
+Recipe variables `$stem0` (the full match) through `$stem9` provide the same
+matches.
+
+Example:
+```
+([^/]+)/([^/]+)\.o:R: \1/\2.c
+    cc -o $target $stem1/$stem2.c
+```
+
+**[DIVERGENCE]** Plan 9 uses its own `regexp(6)` syntax. Our implementation
+uses Go's `regexp` package (RE2 syntax), which does not support backreferences
+or lookaheads in patterns.
 
 ### 7.3 Metarule Evaluation
 
