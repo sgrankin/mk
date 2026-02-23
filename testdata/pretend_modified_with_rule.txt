@@ -1,0 +1,17 @@
+# -w flag works even when the named target has its own rule
+cp dep dep
+cp target target
+mk -w dep -n -p 1 -f mkfile
+stdout 'rebuilding target'
+
+-- mkfile --
+target: dep
+	echo rebuilding target
+dep: source
+	echo rebuilding dep
+-- source --
+src
+-- dep --
+dep
+-- target --
+tgt

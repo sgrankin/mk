@@ -370,7 +370,7 @@ func parseRecipe(p *parser, t token) parserStateFun {
 						right = regexp.QuoteMeta(targetstr[idx+1:])
 					}
 
-					// % matches .+, & matches [^./]+
+					// % matches .* (any stem), & matches [^./]+ (no slashes or dots)
 					var middle string
 					if metaChar == '&' {
 						middle = "([^./]+)"

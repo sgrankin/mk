@@ -38,10 +38,11 @@ const (
 type nodeFlag int
 
 const (
-	nodeFlagCycle    nodeFlag = 0x0002
-	nodeFlagReady    nodeFlag = 0x0004
-	nodeFlagProbable nodeFlag = 0x0100
-	nodeFlagVacuous  nodeFlag = 0x0200
+	nodeFlagCycle      nodeFlag = 0x0002
+	nodeFlagReady      nodeFlag = 0x0004
+	nodeFlagProbable   nodeFlag = 0x0100
+	nodeFlagVacuous    nodeFlag = 0x0200
+	nodeFlagForcedTime nodeFlag = 0x0400 // timestamp set by -w; don't overwrite
 )
 
 // A node in the dependency graph
@@ -59,6 +60,9 @@ type node struct {
 
 // Update a node's timestamp and 'exists' flag.
 func (u *node) updateTimestamp() {
+	if u.flags&nodeFlagForcedTime != 0 {
+		return
+	}
 	info, err := os.Stat(u.name)
 	if err == nil {
 		u.t = info.ModTime()
