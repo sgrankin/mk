@@ -238,8 +238,9 @@ Available in recipes (set by mk before execution):
 | `U` | Update | Force target timestamp update after recipe runs |
 | `V` | Virtual | Target is not a file; always considered out of date |
 
+The `S` attribute is present in plan9port mk but not in the original Plan 9 paper.
+
 **[DIVERGENCE]** Our implementation adds:
-- `S` — Shell: specify alternative shell for this rule (see below)
 - `X` — Exclusive: recipe acquires all parallel job slots before executing
 
 #### N (No-recipe)
@@ -284,10 +285,10 @@ If the recipe didn't modify the file, dependents might not see it as updated.
 The `U` attribute forces the target's timestamp to "now" after the recipe
 completes, ensuring dependents are rebuilt regardless.
 
-#### S (Shell) **[DIVERGENCE]**
+#### S (Shell)
 
-Specifies an alternative shell for this rule's recipe. The attribute consumes
-the remaining attribute text:
+Specifies an alternative shell for this rule's recipe (plan9port extension).
+The attribute consumes the remaining attribute text:
 
 ```
 all:VS"python3":
@@ -484,10 +485,10 @@ removes the `-e` flag for a specific rule.
 
 In Plan 9 mk, the `MKSHELL` variable selects between pluggable shell
 implementations (`sh` and `rc`), each with its own quoting and escaping rules.
+Plan9port added the `S` attribute for per-rule shell override.
 
-**[DIVERGENCE]** Our implementation uses a `shell` mk variable to change the
-shell for subsequent rules. The `S` attribute overrides the shell for a single
-rule. The `-shell` flag sets the default shell from the command line.
+**[DIVERGENCE]** Our implementation uses a `shell` mk variable instead of
+`MKSHELL`. The `-shell` flag sets the default shell from the command line.
 
 ## 11. Environment
 
@@ -557,16 +558,14 @@ in the mkfile.
 | Word characters | `WORDCHR`: all non-ASCII-punctuation | `nonBareRunes`: smaller set (`` \t\n\r\\=:#'"$` ``) |
 | Backtick timing | Expanded at lex time | Expanded at eval time |
 | Recipe indentation | Strips one leading whitespace char | Strips up to first line's indentation column |
-| Shell interface | Pluggable Shell struct (sh, rc) | Fixed sh with `S` attribute for per-rule override |
-| Shell variable | `MKSHELL` changes shell globally | `shell` variable; `-shell` flag; `S` attribute |
+| Shell interface | Pluggable Shell struct (sh, rc) with `MKSHELL` | `shell` variable; `-shell` flag; `S` attribute (from plan9port) |
 | Environment separator | Shell-dependent (space for sh, \x01 for rc) | Always space |
 | Archive members | `lib(member)` syntax with special handling | Not supported (`$newmember` always empty) |
 | Recipe display | `front()` truncates to 5 fields | No truncation |
 | Regex syntax | Plan 9 `regexp(6)` | Go RE2 (no backreferences or lookaheads) |
-| `-e` flag | Explain pretend/intermediate logic only | Explains all staleness decisions |
-| Parallelism | `$NPROC` env var | `-p` flag > `$NPROC` env > NumCPU |
-| Additional attributes | — | `S` (per-rule shell), `X` (exclusive execution) |
-| Additional flags | — | `-p`, `-l`, `-C`, `-F`, `-I`, `-dot`, `-color`, `-shell`, `-e` |
+| Parallelism | `$NPROC` env var only | `-p` flag > `$NPROC` env > NumCPU |
+| Additional attributes | — | `X` (exclusive execution) |
+| Additional flags | — | `-p`, `-l`, `-C`, `-F`, `-I`, `-dot`, `-color`, `-shell` |
 
 ## Appendix B: Examples
 
