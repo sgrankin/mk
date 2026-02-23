@@ -1,0 +1,8 @@
+# E attribute: recipe continues past failing commands (no -e to shell)
+mk -p 1 -f mkfile
+stdout 'after'
+
+-- mkfile --
+all:VE:
+	false
+	echo after

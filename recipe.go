@@ -97,6 +97,16 @@ func dorecipe(target string, u *node, e *edge, vars map[string][]string, dryrun 
 	if len(e.r.shell) > 0 {
 		sh, args = expandShell(e.r.shell[0], e.r.shell[1:])
 	}
+	// E attribute: don't pass -e to the shell (allow recipe to continue on errors)
+	if e.r.attributes.nonstop {
+		filtered := args[:0]
+		for _, a := range args {
+			if a != "-e" {
+				filtered = append(filtered, a)
+			}
+		}
+		args = filtered
+	}
 	vars["shell"] = append([]string{sh}, args...)
 
 	// Build the command.
