@@ -1,0 +1,11 @@
+# U attribute: target is considered updated even if recipe doesn't modify it.
+# Within a single build, this is already handled by status propagation
+# (nodeStatusDone triggers dependent rebuilds).
+mk -p 1 -f mkfile target
+stdout 'building target'
+
+-- mkfile --
+target:U: dep
+	echo building target
+dep:V:
+	echo building dep
