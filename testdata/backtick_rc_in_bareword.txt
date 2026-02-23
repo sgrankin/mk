@@ -1,0 +1,10 @@
+# rc-style backtick works inside bare words
+mk -n -f mkfile
+cmp stdout expected
+
+-- mkfile --
+VAR=pre`{echo mid}post
+all:V:
+	echo $VAR
+-- expected --
+all: echo premidpost

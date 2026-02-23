@@ -1,0 +1,10 @@
+# rc-style backtick `{cmd} uses } as terminator instead of `
+mk -n -f mkfile
+cmp stdout expected
+
+-- mkfile --
+VAR=`{echo hello}
+all:V:
+	echo $VAR
+-- expected --
+all: echo hello

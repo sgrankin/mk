@@ -336,8 +336,16 @@ func lexDoubleQuotedWord(l *lexer) lexerStateFun {
 
 func lexBackQuotedWord(l *lexer) lexerStateFun {
 	l.next() // '`'
-	l.acceptUntil("`")
-	l.next() // '`'
+	if l.peek() == '{' {
+		// rc-style: `{cmd}
+		l.next() // '{'
+		l.acceptUntil("}")
+		l.next() // '}'
+	} else {
+		// sh-style: `cmd`
+		l.acceptUntil("`")
+		l.next() // '`'
+	}
 	return lexBareWord
 }
 

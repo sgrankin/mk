@@ -289,11 +289,27 @@ func expandSuffixes(input string, stem string) string {
 }
 
 // Expand a backtick quoted string, by executing the contents.
+// Supports sh-style `cmd` and rc-style `{cmd}.
 func expandBackQuoted(input string, vars map[string][]string) ([]string, int) {
-	// TODO: expand sigils?
-	j := strings.Index(input, "`")
-	if j < 0 {
-		return []string{input}, len(input)
+	// Determine style: rc-style starts with '{', sh-style uses closing '`'
+	var cmd string
+	var consumed int
+	if len(input) > 0 && input[0] == '{' {
+		// rc-style: `{cmd}
+		j := strings.Index(input[1:], "}")
+		if j < 0 {
+			return []string{input}, len(input)
+		}
+		cmd = input[1 : 1+j]
+		consumed = 1 + j + 1 // '{' + cmd + '}'
+	} else {
+		// sh-style: `cmd`
+		j := strings.Index(input, "`")
+		if j < 0 {
+			return []string{input}, len(input)
+		}
+		cmd = input[:j]
+		consumed = j + 1 // cmd + '`'
 	}
 
 	env := os.Environ()
@@ -313,7 +329,7 @@ func expandBackQuoted(input string, vars map[string][]string) ([]string, int) {
 	}
 
 	// TODO: handle errors
-	output, _ := subprocess(shell, shellargs, env, input[:j], true)
+	output, _ := subprocess(shell, shellargs, env, cmd, true)
 
 	parts := make([]string, 0)
 	_, tokens := lexWords(output)
@@ -321,7 +337,7 @@ func expandBackQuoted(input string, vars map[string][]string) ([]string, int) {
 		parts = append(parts, t.val)
 	}
 
-	return parts, (j + 1)
+	return parts, consumed
 }
 
 // Expand the shell command into cmd, args...
