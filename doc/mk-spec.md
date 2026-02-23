@@ -13,6 +13,9 @@ Mk reads a file (mkfile) describing dependencies between files and executes
 commands to bring them up to date. A mkfile contains three types of statements:
 **assignments**, **includes**, and **rules**.
 
+When no target is specified on the command line, mk builds the targets of the
+first non-metarule in the mkfile.
+
 ## 2. Lexical Structure
 
 ### 2.1 Lines
@@ -212,9 +215,14 @@ Available in recipes (set by mk before execution):
 | `$stem` | String matched by `%` or `&` in metarule |
 | `$stemN` | Nth regex subexpression match (R attribute) |
 | `$alltarget` | All targets of the rule |
+| `$prereqN` | Nth prerequisite (1-based): `$prereq1`, `$prereq2`, etc. |
 | `$newmember` | Archive member names from `$newprereq` |
 | `$nproc` | Slot number (0-based) of this parallel job |
 | `$pid` | Process ID of mk |
+
+**[DIVERGENCE]** `$prereqN` (numbered prerequisites) is an extension not present
+in Plan 9 mk. `$newmember` is always empty because we do not support the
+`lib(member)` archive syntax.
 
 ### 6.4 Attributes
 
@@ -254,6 +262,19 @@ A rule with no prerequisites and a recipe:
 
 A rule with no prerequisites and no recipe is a "no-effect" rule — it is
 ignored during graph construction.
+
+### 6.7 Rule Replacement
+
+When two rules have identical headers (same targets, attributes, and
+prerequisites) and both have recipes, the later rule silently replaces the
+earlier one. This is a Plan 9 convention that allows included mkfiles to
+provide default rules that can be overridden:
+
+```
+<common.mk             # defines %.o: %.c with default flags
+%.o: %.c               # overrides with project-specific recipe
+    cc -DFOO $stem.c
+```
 
 ## 7. Metarules
 
@@ -438,7 +459,21 @@ For `sh`, the separator is space (` `). For `rc`, it is `\x01` (SOH).
 
 **[DIVERGENCE]** Our implementation always uses space.
 
-## 12. Command-Line Flags
+## 12. Command Line
+
+### 12.1 Targets and Variable Overrides
+
+Non-flag arguments to mk are either variable overrides or targets:
+
+- If an argument contains `=` and the left side is a valid variable name,
+  it is a **variable override**: `mk CC=gcc` sets `$CC` to `gcc`.
+  Command-line overrides have the highest precedence (see §3.1).
+- Otherwise, the argument is a **target** to build.
+
+If no targets are specified, mk builds the targets of the first non-metarule
+in the mkfile.
+
+### 12.2 Flags
 
 | Flag | Effect |
 |------|--------|
