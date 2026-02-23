@@ -455,7 +455,7 @@ For `sh`, the separator is space (` `). For `rc`, it is `\x01` (SOH).
 - `-color` — Enable/disable color output (default: auto-detect TTY)
 - `-shell cmd` — Default shell (default: `sh -e`)
 
-Plan 9 flags not implemented: `-e` (explain why targets are out of date).
+- `-e` — Explain why targets are out of date (prints staleness decisions to stderr)
 
 ## Appendix A: Known Divergences Summary
 
@@ -467,4 +467,4 @@ Plan 9 flags not implemented: `-e` (explain why targets are out of date).
 | Shell variable | `MKSHELL` changes shell globally | Uses `shell` variable |
 | Archive members | `lib(member)` syntax with special handling | Not supported |
 | Recipe display | `front()` truncates to 5 fields | No truncation |
-| `-e` flag | Explain why targets are out of date | Not implemented |
+| `-e` flag | Explain pretend/intermediate logic only | Explains all staleness decisions |

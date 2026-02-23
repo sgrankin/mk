@@ -1,0 +1,68 @@
+# Test -e flag: explain why targets are out of date
+
+# Target does not exist (prereq exists)
+exec touch prereq
+mk -e target
+stderr 'mk: target does not exist'
+
+# Virtual target is explained
+mk -e virtual
+stderr 'mk: virtual is virtual'
+
+# Up to date target (target newer than prereq)
+exec touch prereq
+exec touch target
+mk -e target
+stderr 'mk: target is up to date'
+
+# Older than prereq
+exec sleep 0.1
+exec touch prereq
+mk -e target
+stderr 'mk: target older than prereq'
+
+# Stale because prereq was rebuilt (chain: final depends on mid depends on base)
+exec touch base
+exec touch mid
+exec touch final
+# Make base newer than mid so mid gets rebuilt, which makes final stale
+exec sleep 0.1
+exec touch base
+mk -e -f chain final
+stderr 'mk: mid older than base'
+stderr 'mk: final stale because mid was rebuilt'
+
+# P attribute: custom staleness program says out of date
+cp pdep pdep
+cp ptarget ptarget
+mk -e -p 1 -f pmkfile ptarget
+stderr 'mk: ptarget out of date via pdep \(P attribute\)'
+
+# Forced by -a flag
+exec touch prereq
+exec touch target
+mk -e -a target
+stderr 'mk: target forced by -a/-w flag'
+
+-- mkfile --
+target: prereq
+	echo building target
+
+prereq:
+
+virtual:V:
+	echo virtual recipe
+
+-- pmkfile --
+ptarget:Psh -c 'exit 1': pdep
+	echo rebuilding ptarget
+-- pdep --
+content
+-- ptarget --
+content
+-- chain --
+final: mid
+	echo building final
+mid: base
+	echo building mid
+base:

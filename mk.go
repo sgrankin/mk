@@ -66,6 +66,9 @@ var (
 	// Force rebuild of missing intermediates (-i flag).
 	forceIntermediate bool
 
+	// Print explanation of staleness decisions (-e flag).
+	explain bool
+
 	// Set when any recipe fails; checked to stop new recipes when -k is not set.
 	buildFailed atomic.Bool
 )
@@ -243,6 +246,9 @@ func mkNode(g *graph, u *node, vars map[string][]string, dryrun bool, required b
 	if !e.r.attributes.virtual {
 		u.updateTimestamp()
 		if !u.exists && required {
+			if explain {
+				fmt.Fprintf(os.Stderr, "mk: %s does not exist\n", u.name)
+			}
 			uptodate = false
 		} else if len(e.r.command) > 0 && (u.exists || required) {
 			// P attribute: use custom program for staleness checking.
@@ -250,23 +256,40 @@ func mkNode(g *graph, u *node, vars map[string][]string, dryrun bool, required b
 				args := append(append([]string{}, e.r.command[1:]...), u.name, prereqs[i].name)
 				_, ok := subprocess(e.r.command[0], args, os.Environ(), "", false)
 				if !ok {
+					if explain {
+						fmt.Fprintf(os.Stderr, "mk: %s out of date via %s (P attribute)\n", u.name, prereqs[i].name)
+					}
 					uptodate = false
 					break
 				}
 			}
 		} else if u.exists || required {
 			for i := range prereqs {
-				if u.t.Before(prereqs[i].t) || prereqs[i].status == nodeStatusDone {
+				if u.t.Before(prereqs[i].t) {
+					if explain {
+						fmt.Fprintf(os.Stderr, "mk: %s older than %s\n", u.name, prereqs[i].name)
+					}
+					uptodate = false
+				} else if prereqs[i].status == nodeStatusDone {
+					if explain {
+						fmt.Fprintf(os.Stderr, "mk: %s stale because %s was rebuilt\n", u.name, prereqs[i].name)
+					}
 					uptodate = false
 				}
 			}
 		}
 	} else {
+		if explain && u.name != "" { // skip the root dummy node
+			fmt.Fprintf(os.Stderr, "mk: %s is virtual\n", u.name)
+		}
 		uptodate = false
 	}
 
 	_, isrebuildtarget := rebuildtargets[u.name]
 	if isrebuildtarget || rebuildall {
+		if explain && uptodate {
+			fmt.Fprintf(os.Stderr, "mk: %s forced by -a/-w flag\n", u.name)
+		}
 		uptodate = false
 	}
 
@@ -320,6 +343,9 @@ func mkNode(g *graph, u *node, vars map[string][]string, dryrun bool, required b
 			}
 		}
 	} else if finalstatus != nodeStatusFailed {
+		if explain && uptodate && !e.r.attributes.virtual {
+			fmt.Fprintf(os.Stderr, "mk: %s is up to date\n", u.name)
+		}
 		finalstatus = nodeStatusNop
 	}
 }
@@ -387,6 +413,7 @@ func main() {
 	flag.IntVar(&maxRuleCnt, "l", 1, "maximum number of times a specific rule can be applied (recursion)")
 	flag.BoolVar(&interactive, "I", false, "prompt before executing rules")
 	flag.BoolVar(&forceIntermediate, "i", false, "force rebuild of missing intermediates")
+	flag.BoolVar(&explain, "e", false, "explain why targets are out of date")
 	flag.BoolVar(&quiet, "q", false, "don't print recipes before executing them")
 	flag.BoolVar(&dotOutput, "dot", false, "print dependency graph in graphviz dot format and exit")
 	flag.BoolVar(&color, "color", isatty.IsTerminal(os.Stdout.Fd()), "turn color on/off")
