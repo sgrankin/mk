@@ -1,5 +1,5 @@
 # Variables from include files expanded in recipes
-mk -n -f mkfile
+mk -p 1 -n -f mkfile
 cmp stdout expected
 
 -- mkfile --
@@ -19,6 +19,6 @@ two:
 deps = one two
 extracmdarg = gopher
 -- expected --
-two: gopher rebar
 one: process bar gopher
+two: gopher rebar
 test3.mk.o: secondprocess ab

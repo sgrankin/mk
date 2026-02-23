@@ -1,5 +1,5 @@
 # Backslash-escaped newlines in variable definitions
-mk -n -f mkfile
+mk -p 1 -n -f mkfile
 cmp stdout expected
 
 -- mkfile --
@@ -17,6 +17,6 @@ one:
 two:
 	process rebar
 -- expected --
-two: process rebar
 one: process bar
+two: process rebar
 test3.mk.o: secondprocess ab
