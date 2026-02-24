@@ -1,0 +1,7 @@
+# Nonexistent shell program in S attribute triggers LookPath error
+! mk -p 1 -f mkfile
+stderr 'no such file'
+
+-- mkfile --
+all:VS"/nonexistent/shell/xyz":
+	echo hello

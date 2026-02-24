@@ -130,12 +130,7 @@ func dorecipe(target string, u *node, e *edge, vars map[string][]string, dryrun 
 		return true
 	}
 
-	// Merge and construct the execution environment for this recipe.
-	for k, v := range GlobalMkState {
-		if _, ok := vars[k]; !ok {
-			vars[k] = v
-		}
-	}
+	// Construct the execution environment for this recipe.
 	env := os.Environ()
 	for k, v := range vars {
 		// =U= variables are available for mk expansion but not exported to recipes.
