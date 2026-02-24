@@ -236,11 +236,6 @@ func mkNode(g *graph, u *node, vars map[string][]string, dryrun bool, required b
 		}
 	}
 
-	// this should have been caught during graph building
-	if e == nil {
-		panic("unreachable: no edge found for node " + u.name)
-	}
-
 	prereqs_required := required && (e.r.attributes.virtual || !u.exists || forceIntermediate)
 	if mkNodePrereqs(g, prereqs, vars, dryrun, prereqs_required) == nodeStatusFailed {
 		finalstatus = nodeStatusFailed
@@ -461,10 +456,7 @@ func main() {
 	input, _ := io.ReadAll(mkfile)
 	mkfile.Close()
 
-	abspath, err := filepath.Abs(mkfilepath)
-	if err != nil {
-		mkError("unable to find mkfile's absolute path")
-	}
+	abspath, _ := filepath.Abs(mkfilepath)
 
 	env := make(map[string][]string)
 	for _, elem := range os.Environ() {

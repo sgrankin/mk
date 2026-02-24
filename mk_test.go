@@ -92,3 +92,20 @@ func TestInteractiveModeEOF(t *testing.T) {
 		t.Errorf("mismatch:\n  got:  %q\n  want: %q", output, want)
 	}
 }
+
+func TestMkNodeAlreadyClaimed(t *testing.T) {
+	// Calling mkNode on a node that's already been claimed (status != Ready/Nop)
+	// should return immediately without doing any work.
+	u := &node{
+		name:   "already-started",
+		status: nodeStatusStarted,
+	}
+	g := &graph{nodes: map[string]*node{u.name: u}}
+	mkNode(g, u, nil, true, false)
+	u.mutex.Lock()
+	got := u.status
+	u.mutex.Unlock()
+	if got != nodeStatusStarted {
+		t.Errorf("status changed to %v, expected it to remain nodeStatusStarted", got)
+	}
+}

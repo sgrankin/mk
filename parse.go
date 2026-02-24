@@ -184,10 +184,7 @@ func parseRedirInclude(p *parser, t token) parserStateFun {
 		}
 		input, _ := io.ReadAll(file)
 
-		path, err := filepath.Abs(filename)
-		if err != nil {
-			mkError("unable to find mkfile's absolute path")
-		}
+		path, _ := filepath.Abs(filename)
 
 		parseInto(string(input), filename, p.rules, path)
 
