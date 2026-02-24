@@ -60,11 +60,11 @@ go tool govulncheck ./...  # no known vulnerabilities (pinned in go.mod)
 
 Address any gopls diagnostics (type errors, unused imports, etc.) visible in changed files.
 
-All changed/added code must be covered by tests. Check uncovered lines:
+Maintain 100% statement coverage. Check uncovered lines:
 ```bash
 go test -coverprofile=cover.out ./...; awk -f cover-uncovered.awk cover.out
 ```
-Output is one line per file with uncovered line ranges (e.g. `expand.go: 54-58,90-92`).
+Output is one line per file with uncovered line ranges (e.g. `expand.go: 54-58,90-92`). There should be no output.
 
 ## Code Review
 
@@ -74,5 +74,5 @@ Before finalizing a change, review the diff with Sonnet. Focus the review on thi
 
 - No external runtime dependencies — only stdlib at runtime.
 - Errors use `mkError()` (fprintf to stderr + os.Exit(1)), not panic.
-- Global state for color, shell, rebuild flags.
+- Build-mode flags grouped in `buildOpts` struct; subprocess limiting in `scheduler` struct.
 - `\x01` separates array elements in environment variables (Plan 9 rc convention).
