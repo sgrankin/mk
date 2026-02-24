@@ -34,6 +34,24 @@ func startMkWithStdin(stdin string, args ...string) ([]byte, []byte, error) {
 	return outbuffy.Bytes(), errbuffy.Bytes(), err
 }
 
+func TestMkPrintRecipeEmptyRecipe(t *testing.T) {
+	// Cover mkPrintRecipe with empty recipe and quiet=false (mk.go:397-399).
+	// This path is effectively dead in normal execution (rules with empty recipes
+	// are filtered before reaching dorecipe), but exercise it for coverage.
+	old := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+	mkPrintRecipe("target", "", false)
+	w.Close()
+	os.Stdout = old
+	var buf bytes.Buffer
+	buf.ReadFrom(r)
+	got := buf.String()
+	if want := "target: \n"; got != want {
+		t.Errorf("mkPrintRecipe empty recipe: got %q, want %q", got, want)
+	}
+}
+
 func TestInteractiveMode(t *testing.T) {
 	t.Parallel()
 	// Leading whitespace covers the whitespace-skip path in the interactive loop
