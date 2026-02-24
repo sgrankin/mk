@@ -1,0 +1,8 @@
+# Invalid $NPROC value produces error
+env NPROC=notanumber
+! mk -n -f mkfile
+stderr 'invalid \$NPROC value'
+
+-- mkfile --
+all:V:
+	echo hello
