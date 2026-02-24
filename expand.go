@@ -321,9 +321,9 @@ func expandBackQuoted(input string, vars map[string][]string) ([]string, int) {
 	var shell string
 	var shellargs []string
 	if len(vars["shell"]) < 1 {
-		shell, shellargs = expandShell(defaultShell, shellargs, dontDropArgs)
+		shell, shellargs = expandShell(defaultShell, shellargs)
 	} else {
-		shell, shellargs = expandShell(vars["shell"][0], shellargs, dontDropArgs)
+		shell, shellargs = expandShell(vars["shell"][0], shellargs)
 	}
 
 	// TODO: handle errors
@@ -340,7 +340,7 @@ func expandBackQuoted(input string, vars map[string][]string) ([]string, int) {
 
 // Expand the shell command into cmd, args...
 // Ex. "sh -c", "pwd" becomes sh, [-c, pwd]
-func expandShell(shcmd string, args []string, dontDropArgs bool) (string, []string) {
+func expandShell(shcmd string, args []string) (string, []string) {
 	var shell string
 	var shellargs []string
 

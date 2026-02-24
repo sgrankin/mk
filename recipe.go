@@ -108,9 +108,9 @@ func dorecipe(u *node, e *edge, opts *buildOpts, nproc int) bool {
 	vars["newmember"] = []string{}
 
 	// Setup the shell in vars.
-	sh, args := expandShell(defaultShell, []string{}, dontDropArgs)
+	sh, args := expandShell(defaultShell, []string{})
 	if len(e.r.shell) > 0 {
-		sh, args = expandShell(e.r.shell[0], e.r.shell[1:], dontDropArgs)
+		sh, args = expandShell(e.r.shell[0], e.r.shell[1:])
 	}
 	// E attribute: don't pass -e to the shell (allow recipe to continue on errors)
 	if e.r.attributes.nonstop {
