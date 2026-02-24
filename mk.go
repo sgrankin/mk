@@ -29,12 +29,6 @@ var (
 	// This works around `sh -c commands...` being a thing, but allows the `rc -v commands...` argument-less flags
 	dontDropArgs bool
 
-	// True if we are ignoring timestamps and rebuilding everything.
-	rebuildall bool = false
-
-	// Set of targets for which we are forcing rebuild
-	rebuildtargets map[string]bool = make(map[string]bool)
-
 	// Lock on standard out, messages don't get interleaved too much.
 	mkMsgMutex sync.Mutex
 
@@ -46,23 +40,8 @@ var (
 	// Maybe, this shouldn't affect meta-rules?!
 	maxRuleCnt int = 1
 
-	// Keep going after errors (-k flag).
-	keepgoing bool
-
-	// Touch targets instead of executing recipes (-t flag).
-	touchmode bool
-
 	// Pretend this target was recently modified (-w flag).
 	pretendModified string
-
-	// Force rebuild of missing intermediates (-i flag).
-	forceIntermediate bool
-
-	// Print explanation of staleness decisions (-e flag).
-	explain bool
-
-	// Set when any recipe fails; checked to stop new recipes when -k is not set.
-	buildFailed atomic.Bool
 )
 
 // scheduler controls parallel recipe execution, limiting the number of
@@ -72,6 +51,20 @@ type scheduler struct {
 	running   int
 	cond      *sync.Cond
 	exclusive sync.Mutex
+}
+
+// buildOpts holds build-mode configuration that is constant throughout a build.
+type buildOpts struct {
+	vars           map[string][]string
+	unexportedVars map[string]bool
+	dryrun         bool
+	keepgoing      bool
+	touchmode      bool
+	forceIntermed  bool
+	explain        bool
+	rebuildall     bool
+	rebuildTargets map[string]bool
+	failed         atomic.Bool
 }
 
 // Wait until there is an available subprocess slot.
@@ -130,7 +123,7 @@ const (
 )
 
 // Build a node's prereqs. Block until completed.
-func mkNodePrereqs(g *graph, prereqs []*node, vars map[string][]string, unexportedVars map[string]bool, dryrun bool, required bool) nodeStatus {
+func mkNodePrereqs(g *graph, prereqs []*node, opts *buildOpts, required bool) nodeStatus {
 	// When limited to a single process, build sequentially to preserve order.
 	if sched.allowed == 1 {
 		status := nodeStatusDone
@@ -139,7 +132,7 @@ func mkNodePrereqs(g *graph, prereqs []*node, vars map[string][]string, unexport
 			switch prereqs[i].status {
 			case nodeStatusReady, nodeStatusNop:
 				prereqs[i].mutex.Unlock()
-				mkNode(g, prereqs[i], vars, unexportedVars, dryrun, required)
+				mkNode(g, prereqs[i], opts, required)
 			default:
 				prereqs[i].mutex.Unlock()
 			}
@@ -158,7 +151,7 @@ func mkNodePrereqs(g *graph, prereqs []*node, vars map[string][]string, unexport
 		prereqs[i].mutex.Lock()
 		switch prereqs[i].status {
 		case nodeStatusReady, nodeStatusNop:
-			go mkNode(g, prereqs[i], vars, unexportedVars, dryrun, required)
+			go mkNode(g, prereqs[i], opts, required)
 			fallthrough
 		case nodeStatusStarted:
 			prereqs[i].listeners = append(prereqs[i].listeners, prereqstat)
@@ -190,7 +183,7 @@ func mkNodePrereqs(g *graph, prereqs []*node, vars map[string][]string, unexport
 //	u: Node to (possibly) build.
 //	dryrun: Don't actually build anything, just pretend.
 //	required: Avoid building this node, unless its prereqs are out of date.
-func mkNode(g *graph, u *node, vars map[string][]string, unexportedVars map[string]bool, dryrun bool, required bool) {
+func mkNode(g *graph, u *node, opts *buildOpts, required bool) {
 	// try to claim on this node
 	u.mutex.Lock()
 	if u.status != nodeStatusReady && u.status != nodeStatusNop {
@@ -235,16 +228,16 @@ func mkNode(g *graph, u *node, vars map[string][]string, unexportedVars map[stri
 		}
 	}
 
-	prereqs_required := required && (e.r.attributes.virtual || !u.exists || forceIntermediate)
-	if mkNodePrereqs(g, prereqs, vars, unexportedVars, dryrun, prereqs_required) == nodeStatusFailed {
+	prereqs_required := required && (e.r.attributes.virtual || !u.exists || opts.forceIntermed)
+	if mkNodePrereqs(g, prereqs, opts, prereqs_required) == nodeStatusFailed {
 		finalstatus = nodeStatusFailed
 	}
 
 	uptodate := true
 	if !e.r.attributes.virtual {
-		u.updateTimestamp()
+		u.updateTimestamp(opts.rebuildall)
 		if !u.exists && required {
-			if explain {
+			if opts.explain {
 				fmt.Fprintf(os.Stderr, "mk: %s does not exist\n", u.name)
 			}
 			uptodate = false
@@ -254,7 +247,7 @@ func mkNode(g *graph, u *node, vars map[string][]string, unexportedVars map[stri
 				args := append(append([]string{}, e.r.command[1:]...), u.name, prereqs[i].name)
 				_, ok := subprocess(e.r.command[0], args, os.Environ(), "", false)
 				if !ok {
-					if explain {
+					if opts.explain {
 						fmt.Fprintf(os.Stderr, "mk: %s out of date via %s (P attribute)\n", u.name, prereqs[i].name)
 					}
 					uptodate = false
@@ -264,12 +257,12 @@ func mkNode(g *graph, u *node, vars map[string][]string, unexportedVars map[stri
 		} else if u.exists || required {
 			for i := range prereqs {
 				if u.t.Before(prereqs[i].t) {
-					if explain {
+					if opts.explain {
 						fmt.Fprintf(os.Stderr, "mk: %s older than %s\n", u.name, prereqs[i].name)
 					}
 					uptodate = false
 				} else if prereqs[i].status == nodeStatusDone {
-					if explain {
+					if opts.explain {
 						fmt.Fprintf(os.Stderr, "mk: %s stale because %s was rebuilt\n", u.name, prereqs[i].name)
 					}
 					uptodate = false
@@ -277,15 +270,15 @@ func mkNode(g *graph, u *node, vars map[string][]string, unexportedVars map[stri
 			}
 		}
 	} else {
-		if explain && u.name != "" { // skip the root dummy node
+		if opts.explain && u.name != "" { // skip the root dummy node
 			fmt.Fprintf(os.Stderr, "mk: %s is virtual\n", u.name)
 		}
 		uptodate = false
 	}
 
-	_, isrebuildtarget := rebuildtargets[u.name]
-	if isrebuildtarget || rebuildall {
-		if explain && uptodate {
+	_, isrebuildtarget := opts.rebuildTargets[u.name]
+	if isrebuildtarget || opts.rebuildall {
+		if opts.explain && uptodate {
 			fmt.Fprintf(os.Stderr, "mk: %s forced by -a/-w flag\n", u.name)
 		}
 		uptodate = false
@@ -293,19 +286,19 @@ func mkNode(g *graph, u *node, vars map[string][]string, unexportedVars map[stri
 
 	// make another pass on the prereqs, since we know we need them now
 	if !uptodate {
-		if mkNodePrereqs(g, prereqs, vars, unexportedVars, dryrun, true) == nodeStatusFailed {
+		if mkNodePrereqs(g, prereqs, opts, true) == nodeStatusFailed {
 			finalstatus = nodeStatusFailed
 		}
 	}
 
 	// Without -k, stop building when any recipe has failed.
-	if !keepgoing && buildFailed.Load() {
+	if !opts.keepgoing && opts.failed.Load() {
 		finalstatus = nodeStatusFailed
 	}
 
 	// execute the recipe, unless the prereqs failed
 	if !uptodate && finalstatus != nodeStatusFailed && len(e.r.recipe) > 0 {
-		if touchmode && !e.r.attributes.virtual {
+		if opts.touchmode && !e.r.attributes.virtual {
 			// Touch mode: update the target's timestamp without running the recipe.
 			now := time.Now()
 			if !u.exists {
@@ -316,8 +309,8 @@ func mkNode(g *graph, u *node, vars map[string][]string, unexportedVars map[stri
 			} else {
 				os.Chtimes(u.name, now, now)
 			}
-			u.updateTimestamp()
-		} else if !touchmode {
+			u.updateTimestamp(opts.rebuildall)
+		} else if !opts.touchmode {
 			var nproc int
 			if e.r.attributes.exclusive {
 				sched.reserveExclusive()
@@ -326,9 +319,9 @@ func mkNode(g *graph, u *node, vars map[string][]string, unexportedVars map[stri
 				nproc = sched.reserve()
 			}
 
-			if !dorecipe(u.name, u, e, vars, unexportedVars, dryrun, nproc) {
+			if !dorecipe(u.name, u, e, opts.vars, opts.unexportedVars, opts.dryrun, nproc) {
 				finalstatus = nodeStatusFailed
-				buildFailed.Store(true)
+				opts.failed.Store(true)
 				// D attribute: delete the target file when the recipe fails.
 				if e.r.attributes.delFailed {
 					os.Remove(u.name)
@@ -339,7 +332,7 @@ func mkNode(g *graph, u *node, vars map[string][]string, unexportedVars map[stri
 			if finalstatus != nodeStatusFailed && e.r.attributes.update {
 				u.t = time.Now()
 			} else {
-				u.updateTimestamp()
+				u.updateTimestamp(opts.rebuildall)
 			}
 
 			if e.r.attributes.exclusive {
@@ -349,7 +342,7 @@ func mkNode(g *graph, u *node, vars map[string][]string, unexportedVars map[stri
 			}
 		}
 	} else if finalstatus != nodeStatusFailed {
-		if explain && uptodate && !e.r.attributes.virtual {
+		if opts.explain && uptodate && !e.r.attributes.virtual {
 			fmt.Fprintf(os.Stderr, "mk: %s is up to date\n", u.name)
 		}
 		finalstatus = nodeStatusNop
@@ -402,24 +395,24 @@ func main() {
 	var directory string
 	var mkfilepath string
 	var interactive bool
-	var dryrun bool
 	var shallowrebuild bool
 	var quiet bool
 	var dotOutput bool
+	var opts buildOpts
 
 	flag.StringVar(&directory, "C", "", "directory to change in to")
 	flag.StringVar(&mkfilepath, "f", "mkfile", "use the given file as mkfile")
-	flag.BoolVar(&dryrun, "n", false, "print commands without actually executing")
-	flag.BoolVar(&touchmode, "t", false, "touch targets instead of executing recipes")
+	flag.BoolVar(&opts.dryrun, "n", false, "print commands without actually executing")
+	flag.BoolVar(&opts.touchmode, "t", false, "touch targets instead of executing recipes")
 	flag.BoolVar(&shallowrebuild, "r", false, "force building of just targets")
-	flag.BoolVar(&rebuildall, "a", false, "force building of all dependencies")
-	flag.BoolVar(&keepgoing, "k", false, "continue building after errors")
+	flag.BoolVar(&opts.rebuildall, "a", false, "force building of all dependencies")
+	flag.BoolVar(&opts.keepgoing, "k", false, "continue building after errors")
 	flag.StringVar(&pretendModified, "w", "", "pretend `target` was recently modified")
 	flag.IntVar(&sched.allowed, "p", -1, "maximum number of jobs to execute in parallel")
 	flag.IntVar(&maxRuleCnt, "l", 1, "maximum number of times a specific rule can be applied (recursion)")
 	flag.BoolVar(&interactive, "I", false, "prompt before executing rules")
-	flag.BoolVar(&forceIntermediate, "i", false, "force rebuild of missing intermediates")
-	flag.BoolVar(&explain, "e", false, "explain why targets are out of date")
+	flag.BoolVar(&opts.forceIntermed, "i", false, "force rebuild of missing intermediates")
+	flag.BoolVar(&opts.explain, "e", false, "explain why targets are out of date")
 	flag.BoolVar(&quiet, "q", false, "don't print recipes before executing them")
 	flag.BoolVar(&dotOutput, "dot", false, "print dependency graph in graphviz dot format and exit")
 	flag.BoolVar(&color, "color", isatty.IsTerminal(os.Stdout.Fd()), "turn color on/off")
@@ -498,9 +491,10 @@ func main() {
 		return
 	}
 
+	opts.rebuildTargets = make(map[string]bool)
 	if shallowrebuild {
 		for i := range targets {
-			rebuildtargets[targets[i]] = true
+			opts.rebuildTargets[targets[i]] = true
 		}
 	}
 
@@ -512,14 +506,21 @@ func main() {
 	rs.add(root)
 
 	if dotOutput {
-		g := buildgraph(rs, "", maxRuleCnt)
+		g := buildgraph(rs, "", maxRuleCnt, opts.rebuildall)
 		g.visualize(os.Stdout)
 		return
 	}
 
+	opts.vars = rs.vars
+	opts.unexportedVars = rs.unexportedVars
+
 	if interactive {
-		g := buildgraph(rs, "", maxRuleCnt)
-		mkNode(g, g.root, rs.vars, rs.unexportedVars, true, true)
+		g := buildgraph(rs, "", maxRuleCnt, opts.rebuildall)
+		// Preview: dry-run to show what would be built.
+		savedDryrun := opts.dryrun
+		opts.dryrun = true
+		mkNode(g, g.root, &opts, true)
+		opts.dryrun = savedDryrun
 		fmt.Print("Proceed? ")
 		in := bufio.NewReader(os.Stdin)
 		for {
@@ -536,7 +537,7 @@ func main() {
 		}
 	}
 
-	g := buildgraph(rs, "", maxRuleCnt)
+	g := buildgraph(rs, "", maxRuleCnt, opts.rebuildall)
 
 	// -w flag: pretend a target was recently modified.
 	if pretendModified != "" {
@@ -546,7 +547,7 @@ func main() {
 		}
 	}
 
-	mkNode(g, g.root, rs.vars, rs.unexportedVars, dryrun, true)
+	mkNode(g, g.root, &opts, true)
 	if g.root.status == nodeStatusFailed {
 		os.Exit(1)
 	}

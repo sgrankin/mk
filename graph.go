@@ -11,8 +11,9 @@ import (
 
 // A dependency graph
 type graph struct {
-	root  *node            // the intial target's node
-	nodes map[string]*node // map targets to their nodes
+	root       *node            // the intial target's node
+	nodes      map[string]*node // map targets to their nodes
+	rebuildall bool             // -a flag: ignore timestamps, rebuild everything
 }
 
 // An edge in the graph.
@@ -59,7 +60,7 @@ type node struct {
 }
 
 // Update a node's timestamp and 'exists' flag.
-func (u *node) updateTimestamp() {
+func (u *node) updateTimestamp(rebuildall bool) {
 	if u.flags&nodeFlagForcedTime != 0 {
 		return
 	}
@@ -81,7 +82,7 @@ func (u *node) updateTimestamp() {
 // Create a new node
 func (g *graph) newnode(name string) *node {
 	u := &node{name: name}
-	u.updateTimestamp()
+	u.updateTimestamp(g.rebuildall)
 	g.nodes[name] = u
 	return u
 }
@@ -113,8 +114,8 @@ func (u *node) newedge(v *node, r *rule) *edge {
 }
 
 // Create a dependency graph for the given target.
-func buildgraph(rs *ruleSet, target string, maxRuleCnt int) *graph {
-	g := &graph{nil, make(map[string]*node)}
+func buildgraph(rs *ruleSet, target string, maxRuleCnt int, rebuildall bool) *graph {
+	g := &graph{nodes: make(map[string]*node), rebuildall: rebuildall}
 
 	// keep track of how many times each rule is visited, to avoid cycles.
 	rulecnt := make([]int, len(rs.rules))
