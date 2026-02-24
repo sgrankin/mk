@@ -143,6 +143,8 @@ func applyrules(rs *ruleSet, g *graph, target string, rulecnt []int) *node {
 	if ok {
 		for ki := range ks {
 			k := ks[ki]
+			// Use > (not >=) so multi-target rules like "a b: b" can match
+			// each target once before the limit kicks in. Metarules use >=.
 			if rulecnt[k] > maxRuleCnt {
 				continue
 			}
@@ -241,8 +243,8 @@ func applyrules(rs *ruleSet, g *graph, target string, rulecnt []int) *node {
 	return n
 }
 
-// Remove edges marked as togo.
-func (g *graph) togo(n *node) {
+// Remove edges marked for pruning (edge.togo == true).
+func (g *graph) pruneEdges(n *node) {
 	count := 0
 	for i := range n.prereqs {
 		if !n.prereqs[i].togo {
@@ -293,7 +295,7 @@ func (g *graph) vacuous(n *node) bool {
 		}
 	}
 
-	g.togo(n)
+	g.pruneEdges(n)
 	if vac {
 		n.flags |= nodeFlagVacuous
 	}
@@ -350,7 +352,7 @@ func (g *graph) ambiguous(n *node) {
 	if bad > 0 {
 		mkError("")
 	}
-	g.togo(n)
+	g.pruneEdges(n)
 }
 
 // Print a trace of rules, k

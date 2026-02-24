@@ -351,14 +351,8 @@ func expandShell(shcmd string, args []string) (string, []string) {
 		shellargs = fields[1:]
 	}
 
-	switch {
-	// TODO - This case logic might be shaky, works for now
-	case len(shellargs) > 0 && len(args) > 0:
+	if len(shellargs) > 0 && (len(args) > 0 || dontDropArgs) {
 		args = append(shellargs, args...)
-
-	case len(shellargs) > 0 && dontDropArgs:
-		args = append(shellargs, args...)
-
 	}
 
 	return shell, args
