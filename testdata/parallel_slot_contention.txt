@@ -1,0 +1,17 @@
+# With -p 2, more than 2 parallel recipes must wait for a slot.
+# This exercises the reserveSubproc wait loop.
+mk -p 2 -f mkfile
+stdout 'done'
+
+-- mkfile --
+all:V: a b c d e
+a:V:
+	sleep 0.05
+b:V:
+	sleep 0.05
+c:V:
+	sleep 0.05
+d:V:
+	sleep 0.05
+e:V:
+	echo done

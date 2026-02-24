@@ -1,0 +1,9 @@
+# -t flag with non-existent target: creates empty file instead of running recipe
+mk -t -p 1 -f mkfile target
+! stdout 'recipe ran'
+exists target
+
+-- mkfile --
+target: dep
+	echo recipe ran
+-- dep --
