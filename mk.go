@@ -512,13 +512,13 @@ func main() {
 	rs.add(root)
 
 	if dotOutput {
-		g := buildgraph(rs, "")
+		g := buildgraph(rs, "", maxRuleCnt)
 		g.visualize(os.Stdout)
 		return
 	}
 
 	if interactive {
-		g := buildgraph(rs, "")
+		g := buildgraph(rs, "", maxRuleCnt)
 		mkNode(g, g.root, rs.vars, rs.unexportedVars, true, true)
 		fmt.Print("Proceed? ")
 		in := bufio.NewReader(os.Stdin)
@@ -536,7 +536,7 @@ func main() {
 		}
 	}
 
-	g := buildgraph(rs, "")
+	g := buildgraph(rs, "", maxRuleCnt)
 
 	// -w flag: pretend a target was recently modified.
 	if pretendModified != "" {

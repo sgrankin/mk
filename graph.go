@@ -113,12 +113,12 @@ func (u *node) newedge(v *node, r *rule) *edge {
 }
 
 // Create a dependency graph for the given target.
-func buildgraph(rs *ruleSet, target string) *graph {
+func buildgraph(rs *ruleSet, target string, maxRuleCnt int) *graph {
 	g := &graph{nil, make(map[string]*node)}
 
 	// keep track of how many times each rule is visited, to avoid cycles.
 	rulecnt := make([]int, len(rs.rules))
-	g.root = applyrules(rs, g, target, rulecnt)
+	g.root = applyrules(rs, g, target, rulecnt, maxRuleCnt)
 	g.cyclecheck(g.root)
 	g.root.flags |= nodeFlagProbable
 	g.vacuous(g.root)
@@ -129,7 +129,7 @@ func buildgraph(rs *ruleSet, target string) *graph {
 
 // Recursively match the given target to a rule in the rule set to construct the
 // full graph.
-func applyrules(rs *ruleSet, g *graph, target string, rulecnt []int) *node {
+func applyrules(rs *ruleSet, g *graph, target string, rulecnt []int, maxRuleCnt int) *node {
 	u, ok := g.nodes[target]
 	if ok {
 		return u
@@ -164,7 +164,7 @@ func applyrules(rs *ruleSet, g *graph, target string, rulecnt []int) *node {
 				u.newedge(nil, r)
 			} else {
 				for i := range r.prereqs {
-					u.newedge(applyrules(rs, g, r.prereqs[i], rulecnt), r)
+					u.newedge(applyrules(rs, g, r.prereqs[i], rulecnt, maxRuleCnt), r)
 				}
 			}
 			rulecnt[k] -= 1
@@ -228,7 +228,7 @@ func applyrules(rs *ruleSet, g *graph, target string, rulecnt []int) *node {
 						prereq = expandSuffixes(r.prereqs[i], stem)
 					}
 
-					e := u.newedge(applyrules(rs, g, prereq, rulecnt), r)
+					e := u.newedge(applyrules(rs, g, prereq, rulecnt, maxRuleCnt), r)
 					e.stem = stem
 					e.matches = matches
 				}
