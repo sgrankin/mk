@@ -506,7 +506,7 @@ func main() {
 	rs.add(root)
 
 	if dotOutput {
-		g := buildgraph(rs, "", maxRuleCnt, opts.rebuildall)
+		g := buildgraph(rs, "", opts.rebuildall)
 		g.visualize(os.Stdout)
 		return
 	}
@@ -515,7 +515,7 @@ func main() {
 	opts.unexportedVars = rs.unexportedVars
 
 	if interactive {
-		g := buildgraph(rs, "", maxRuleCnt, opts.rebuildall)
+		g := buildgraph(rs, "", opts.rebuildall)
 		// Preview: dry-run to show what would be built.
 		savedDryrun := opts.dryrun
 		opts.dryrun = true
@@ -537,7 +537,7 @@ func main() {
 		}
 	}
 
-	g := buildgraph(rs, "", maxRuleCnt, opts.rebuildall)
+	g := buildgraph(rs, "", opts.rebuildall)
 
 	// -w flag: pretend a target was recently modified.
 	if pretendModified != "" {
