@@ -144,8 +144,6 @@ func expandSigil(input string, vars map[string][]string) ([]string, int) {
 	c, w := utf8.DecodeRuneInString(input)
 	var offset int
 	var varname string
-	namelist_pattern := expandSigil_namelist_pattern
-
 	if c == '$' { // escaping of "$" with "$$"
 		return []string{"$"}, w
 	} else if c == '{' { // match bracketed expansions: ${foo}, or ${foo:a%b=c%d}
@@ -157,7 +155,7 @@ func expandSigil(input string, vars map[string][]string) ([]string, int) {
 		offset = w + j + 1
 
 		// is this a namelist?
-		mat := namelist_pattern.FindStringSubmatch(varname)
+		mat := expandSigil_namelist_pattern.FindStringSubmatch(varname)
 		if mat != nil && isValidVarName(mat[1]) {
 			// ${varname:a%b=c%d}
 			varname = mat[1]
