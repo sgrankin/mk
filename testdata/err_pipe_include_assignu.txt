@@ -1,0 +1,8 @@
+# =U= token inside pipe include is unexpected and produces error
+! mk -n -f mkfile
+stderr 'expected a shell command'
+
+-- mkfile --
+<| echo =U= foo
+all:V:
+	echo hello
