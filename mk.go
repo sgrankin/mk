@@ -217,8 +217,8 @@ func mkNode(g *graph, u *node, opts *buildOpts, required bool) {
 	}
 
 	// there should otherwise be exactly one edge with an associated rule
-	prereqs := make([]*node, 0)
-	var e *edge = nil
+	var prereqs []*node
+	var e *edge
 	for i := range u.prereqs {
 		if u.prereqs[i].r != nil {
 			e = u.prereqs[i]

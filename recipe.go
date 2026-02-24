@@ -1,4 +1,4 @@
-// Various function for dealing with recipes.
+// Various functions for dealing with recipes.
 
 package main
 
@@ -90,12 +90,12 @@ func dorecipe(u *node, e *edge, opts *buildOpts, nproc int) bool {
 
 	prereqs := make([]string, 0)
 	newprereq := make([]string, 0)
-	nprereqN := 0
+	prereqCount := 0
 	for i := range u.prereqs {
 		if u.prereqs[i].v != nil {
 			prereqs = append(prereqs, u.prereqs[i].v.name)
-			nprereqN++
-			vars[fmt.Sprintf("prereq%d", nprereqN)] = []string{u.prereqs[i].v.name}
+			prereqCount++
+			vars[fmt.Sprintf("prereq%d", prereqCount)] = []string{u.prereqs[i].v.name}
 			// newprereq: prereqs that were rebuilt (out of date)
 			if u.prereqs[i].v.status == nodeStatusDone {
 				newprereq = append(newprereq, u.prereqs[i].v.name)
