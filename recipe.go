@@ -66,9 +66,9 @@ func printIndented(out io.Writer, s string, ind int) {
 }
 
 // Execute a recipe.
-func dorecipe(target string, u *node, e *edge, vars map[string][]string, unexportedVars map[string]bool, dryrun bool, nproc int) bool {
-	vars = maps.Clone(vars)
-	vars["target"] = []string{target}
+func dorecipe(u *node, e *edge, opts *buildOpts, nproc int) bool {
+	vars := maps.Clone(opts.vars)
+	vars["target"] = []string{u.name}
 	vars["nproc"] = []string{fmt.Sprintf("%d", nproc)}
 	vars["pid"] = []string{fmt.Sprintf("%d", os.Getpid())}
 	if e.r.ismeta {
@@ -127,8 +127,8 @@ func dorecipe(target string, u *node, e *edge, vars map[string][]string, unexpor
 	// Build the command.
 	input := expandRecipeSigils(e.r.recipe, vars)
 
-	mkPrintRecipe(target, input, e.r.attributes.quiet)
-	if dryrun {
+	mkPrintRecipe(u.name, input, e.r.attributes.quiet)
+	if opts.dryrun {
 		return true
 	}
 
@@ -136,7 +136,7 @@ func dorecipe(target string, u *node, e *edge, vars map[string][]string, unexpor
 	env := os.Environ()
 	for k, v := range vars {
 		// =U= variables are available for mk expansion but not exported to recipes.
-		if unexportedVars[k] {
+		if opts.unexportedVars[k] {
 			continue
 		}
 		env = append(env, k+"="+strings.Join(v, " "))

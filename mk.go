@@ -319,7 +319,7 @@ func mkNode(g *graph, u *node, opts *buildOpts, required bool) {
 				nproc = sched.reserve()
 			}
 
-			if !dorecipe(u.name, u, e, opts.vars, opts.unexportedVars, opts.dryrun, nproc) {
+			if !dorecipe(u, e, opts, nproc) {
 				finalstatus = nodeStatusFailed
 				opts.failed.Store(true)
 				// D attribute: delete the target file when the recipe fails.
