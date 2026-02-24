@@ -1,0 +1,11 @@
+# A rule with both literal and pattern targets is meta (due to %).
+# The literal target must be found through the meta-rules path, not targetrules.
+mk -n -f mkfile foo
+cmp stdout expected
+
+-- mkfile --
+foo %.o:V:
+	echo building $target
+
+-- expected --
+foo: echo building foo

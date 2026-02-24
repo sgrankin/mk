@@ -215,7 +215,7 @@ func applyrules(rs *ruleSet, g *graph, target string, rulecnt []int) *node {
 					key := fmt.Sprintf("stem%d", i)
 					match_vars[key] = matches[i : i+1]
 				}
-			} else {
+			} else if len(mat) > 1 {
 				stem = mat[1]
 			}
 
