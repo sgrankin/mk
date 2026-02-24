@@ -38,17 +38,8 @@ var (
 	// Lock on standard out, messages don't get interleaved too much.
 	mkMsgMutex sync.Mutex
 
-	// Limit the number of recipes executed simultaneously.
-	subprocsAllowed int
-
-	// Current subprocesses being executed
-	subprocsRunning int
-
-	// Wakeup on a free subprocess slot.
-	subprocsRunningCond *sync.Cond = sync.NewCond(&sync.Mutex{})
-
-	// Prevent more than one recipe at a time from trying to take over
-	exclusiveSubproc = sync.Mutex{}
+	// sched controls parallel recipe execution.
+	sched scheduler
 
 	// The maximum number of times an rule may be applied.
 	// This limits recursion of both meta- and non-meta-rules!
@@ -74,47 +65,55 @@ var (
 	buildFailed atomic.Bool
 )
 
+// scheduler controls parallel recipe execution, limiting the number of
+// concurrent subprocesses.
+type scheduler struct {
+	allowed   int
+	running   int
+	cond      *sync.Cond
+	exclusive sync.Mutex
+}
+
 // Wait until there is an available subprocess slot.
 // Returns the 0-based slot number assigned to this job.
-func reserveSubproc() int {
-	subprocsRunningCond.L.Lock()
-	for subprocsRunning >= subprocsAllowed {
-		subprocsRunningCond.Wait()
+func (s *scheduler) reserve() int {
+	s.cond.L.Lock()
+	for s.running >= s.allowed {
+		s.cond.Wait()
 	}
-	slot := subprocsRunning
-	subprocsRunning++
-	subprocsRunningCond.L.Unlock()
+	slot := s.running
+	s.running++
+	s.cond.L.Unlock()
 	return slot
 }
 
 // Free up another subprocess to run.
-func finishSubproc() {
-	subprocsRunningCond.L.Lock()
-	subprocsRunning--
-	subprocsRunningCond.Signal()
-	subprocsRunningCond.L.Unlock()
+func (s *scheduler) finish() {
+	s.cond.L.Lock()
+	s.running--
+	s.cond.Signal()
+	s.cond.L.Unlock()
 }
 
-// Make everyone wait while we
-func reserveExclusiveSubproc() {
-	exclusiveSubproc.Lock()
-	// Wait until everything is done running
+// Acquire exclusive access, waiting for all running subprocesses to finish.
+func (s *scheduler) reserveExclusive() {
+	s.exclusive.Lock()
 	stolenSubprocs := 0
-	subprocsRunningCond.L.Lock()
-	stolenSubprocs = subprocsAllowed - subprocsRunning
-	subprocsRunning = subprocsAllowed
-	for stolenSubprocs < subprocsAllowed {
-		subprocsRunningCond.Wait()
-		stolenSubprocs += subprocsAllowed - subprocsRunning
-		subprocsRunning = subprocsAllowed
+	s.cond.L.Lock()
+	stolenSubprocs = s.allowed - s.running
+	s.running = s.allowed
+	for stolenSubprocs < s.allowed {
+		s.cond.Wait()
+		stolenSubprocs += s.allowed - s.running
+		s.running = s.allowed
 	}
 }
 
-func finishExclusiveSubproc() {
-	subprocsRunning = 0
-	subprocsRunningCond.Broadcast()
-	subprocsRunningCond.L.Unlock()
-	exclusiveSubproc.Unlock()
+func (s *scheduler) finishExclusive() {
+	s.running = 0
+	s.cond.Broadcast()
+	s.cond.L.Unlock()
+	s.exclusive.Unlock()
 }
 
 // Ansi color codes.
@@ -133,7 +132,7 @@ const (
 // Build a node's prereqs. Block until completed.
 func mkNodePrereqs(g *graph, prereqs []*node, vars map[string][]string, unexportedVars map[string]bool, dryrun bool, required bool) nodeStatus {
 	// When limited to a single process, build sequentially to preserve order.
-	if subprocsAllowed == 1 {
+	if sched.allowed == 1 {
 		status := nodeStatusDone
 		for i := range prereqs {
 			prereqs[i].mutex.Lock()
@@ -321,10 +320,10 @@ func mkNode(g *graph, u *node, vars map[string][]string, unexportedVars map[stri
 		} else if !touchmode {
 			var nproc int
 			if e.r.attributes.exclusive {
-				reserveExclusiveSubproc()
+				sched.reserveExclusive()
 				nproc = 0
 			} else {
-				nproc = reserveSubproc()
+				nproc = sched.reserve()
 			}
 
 			if !dorecipe(u.name, u, e, vars, unexportedVars, dryrun, nproc) {
@@ -344,9 +343,9 @@ func mkNode(g *graph, u *node, vars map[string][]string, unexportedVars map[stri
 			}
 
 			if e.r.attributes.exclusive {
-				finishExclusiveSubproc()
+				sched.finishExclusive()
 			} else {
-				finishSubproc()
+				sched.finish()
 			}
 		}
 	} else if finalstatus != nodeStatusFailed {
@@ -416,7 +415,7 @@ func main() {
 	flag.BoolVar(&rebuildall, "a", false, "force building of all dependencies")
 	flag.BoolVar(&keepgoing, "k", false, "continue building after errors")
 	flag.StringVar(&pretendModified, "w", "", "pretend `target` was recently modified")
-	flag.IntVar(&subprocsAllowed, "p", -1, "maximum number of jobs to execute in parallel")
+	flag.IntVar(&sched.allowed, "p", -1, "maximum number of jobs to execute in parallel")
 	flag.IntVar(&maxRuleCnt, "l", 1, "maximum number of times a specific rule can be applied (recursion)")
 	flag.BoolVar(&interactive, "I", false, "prompt before executing rules")
 	flag.BoolVar(&forceIntermediate, "i", false, "force rebuild of missing intermediates")
@@ -430,17 +429,18 @@ func main() {
 	flag.Parse()
 
 	// Resolve parallelism: -p flag > $NPROC env > NumCPU
-	if subprocsAllowed < 0 {
+	if sched.allowed < 0 {
 		if nproc := os.Getenv("NPROC"); nproc != "" {
 			if n, err := strconv.Atoi(nproc); err == nil && n > 0 {
-				subprocsAllowed = n
+				sched.allowed = n
 			} else {
 				mkError(fmt.Sprintf("invalid $NPROC value: %q", nproc))
 			}
 		} else {
-			subprocsAllowed = runtime.NumCPU()
+			sched.allowed = runtime.NumCPU()
 		}
 	}
+	sched.cond = sync.NewCond(&sync.Mutex{})
 
 	if directory != "" {
 		err := os.Chdir(directory)
