@@ -18,7 +18,7 @@ const nonBareRunes = " \t\n\r\\=:#'\"$`"
 
 // Return true if the string contains whitespace only.
 func onlyWhitespace(s string) bool {
-	return !strings.ContainsAny(s, " \t\r\n")
+	return strings.TrimLeft(s, " \t\r\n") == ""
 }
 
 const (
