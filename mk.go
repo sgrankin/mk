@@ -501,7 +501,7 @@ func main() {
 	// Create a dummy virtual rule that depends on every target
 	root := rule{}
 	root.targets = []pattern{{false, "", nil}}
-	root.attributes = attribSet{false, false, false, false, false, false, false, true, false}
+	root.attributes = attribSet{virtual: true}
 	root.prereqs = targets
 	rs.add(root)
 
