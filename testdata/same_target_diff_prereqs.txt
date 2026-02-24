@@ -1,0 +1,12 @@
+# Two rules with same target and attributes but different prereq count
+# are not replacements. They are treated as ambiguous.
+! mk -n -p 1 -f mkfile
+stderr 'ambiguous'
+
+-- mkfile --
+all:V: dep
+	echo first
+all:V:
+	echo second
+dep:V:
+	echo dep

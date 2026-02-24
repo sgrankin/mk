@@ -1,0 +1,10 @@
+# Two rules with same target but different attributes are not replacements.
+# They are treated as ambiguous.
+! mk -n -p 1 -f mkfile
+stderr 'ambiguous'
+
+-- mkfile --
+all:V:
+	echo first
+all:VQ:
+	echo second
