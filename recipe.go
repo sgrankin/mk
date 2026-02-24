@@ -4,6 +4,8 @@ package main
 
 import (
 	"bufio"
+	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -158,92 +160,33 @@ func dorecipe(target string, u *node, e *edge, vars map[string][]string, dryrun 
 //	input: String piped into the program's stdin
 //	capture_out: If true, capture and return the program's stdout rather than echoing it.
 //
-// Returns
-//
-//	(output, success)
-//	output is an empty string of catputer_out is false, or the collected output from the profram is true.
-//
-//	success is true if the exit code was 0 and false otherwise
+// Returns (output, success) where output is the captured stdout (empty if
+// capture_out is false) and success indicates a zero exit code.
 func subprocess(program string,
 	args []string,
 	env []string,
 	input string,
 	capture_out bool,
 ) (string, bool) {
-	program_path, err := exec.LookPath(program)
-	if err != nil {
-		log.Fatal(err)
-	}
+	cmd := exec.Command(program, args...)
+	cmd.Env = env
+	cmd.Stdin = strings.NewReader(input)
+	cmd.Stderr = os.Stderr
 
-	proc_args := []string{program}
-	proc_args = append(proc_args, args...)
-
-	stdin_pipe_read, stdin_pipe_write, err := os.Pipe()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	attr := os.ProcAttr{Env: env, Files: []*os.File{stdin_pipe_read, os.Stdout, os.Stderr}}
-
-	output := make([]byte, 0)
-	capture_done := make(chan bool)
+	var stdout bytes.Buffer
 	if capture_out {
-		stdout_pipe_read, stdout_pipe_write, err := os.Pipe()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		attr.Files[1] = stdout_pipe_write
-
-		go func() {
-			buf := make([]byte, 1024)
-			for {
-				n, err := stdout_pipe_read.Read(buf)
-
-				if err == io.EOF && n == 0 {
-					break
-				} else if err != nil {
-					log.Fatal(err)
-				}
-
-				output = append(output, buf[:n]...)
-			}
-
-			capture_done <- true
-		}()
+		cmd.Stdout = &stdout
+	} else {
+		cmd.Stdout = os.Stdout
 	}
 
-	proc, err := os.StartProcess(program_path, proc_args, &attr)
+	err := cmd.Run()
 	if err != nil {
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) {
+			return stdout.String(), false
+		}
 		log.Fatal(err)
 	}
-
-	go func() {
-		_, err := stdin_pipe_write.WriteString(input)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		err = stdin_pipe_write.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}()
-
-	state, err := proc.Wait()
-
-	if attr.Files[1] != os.Stdout {
-		attr.Files[1].Close()
-	}
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// wait until stdout copying in finished
-	if capture_out {
-		<-capture_done
-	}
-
-	return string(output), state.Success()
+	return stdout.String(), true
 }
