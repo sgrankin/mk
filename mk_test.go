@@ -101,7 +101,7 @@ func TestMkNodeAlreadyClaimed(t *testing.T) {
 		status: nodeStatusStarted,
 	}
 	g := &graph{nodes: map[string]*node{u.name: u}}
-	mkNode(g, u, nil, true, false)
+	mkNode(g, u, nil, nil, true, false)
 	u.mutex.Lock()
 	got := u.status
 	u.mutex.Unlock()

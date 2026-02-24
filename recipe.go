@@ -66,7 +66,7 @@ func printIndented(out io.Writer, s string, ind int) {
 }
 
 // Execute a recipe.
-func dorecipe(target string, u *node, e *edge, vars map[string][]string, dryrun bool, nproc int) bool {
+func dorecipe(target string, u *node, e *edge, vars map[string][]string, unexportedVars map[string]bool, dryrun bool, nproc int) bool {
 	vars = maps.Clone(vars)
 	vars["target"] = []string{target}
 	vars["nproc"] = []string{fmt.Sprintf("%d", nproc)}
@@ -136,7 +136,7 @@ func dorecipe(target string, u *node, e *edge, vars map[string][]string, dryrun 
 	env := os.Environ()
 	for k, v := range vars {
 		// =U= variables are available for mk expansion but not exported to recipes.
-		if GlobalUnexportedVars[k] {
+		if unexportedVars[k] {
 			continue
 		}
 		env = append(env, k+"="+strings.Join(v, " "))

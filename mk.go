@@ -131,7 +131,7 @@ const (
 )
 
 // Build a node's prereqs. Block until completed.
-func mkNodePrereqs(g *graph, prereqs []*node, vars map[string][]string, dryrun bool, required bool) nodeStatus {
+func mkNodePrereqs(g *graph, prereqs []*node, vars map[string][]string, unexportedVars map[string]bool, dryrun bool, required bool) nodeStatus {
 	// When limited to a single process, build sequentially to preserve order.
 	if subprocsAllowed == 1 {
 		status := nodeStatusDone
@@ -140,7 +140,7 @@ func mkNodePrereqs(g *graph, prereqs []*node, vars map[string][]string, dryrun b
 			switch prereqs[i].status {
 			case nodeStatusReady, nodeStatusNop:
 				prereqs[i].mutex.Unlock()
-				mkNode(g, prereqs[i], vars, dryrun, required)
+				mkNode(g, prereqs[i], vars, unexportedVars, dryrun, required)
 			default:
 				prereqs[i].mutex.Unlock()
 			}
@@ -159,7 +159,7 @@ func mkNodePrereqs(g *graph, prereqs []*node, vars map[string][]string, dryrun b
 		prereqs[i].mutex.Lock()
 		switch prereqs[i].status {
 		case nodeStatusReady, nodeStatusNop:
-			go mkNode(g, prereqs[i], vars, dryrun, required)
+			go mkNode(g, prereqs[i], vars, unexportedVars, dryrun, required)
 			fallthrough
 		case nodeStatusStarted:
 			prereqs[i].listeners = append(prereqs[i].listeners, prereqstat)
@@ -191,7 +191,7 @@ func mkNodePrereqs(g *graph, prereqs []*node, vars map[string][]string, dryrun b
 //	u: Node to (possibly) build.
 //	dryrun: Don't actually build anything, just pretend.
 //	required: Avoid building this node, unless its prereqs are out of date.
-func mkNode(g *graph, u *node, vars map[string][]string, dryrun bool, required bool) {
+func mkNode(g *graph, u *node, vars map[string][]string, unexportedVars map[string]bool, dryrun bool, required bool) {
 	// try to claim on this node
 	u.mutex.Lock()
 	if u.status != nodeStatusReady && u.status != nodeStatusNop {
@@ -237,7 +237,7 @@ func mkNode(g *graph, u *node, vars map[string][]string, dryrun bool, required b
 	}
 
 	prereqs_required := required && (e.r.attributes.virtual || !u.exists || forceIntermediate)
-	if mkNodePrereqs(g, prereqs, vars, dryrun, prereqs_required) == nodeStatusFailed {
+	if mkNodePrereqs(g, prereqs, vars, unexportedVars, dryrun, prereqs_required) == nodeStatusFailed {
 		finalstatus = nodeStatusFailed
 	}
 
@@ -294,7 +294,7 @@ func mkNode(g *graph, u *node, vars map[string][]string, dryrun bool, required b
 
 	// make another pass on the prereqs, since we know we need them now
 	if !uptodate {
-		if mkNodePrereqs(g, prereqs, vars, dryrun, true) == nodeStatusFailed {
+		if mkNodePrereqs(g, prereqs, vars, unexportedVars, dryrun, true) == nodeStatusFailed {
 			finalstatus = nodeStatusFailed
 		}
 	}
@@ -327,7 +327,7 @@ func mkNode(g *graph, u *node, vars map[string][]string, dryrun bool, required b
 				nproc = reserveSubproc()
 			}
 
-			if !dorecipe(u.name, u, e, vars, dryrun, nproc) {
+			if !dorecipe(u.name, u, e, vars, unexportedVars, dryrun, nproc) {
 				finalstatus = nodeStatusFailed
 				buildFailed.Store(true)
 				// D attribute: delete the target file when the recipe fails.
@@ -511,10 +511,6 @@ func main() {
 	root.prereqs = targets
 	rs.add(root)
 
-	// Keep a global reference to the total state of mk variables.
-	GlobalMkState = rs.vars
-	GlobalUnexportedVars = rs.unexportedVars
-
 	if dotOutput {
 		g := buildgraph(rs, "")
 		g.visualize(os.Stdout)
@@ -523,7 +519,7 @@ func main() {
 
 	if interactive {
 		g := buildgraph(rs, "")
-		mkNode(g, g.root, rs.vars, true, true)
+		mkNode(g, g.root, rs.vars, rs.unexportedVars, true, true)
 		fmt.Print("Proceed? ")
 		in := bufio.NewReader(os.Stdin)
 		for {
@@ -550,11 +546,9 @@ func main() {
 		}
 	}
 
-	mkNode(g, g.root, rs.vars, dryrun, true)
+	mkNode(g, g.root, rs.vars, rs.unexportedVars, dryrun, true)
 	if g.root.status == nodeStatusFailed {
 		os.Exit(1)
 	}
 }
 
-var GlobalMkState map[string][]string
-var GlobalUnexportedVars map[string]bool
