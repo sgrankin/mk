@@ -228,8 +228,8 @@ func mkNode(g *graph, u *node, opts *buildOpts, required bool) {
 		}
 	}
 
-	prereqs_required := required && (e.r.attributes.virtual || !u.exists || opts.forceIntermed)
-	if mkNodePrereqs(g, prereqs, opts, prereqs_required) == nodeStatusFailed {
+	prereqsRequired := required && (e.r.attributes.virtual || !u.exists || opts.forceIntermed)
+	if mkNodePrereqs(g, prereqs, opts, prereqsRequired) == nodeStatusFailed {
 		finalstatus = nodeStatusFailed
 	}
 

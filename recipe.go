@@ -158,15 +158,15 @@ func dorecipe(u *node, e *edge, opts *buildOpts, nproc int) bool {
 //
 //	program: Program path or name located in PATH
 //	input: String piped into the program's stdin
-//	capture_out: If true, capture and return the program's stdout rather than echoing it.
+//	captureOut: If true, capture and return the program's stdout rather than echoing it.
 //
 // Returns (output, success) where output is the captured stdout (empty if
-// capture_out is false) and success indicates a zero exit code.
+// captureOut is false) and success indicates a zero exit code.
 func subprocess(program string,
 	args []string,
 	env []string,
 	input string,
-	capture_out bool,
+	captureOut bool,
 ) (string, bool) {
 	cmd := exec.Command(program, args...)
 	cmd.Env = env
@@ -174,7 +174,7 @@ func subprocess(program string,
 	cmd.Stderr = os.Stderr
 
 	var stdout bytes.Buffer
-	if capture_out {
+	if captureOut {
 		cmd.Stdout = &stdout
 	} else {
 		cmd.Stdout = os.Stdout
