@@ -3,7 +3,7 @@ package main
 import "testing"
 
 func TestTokenTypeString(t *testing.T) {
-	// Cover all named cases (lines 38-55) and the fallthrough default (line 57).
+	// Cover all named cases and the fallthrough default in tokenType.String().
 	cases := []struct {
 		typ  tokenType
 		want string
@@ -27,7 +27,7 @@ func TestTokenTypeString(t *testing.T) {
 }
 
 func TestTokenString(t *testing.T) {
-	// Cover the error and newline special cases (lines 69-70).
+	// Cover the error and newline special cases in token.String().
 	errTok := token{typ: tokenError, val: "some error"}
 	if got := errTok.String(); got != "some error" {
 		t.Errorf("error token String() = %q, want %q", got, "some error")
@@ -39,7 +39,7 @@ func TestTokenString(t *testing.T) {
 }
 
 func TestLexerNextEOF(t *testing.T) {
-	// Cover next() returning eof when pos >= len(input) (lines 126-128).
+	// Cover next() returning eof when pos >= len(input).
 	l := &lexer{input: ""}
 	if got := l.next(); got != eof {
 		t.Errorf("next() on empty input = %q, want eof", got)
@@ -47,7 +47,7 @@ func TestLexerNextEOF(t *testing.T) {
 }
 
 func TestSkipUntilEOF(t *testing.T) {
-	// Cover skipUntil hitting EOF (lines 215-217).
+	// Cover skipUntil hitting EOF.
 	// Construct lexer directly (bypassing lex() which adds trailing newline).
 	output := make(chan token, 1)
 	l := &lexer{input: "no newline here", line: 1, output: output}

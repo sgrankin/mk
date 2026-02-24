@@ -35,7 +35,7 @@ func startMkWithStdin(stdin string, args ...string) ([]byte, []byte, error) {
 }
 
 func TestMkPrintRecipeEmptyRecipe(t *testing.T) {
-	// Cover mkPrintRecipe with empty recipe and quiet=false (mk.go:397-399).
+	// Cover mkPrintRecipe with empty recipe and quiet=false.
 	// This path is effectively dead in normal execution (rules with empty recipes
 	// are filtered before reaching dorecipe), but exercise it for coverage.
 	old := os.Stdout
