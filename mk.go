@@ -180,37 +180,37 @@ func mkNodePrereqs(g *graph, prereqs []*node, opts *buildOpts, required bool) no
 // Args:
 //
 //	g: Graph in which the node lives.
-//	u: Node to (possibly) build.
+//	n: Node to (possibly) build.
 //	dryrun: Don't actually build anything, just pretend.
 //	required: Avoid building this node, unless its prereqs are out of date.
-func mkNode(g *graph, u *node, opts *buildOpts, required bool) {
+func mkNode(g *graph, n *node, opts *buildOpts, required bool) {
 	// try to claim on this node
-	u.mutex.Lock()
-	if u.status != nodeStatusReady && u.status != nodeStatusNop {
-		u.mutex.Unlock()
+	n.mutex.Lock()
+	if n.status != nodeStatusReady && n.status != nodeStatusNop {
+		n.mutex.Unlock()
 		return
 	} else {
-		u.status = nodeStatusStarted
+		n.status = nodeStatusStarted
 	}
-	u.mutex.Unlock()
+	n.mutex.Unlock()
 
 	// when finished, notify the listeners
 	finalstatus := nodeStatusDone
 	defer func() {
-		u.mutex.Lock()
-		u.status = finalstatus
-		for i := range u.listeners {
-			u.listeners[i] <- u.status
+		n.mutex.Lock()
+		n.status = finalstatus
+		for i := range n.listeners {
+			n.listeners[i] <- n.status
 		}
-		u.listeners = u.listeners[0:0]
-		u.mutex.Unlock()
+		n.listeners = n.listeners[0:0]
+		n.mutex.Unlock()
 	}()
 
 	// there's no rules.
-	if len(u.prereqs) == 0 {
-		if !(u.r != nil && (u.r.attributes.virtual || u.r.attributes.forcedTimestamp)) && !u.exists {
+	if len(n.prereqs) == 0 {
+		if !(n.r != nil && (n.r.attributes.virtual || n.r.attributes.forcedTimestamp)) && !n.exists {
 			wd, _ := os.Getwd()
-			mkError(fmt.Sprintf("don't know how to make %s in %s\n", u.name, wd))
+			mkError(fmt.Sprintf("don't know how to make %s in %s\n", n.name, wd))
 		}
 		finalstatus = nodeStatusNop
 		return
@@ -219,67 +219,67 @@ func mkNode(g *graph, u *node, opts *buildOpts, required bool) {
 	// there should otherwise be exactly one edge with an associated rule
 	var prereqs []*node
 	var e *edge
-	for i := range u.prereqs {
-		if u.prereqs[i].r != nil {
-			e = u.prereqs[i]
+	for i := range n.prereqs {
+		if n.prereqs[i].r != nil {
+			e = n.prereqs[i]
 		}
-		if u.prereqs[i].v != nil {
-			prereqs = append(prereqs, u.prereqs[i].v)
+		if n.prereqs[i].v != nil {
+			prereqs = append(prereqs, n.prereqs[i].v)
 		}
 	}
 
-	prereqsRequired := required && (e.r.attributes.virtual || !u.exists || opts.forceIntermed)
+	prereqsRequired := required && (e.r.attributes.virtual || !n.exists || opts.forceIntermed)
 	if mkNodePrereqs(g, prereqs, opts, prereqsRequired) == nodeStatusFailed {
 		finalstatus = nodeStatusFailed
 	}
 
 	uptodate := true
 	if !e.r.attributes.virtual {
-		u.updateTimestamp(opts.rebuildall)
-		if !u.exists && required {
+		n.updateTimestamp(opts.rebuildall)
+		if !n.exists && required {
 			if opts.explain {
-				fmt.Fprintf(os.Stderr, "mk: %s does not exist\n", u.name)
+				fmt.Fprintf(os.Stderr, "mk: %s does not exist\n", n.name)
 			}
 			uptodate = false
-		} else if len(e.r.command) > 0 && (u.exists || required) {
+		} else if len(e.r.command) > 0 && (n.exists || required) {
 			// P attribute: use custom program for staleness checking.
 			for i := range prereqs {
-				args := append(append([]string{}, e.r.command[1:]...), u.name, prereqs[i].name)
+				args := append(append([]string{}, e.r.command[1:]...), n.name, prereqs[i].name)
 				_, ok := subprocess(e.r.command[0], args, os.Environ(), "", false)
 				if !ok {
 					if opts.explain {
-						fmt.Fprintf(os.Stderr, "mk: %s out of date via %s (P attribute)\n", u.name, prereqs[i].name)
+						fmt.Fprintf(os.Stderr, "mk: %s out of date via %s (P attribute)\n", n.name, prereqs[i].name)
 					}
 					uptodate = false
 					break
 				}
 			}
-		} else if u.exists || required {
+		} else if n.exists || required {
 			for i := range prereqs {
-				if u.t.Before(prereqs[i].t) {
+				if n.t.Before(prereqs[i].t) {
 					if opts.explain {
-						fmt.Fprintf(os.Stderr, "mk: %s older than %s\n", u.name, prereqs[i].name)
+						fmt.Fprintf(os.Stderr, "mk: %s older than %s\n", n.name, prereqs[i].name)
 					}
 					uptodate = false
 				} else if prereqs[i].status == nodeStatusDone {
 					if opts.explain {
-						fmt.Fprintf(os.Stderr, "mk: %s stale because %s was rebuilt\n", u.name, prereqs[i].name)
+						fmt.Fprintf(os.Stderr, "mk: %s stale because %s was rebuilt\n", n.name, prereqs[i].name)
 					}
 					uptodate = false
 				}
 			}
 		}
 	} else {
-		if opts.explain && u.name != "" { // skip the root dummy node
-			fmt.Fprintf(os.Stderr, "mk: %s is virtual\n", u.name)
+		if opts.explain && n.name != "" { // skip the root dummy node
+			fmt.Fprintf(os.Stderr, "mk: %s is virtual\n", n.name)
 		}
 		uptodate = false
 	}
 
-	_, isrebuildtarget := opts.rebuildTargets[u.name]
+	_, isrebuildtarget := opts.rebuildTargets[n.name]
 	if isrebuildtarget || opts.rebuildall {
 		if opts.explain && uptodate {
-			fmt.Fprintf(os.Stderr, "mk: %s forced by -a/-w flag\n", u.name)
+			fmt.Fprintf(os.Stderr, "mk: %s forced by -a/-w flag\n", n.name)
 		}
 		uptodate = false
 	}
@@ -301,15 +301,15 @@ func mkNode(g *graph, u *node, opts *buildOpts, required bool) {
 		if opts.touchmode && !e.r.attributes.virtual {
 			// Touch mode: update the target's timestamp without running the recipe.
 			now := time.Now()
-			if !u.exists {
-				f, err := os.Create(u.name)
+			if !n.exists {
+				f, err := os.Create(n.name)
 				if err == nil {
 					f.Close()
 				}
 			} else {
-				os.Chtimes(u.name, now, now)
+				os.Chtimes(n.name, now, now)
 			}
-			u.updateTimestamp(opts.rebuildall)
+			n.updateTimestamp(opts.rebuildall)
 		} else if !opts.touchmode {
 			var nproc int
 			if e.r.attributes.exclusive {
@@ -319,20 +319,20 @@ func mkNode(g *graph, u *node, opts *buildOpts, required bool) {
 				nproc = sched.reserve()
 			}
 
-			if !dorecipe(u, e, opts, nproc) {
+			if !dorecipe(n, e, opts, nproc) {
 				finalstatus = nodeStatusFailed
 				opts.failed.Store(true)
 				// D attribute: delete the target file when the recipe fails.
 				if e.r.attributes.delFailed {
-					os.Remove(u.name)
+					os.Remove(n.name)
 				}
 			}
 			// U attribute: force timestamp so dependents see the target as updated
 			// even if the recipe didn't modify the file.
 			if finalstatus != nodeStatusFailed && e.r.attributes.update {
-				u.t = time.Now()
+				n.t = time.Now()
 			} else {
-				u.updateTimestamp(opts.rebuildall)
+				n.updateTimestamp(opts.rebuildall)
 			}
 
 			if e.r.attributes.exclusive {
@@ -343,7 +343,7 @@ func mkNode(g *graph, u *node, opts *buildOpts, required bool) {
 		}
 	} else if finalstatus != nodeStatusFailed {
 		if opts.explain && uptodate && !e.r.attributes.virtual {
-			fmt.Fprintf(os.Stderr, "mk: %s is up to date\n", u.name)
+			fmt.Fprintf(os.Stderr, "mk: %s is up to date\n", n.name)
 		}
 		finalstatus = nodeStatusNop
 	}

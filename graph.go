@@ -60,31 +60,31 @@ type node struct {
 }
 
 // Update a node's timestamp and 'exists' flag.
-func (u *node) updateTimestamp(rebuildall bool) {
-	if u.flags&nodeFlagForcedTime != 0 {
+func (n *node) updateTimestamp(rebuildall bool) {
+	if n.flags&nodeFlagForcedTime != 0 {
 		return
 	}
-	info, err := os.Stat(u.name)
+	info, err := os.Stat(n.name)
 	if err == nil {
-		u.t = info.ModTime()
-		u.exists = true
-		u.flags |= nodeFlagProbable
+		n.t = info.ModTime()
+		n.exists = true
+		n.flags |= nodeFlagProbable
 	} else {
-		u.t = time.Unix(0, 0)
-		u.exists = false
+		n.t = time.Unix(0, 0)
+		n.exists = false
 	}
 
 	if rebuildall {
-		u.flags |= nodeFlagProbable
+		n.flags |= nodeFlagProbable
 	}
 }
 
 // Create a new node
 func (g *graph) newnode(name string) *node {
-	u := &node{name: name}
-	u.updateTimestamp(g.rebuildall)
-	g.nodes[name] = u
-	return u
+	n := &node{name: name}
+	n.updateTimestamp(g.rebuildall)
+	g.nodes[name] = n
+	return n
 }
 
 // Print a graph in graphviz format.
@@ -96,10 +96,10 @@ func (g *graph) visualize(w io.Writer) {
 	}
 	slices.Sort(targets)
 	for _, t := range targets {
-		u := g.nodes[t]
-		for i := range u.prereqs {
-			if u.prereqs[i].v != nil {
-				fmt.Fprintf(w, "    \"%s\" -> \"%s\";\n", t, u.prereqs[i].v.name)
+		n := g.nodes[t]
+		for i := range n.prereqs {
+			if n.prereqs[i].v != nil {
+				fmt.Fprintf(w, "    \"%s\" -> \"%s\";\n", t, n.prereqs[i].v.name)
 			}
 		}
 	}
@@ -107,9 +107,9 @@ func (g *graph) visualize(w io.Writer) {
 }
 
 // Create a new arc.
-func (u *node) newedge(v *node, r *rule) *edge {
+func (n *node) newedge(v *node, r *rule) *edge {
 	e := &edge{v: v, r: r}
-	u.prereqs = append(u.prereqs, e)
+	n.prereqs = append(n.prereqs, e)
 	return e
 }
 
@@ -131,11 +131,11 @@ func buildgraph(rs *ruleSet, target string, rebuildall bool) *graph {
 // Recursively match the given target to a rule in the rule set to construct the
 // full graph.
 func applyrules(rs *ruleSet, g *graph, target string, rulecnt []int) *node {
-	u, ok := g.nodes[target]
+	n, ok := g.nodes[target]
 	if ok {
-		return u
+		return n
 	}
-	u = g.newnode(target)
+	n = g.newnode(target)
 
 	// does the target match a concrete rule?
 
@@ -159,13 +159,13 @@ func applyrules(rs *ruleSet, g *graph, target string, rulecnt []int) *node {
 				continue
 			}
 
-			u.flags |= nodeFlagProbable
+			n.flags |= nodeFlagProbable
 			rulecnt[k] += 1
 			if len(r.prereqs) == 0 {
-				u.newedge(nil, r)
+				n.newedge(nil, r)
 			} else {
 				for i := range r.prereqs {
-					u.newedge(applyrules(rs, g, r.prereqs[i], rulecnt), r)
+					n.newedge(applyrules(rs, g, r.prereqs[i], rulecnt), r)
 				}
 			}
 			rulecnt[k] -= 1
@@ -191,7 +191,7 @@ func applyrules(rs *ruleSet, g *graph, target string, rulecnt []int) *node {
 
 		// n attribute: skip metarule if the target is virtual-only
 		// (doesn't exist on disk and no concrete rule matched)
-		if r.attributes.nonvirtual && !u.exists && u.flags&nodeFlagProbable == 0 {
+		if r.attributes.nonvirtual && !n.exists && n.flags&nodeFlagProbable == 0 {
 			continue
 		}
 
@@ -217,7 +217,7 @@ func applyrules(rs *ruleSet, g *graph, target string, rulecnt []int) *node {
 
 			rulecnt[k] += 1
 			if len(r.prereqs) == 0 {
-				e := u.newedge(nil, r)
+				e := n.newedge(nil, r)
 				e.stem = stem
 				e.matches = matches
 			} else {
@@ -229,7 +229,7 @@ func applyrules(rs *ruleSet, g *graph, target string, rulecnt []int) *node {
 						prereq = expandSuffixes(r.prereqs[i], stem)
 					}
 
-					e := u.newedge(applyrules(rs, g, prereq, rulecnt), r)
+					e := n.newedge(applyrules(rs, g, prereq, rulecnt), r)
 					e.stem = stem
 					e.matches = matches
 				}
@@ -238,41 +238,41 @@ func applyrules(rs *ruleSet, g *graph, target string, rulecnt []int) *node {
 		}
 	}
 
-	return u
+	return n
 }
 
 // Remove edges marked as togo.
-func (g *graph) togo(u *node) {
-	n := 0
-	for i := range u.prereqs {
-		if !u.prereqs[i].togo {
-			n++
+func (g *graph) togo(n *node) {
+	count := 0
+	for i := range n.prereqs {
+		if !n.prereqs[i].togo {
+			count++
 		}
 	}
-	prereqs := make([]*edge, n)
+	prereqs := make([]*edge, count)
 	j := 0
-	for i := range u.prereqs {
-		if !u.prereqs[i].togo {
-			prereqs[j] = u.prereqs[i]
+	for i := range n.prereqs {
+		if !n.prereqs[i].togo {
+			prereqs[j] = n.prereqs[i]
 			j++
 		}
 	}
 
 	// TODO: We may have to delete nodes from g.nodes, right?
 
-	u.prereqs = prereqs
+	n.prereqs = prereqs
 }
 
 // Remove vacous children of n.
-func (g *graph) vacuous(u *node) bool {
-	vac := u.flags&nodeFlagProbable == 0
-	if u.flags&nodeFlagReady != 0 {
+func (g *graph) vacuous(n *node) bool {
+	vac := n.flags&nodeFlagProbable == 0
+	if n.flags&nodeFlagReady != 0 {
 		return vac
 	}
-	u.flags |= nodeFlagReady
+	n.flags |= nodeFlagReady
 
-	for i := range u.prereqs {
-		e := u.prereqs[i]
+	for i := range n.prereqs {
+		e := n.prereqs[i]
 		if e.v != nil && g.vacuous(e.v) && e.r.ismeta {
 			e.togo = true
 		} else {
@@ -281,11 +281,11 @@ func (g *graph) vacuous(u *node) bool {
 	}
 
 	// if a rule generated edges that are not togo, keep all of its edges
-	for i := range u.prereqs {
-		e := u.prereqs[i]
+	for i := range n.prereqs {
+		e := n.prereqs[i]
 		if !e.togo {
-			for j := range u.prereqs {
-				f := u.prereqs[j]
+			for j := range n.prereqs {
+				f := n.prereqs[j]
 				if e.r == f.r {
 					f.togo = false
 				}
@@ -293,34 +293,34 @@ func (g *graph) vacuous(u *node) bool {
 		}
 	}
 
-	g.togo(u)
+	g.togo(n)
 	if vac {
-		u.flags |= nodeFlagVacuous
+		n.flags |= nodeFlagVacuous
 	}
 
 	return vac
 }
 
 // Check for cycles
-func (g *graph) cyclecheck(u *node) {
-	if u.flags&nodeFlagCycle != 0 && len(u.prereqs) > 0 {
-		mkError(fmt.Sprintf("cycle in the graph detected at target %s", u.name))
+func (g *graph) cyclecheck(n *node) {
+	if n.flags&nodeFlagCycle != 0 && len(n.prereqs) > 0 {
+		mkError(fmt.Sprintf("cycle in the graph detected at target %s", n.name))
 	}
-	u.flags |= nodeFlagCycle
-	for i := range u.prereqs {
-		if u.prereqs[i].v != nil {
-			g.cyclecheck(u.prereqs[i].v)
+	n.flags |= nodeFlagCycle
+	for i := range n.prereqs {
+		if n.prereqs[i].v != nil {
+			g.cyclecheck(n.prereqs[i].v)
 		}
 	}
-	u.flags &= ^nodeFlagCycle
+	n.flags &= ^nodeFlagCycle
 }
 
 // Deal with ambiguous rules.
-func (g *graph) ambiguous(u *node) {
+func (g *graph) ambiguous(n *node) {
 	bad := 0
 	var le *edge
-	for i := range u.prereqs {
-		e := u.prereqs[i]
+	for i := range n.prereqs {
+		e := n.prereqs[i]
 
 		if e.v != nil {
 			g.ambiguous(e.v)
@@ -333,24 +333,24 @@ func (g *graph) ambiguous(u *node) {
 		} else {
 			if !le.r.equivRecipe(e.r) && !le.r.ismeta && e.r.ismeta {
 				// Concrete rule takes priority over meta-rule.
-				mkPrintRecipe(u.name, e.r.recipe, false)
+				mkPrintRecipe(n.name, e.r.recipe, false)
 				e.togo = true
 				continue
 			}
 			if !le.r.equivRecipe(e.r) {
 				if bad == 0 {
-					mkPrintError(fmt.Sprintf("mk: ambiguous recipes for %s\n", u.name))
+					mkPrintError(fmt.Sprintf("mk: ambiguous recipes for %s\n", n.name))
 					bad = 1
-					g.trace(u.name, le)
+					g.trace(n.name, le)
 				}
-				g.trace(u.name, e)
+				g.trace(n.name, e)
 			}
 		}
 	}
 	if bad > 0 {
 		mkError("")
 	}
-	g.togo(u)
+	g.togo(n)
 }
 
 // Print a trace of rules, k

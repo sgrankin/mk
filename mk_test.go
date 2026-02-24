@@ -96,15 +96,15 @@ func TestInteractiveModeEOF(t *testing.T) {
 func TestMkNodeAlreadyClaimed(t *testing.T) {
 	// Calling mkNode on a node that's already been claimed (status != Ready/Nop)
 	// should return immediately without doing any work.
-	u := &node{
+	n := &node{
 		name:   "already-started",
 		status: nodeStatusStarted,
 	}
-	g := &graph{nodes: map[string]*node{u.name: u}}
-	mkNode(g, u, &buildOpts{dryrun: true}, false)
-	u.mutex.Lock()
-	got := u.status
-	u.mutex.Unlock()
+	g := &graph{nodes: map[string]*node{n.name: n}}
+	mkNode(g, n, &buildOpts{dryrun: true}, false)
+	n.mutex.Lock()
+	got := n.status
+	n.mutex.Unlock()
 	if got != nodeStatusStarted {
 		t.Errorf("status changed to %v, expected it to remain nodeStatusStarted", got)
 	}

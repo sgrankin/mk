@@ -66,9 +66,9 @@ func printIndented(out io.Writer, s string, ind int) {
 }
 
 // Execute a recipe.
-func dorecipe(u *node, e *edge, opts *buildOpts, nproc int) bool {
+func dorecipe(n *node, e *edge, opts *buildOpts, nproc int) bool {
 	vars := maps.Clone(opts.vars)
-	vars["target"] = []string{u.name}
+	vars["target"] = []string{n.name}
 	vars["nproc"] = []string{fmt.Sprintf("%d", nproc)}
 	vars["pid"] = []string{fmt.Sprintf("%d", os.Getpid())}
 	if e.r.ismeta {
@@ -91,14 +91,14 @@ func dorecipe(u *node, e *edge, opts *buildOpts, nproc int) bool {
 	prereqs := make([]string, 0)
 	newprereq := make([]string, 0)
 	prereqCount := 0
-	for i := range u.prereqs {
-		if u.prereqs[i].v != nil {
-			prereqs = append(prereqs, u.prereqs[i].v.name)
+	for i := range n.prereqs {
+		if n.prereqs[i].v != nil {
+			prereqs = append(prereqs, n.prereqs[i].v.name)
 			prereqCount++
-			vars[fmt.Sprintf("prereq%d", prereqCount)] = []string{u.prereqs[i].v.name}
+			vars[fmt.Sprintf("prereq%d", prereqCount)] = []string{n.prereqs[i].v.name}
 			// newprereq: prereqs that were rebuilt (out of date)
-			if u.prereqs[i].v.status == nodeStatusDone {
-				newprereq = append(newprereq, u.prereqs[i].v.name)
+			if n.prereqs[i].v.status == nodeStatusDone {
+				newprereq = append(newprereq, n.prereqs[i].v.name)
 			}
 		}
 	}
@@ -127,7 +127,7 @@ func dorecipe(u *node, e *edge, opts *buildOpts, nproc int) bool {
 	// Build the command.
 	input := expandRecipeSigils(e.r.recipe, vars)
 
-	mkPrintRecipe(u.name, input, e.r.attributes.quiet)
+	mkPrintRecipe(n.name, input, e.r.attributes.quiet)
 	if opts.dryrun {
 		return true
 	}
