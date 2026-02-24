@@ -104,9 +104,8 @@ func parseTopLevel(p *parser, t token) parserStateFun {
 	default:
 		p.parseError("parsing mkfile",
 			"a rule, include, or assignment", t)
+		return parseTopLevel
 	}
-
-	return parseTopLevel
 }
 
 func prettyPipeIncludeName(args []string) string {
@@ -232,9 +231,8 @@ func parseEqualsOrTarget(p *parser, t token) parserStateFun {
 	default:
 		p.parseError("reading a target or assignment",
 			"'=', ':', or another target", t)
+		return parseTopLevel
 	}
-
-	return parseTopLevel // unreachable
 }
 
 // Consumed 'foo='. Everything else is a value being assigned to foo.
