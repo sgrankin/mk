@@ -1,0 +1,9 @@
+# Multi-target rule where prereqs overlap with targets.
+# The recursion limit prevents the same rule from being applied
+# too deeply during graph construction. The cycle check then catches it.
+! mk -n -p 1 -f mkfile a
+stderr 'cycle'
+
+-- mkfile --
+a b c: b c
+	echo building $target

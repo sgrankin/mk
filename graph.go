@@ -69,13 +69,8 @@ func (u *node) updateTimestamp() {
 		u.exists = true
 		u.flags |= nodeFlagProbable
 	} else {
-		_, ok := err.(*os.PathError)
-		if ok {
-			u.t = time.Unix(0, 0)
-			u.exists = false
-		} else {
-			mkError(err.Error())
-		}
+		u.t = time.Unix(0, 0)
+		u.exists = false
 	}
 
 	if rebuildall {
@@ -335,16 +330,11 @@ func (g *graph) ambiguous(u *node) {
 		if le == nil || le.r == nil {
 			le = e
 		} else {
-			if !le.r.equivRecipe(e.r) {
-				if le.r.ismeta && !e.r.ismeta {
-					mkPrintRecipe(u.name, le.r.recipe, false)
-					le.togo = true
-					le = e
-				} else if !le.r.ismeta && e.r.ismeta {
-					mkPrintRecipe(u.name, e.r.recipe, false)
-					e.togo = true
-					continue
-				}
+			if !le.r.equivRecipe(e.r) && !le.r.ismeta && e.r.ismeta {
+				// Concrete rule takes priority over meta-rule.
+				mkPrintRecipe(u.name, e.r.recipe, false)
+				e.togo = true
+				continue
 			}
 			if !le.r.equivRecipe(e.r) {
 				if bad == 0 {
