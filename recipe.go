@@ -108,9 +108,9 @@ func dorecipe(target string, u *node, e *edge, vars map[string][]string, unexpor
 	vars["newmember"] = []string{}
 
 	// Setup the shell in vars.
-	sh, args := expandShell(defaultShell, []string{})
+	sh, args := expandShell(defaultShell, []string{}, dontDropArgs)
 	if len(e.r.shell) > 0 {
-		sh, args = expandShell(e.r.shell[0], e.r.shell[1:])
+		sh, args = expandShell(e.r.shell[0], e.r.shell[1:], dontDropArgs)
 	}
 	// E attribute: don't pass -e to the shell (allow recipe to continue on errors)
 	if e.r.attributes.nonstop {
