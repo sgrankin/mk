@@ -350,17 +350,41 @@ func TestExpandBackQuotedEdgeCases(t *testing.T) {
 	}
 }
 
-func TestExpandSuffixesBackslashPercent(t *testing.T) {
-	// \% → literal %
-	got := expandSuffixes(`\%`, "stem")
-	if got != "%" {
-		t.Errorf("expandSuffixes(`\\%%`, stem) = %q, want %q", got, "%")
+func TestExpandSuffixes(t *testing.T) {
+	tests := []struct {
+		input, stem, want string
+	}{
+		// Basic substitution
+		{"%.o", "foo", "foo.o"},
+		{"&.o", "foo", "foo.o"},
+		// Escaped % → literal %
+		{`\%`, "stem", "%"},
+		{`\%.o`, "stem", "%.o"},
+		// Escaped & → literal &
+		{`\&`, "stem", "&"},
+		// Multiple substitutions (exercises j>0 iterations)
+		{"%.c.%", "foo", "foo.c.foo"},
+		{"%.dir/%", "bar", "bar.dir/bar"},
+		// Backslash followed by non-meta char → preserved literally
+		{`\n`, "stem", `\n`},
+		{`\..o`, "stem", `\..o`},
+		{`a\.b`, "stem", `a\.b`},
+		// Trailing backslash → preserved literally
+		{`a\`, "stem", `a\`},
+		{`\`, "stem", `\`},
+		// Mix of escapes and substitutions
+		{`\%=%`, "stem", "%=stem"},
+		// No special chars
+		{"plain", "stem", "plain"},
+		// Empty input
+		{"", "stem", ""},
 	}
 
-	// Mixed: literal \% and real %
-	got = expandSuffixes(`\%.o`, "stem")
-	if got != "%.o" {
-		t.Errorf("expandSuffixes(`\\%%.o`, stem) = %q, want %q", got, "%.o")
+	for _, tt := range tests {
+		got := expandSuffixes(tt.input, tt.stem)
+		if got != tt.want {
+			t.Errorf("expandSuffixes(%q, %q) = %q, want %q", tt.input, tt.stem, got, tt.want)
+		}
 	}
 }
 

@@ -267,18 +267,28 @@ func expandSuffixes(input string, stem string) string {
 			expanded = append(expanded, input[i:]...)
 			break
 		}
+		j += i // make j absolute
 
 		c, w := utf8.DecodeRuneInString(input[j:])
 		expanded = append(expanded, input[i:j]...)
 		if c == '%' || c == '&' {
 			expanded = append(expanded, stem...)
 			i = j + w
-		} else {
-			j += w
-			c, w := utf8.DecodeRuneInString(input[j:])
-			if c == '%' || c == '&' {
-				expanded = append(expanded, byte(c))
+		} else { // c == '\\'
+			j += w // advance past backslash
+			if j < len(input) {
+				c, w = utf8.DecodeRuneInString(input[j:])
+				if c == '%' || c == '&' {
+					expanded = append(expanded, byte(c))
+				} else {
+					expanded = append(expanded, '\\')
+					expanded = append(expanded, input[j:j+w]...)
+				}
 				i = j + w
+			} else {
+				// trailing backslash: emit literally
+				expanded = append(expanded, '\\')
+				break
 			}
 		}
 	}
