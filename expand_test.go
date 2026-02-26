@@ -283,6 +283,12 @@ func TestExpandRecipeSigils(t *testing.T) {
 			expandticks: false,
 			want:        []string{"mkdir -p $(dirname a)\necho a"},
 		},
+		// trailing backslash → preserved literally
+		{
+			input: "echo \\",
+			vars:  map[string][]string{},
+			want:  []string{"echo \\"},
+		},
 		// backslash + non-$ char → preserved
 		{
 			input: "echo \\n",

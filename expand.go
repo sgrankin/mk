@@ -245,6 +245,10 @@ func expandRecipeSigils(input string, vars map[string][]string) string {
 			i += k
 		} else if c == '\\' {
 			i += w
+			if i >= len(input) {
+				expanded += "\\"
+				break
+			}
 			c, w := utf8.DecodeRuneInString(input[i:])
 			if c == '$' {
 				expanded += "$"
