@@ -23,10 +23,8 @@ type parser struct {
 
 // Pretty errors.
 func (p *parser) parseError(context string, expected string, found token) {
-	mkPrintError(fmt.Sprintf("%s:%d: syntax error: ", p.name, found.line))
-	mkPrintError(fmt.Sprintf("while %s, expected %s but found '%s'.\n",
-		context, expected, found.String()))
-	mkError("")
+	mkError(fmt.Sprintf("%s:%d: syntax error: while %s, expected %s but found '%s'.",
+		p.name, found.line, context, expected, found.String()))
 }
 
 // More basic errors.
