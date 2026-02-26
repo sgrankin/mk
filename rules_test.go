@@ -115,6 +115,7 @@ func TestIsValidVarName(t *testing.T) {
 		{"a1", true},
 		{"1bad", false},
 		{"a-b", false},
+		{"", false},
 	}
 	for _, tt := range tests {
 		got := isValidVarName(tt.name)

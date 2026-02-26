@@ -186,6 +186,9 @@ func (rs *ruleSet) add(r rule) {
 }
 
 func isValidVarName(v string) bool {
+	if len(v) == 0 {
+		return false
+	}
 	for i := 0; i < len(v); {
 		c, w := utf8.DecodeRuneInString(v[i:])
 		if i == 0 && !(isalpha(c) || c == '_') {
