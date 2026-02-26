@@ -38,6 +38,7 @@ func TestMkPrintRecipeEmptyRecipe(t *testing.T) {
 	// Cover mkPrintRecipe with empty recipe and quiet=false.
 	// This path is effectively dead in normal execution (rules with empty recipes
 	// are filtered before reaching dorecipe), but exercise it for coverage.
+	// Note: this test must NOT use t.Parallel() since it swaps os.Stdout.
 	old := os.Stdout
 	r, w, _ := os.Pipe()
 	os.Stdout = w
