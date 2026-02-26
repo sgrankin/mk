@@ -219,7 +219,8 @@ func mkNode(g *graph, n *node, opts *buildOpts, required bool) {
 		return
 	}
 
-	// there should otherwise be exactly one edge with an associated rule
+	// There is exactly one rule among the edges (all edges share the same
+	// rule pointer, set by applyrules; newedge never creates edges with r==nil).
 	var prereqs []*node
 	var e *edge
 	for i := range n.prereqs {
