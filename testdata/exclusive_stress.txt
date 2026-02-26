@@ -1,0 +1,23 @@
+# Stress test for exclusive attribute with many parallel workers.
+# Exercises reserveExclusive signal accounting with >2 concurrent jobs.
+mk -p 5 -f mkfile
+stdout 'exclusive done'
+stdout 'a done'
+stdout 'b done'
+stdout 'c done'
+stdout 'd done'
+
+-- mkfile --
+all:V: a b c d excl
+a:V:
+	sleep 0.1 && echo a done
+b:V:
+	sleep 0.1 && echo b done
+c:V:
+	sleep 0.1 && echo c done
+d:V:
+	sleep 0.1 && echo d done
+delay:V:
+	sleep 0.02
+excl:VX: delay
+	echo exclusive done
