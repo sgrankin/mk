@@ -165,10 +165,6 @@ func (l *lexer) accept(valid string) bool {
 	return false
 }
 
-// Skip the next rune if it is in the valid string. Return true if it was
-// skipped.
-
-
 // Consume characters from the valid string until the next is not.
 func (l *lexer) acceptRun(valid string) int {
 	prevpos := l.pos
@@ -189,8 +185,7 @@ func (l *lexer) acceptUntil(invalid string) {
 	}
 }
 
-// Accept until something from the given string is encountered, or the end of th
-// file
+// Accept until something from the given string is encountered, or the end of the file.
 func (l *lexer) acceptUntilOrEof(invalid string) {
 	for l.pos < len(l.input) && !strings.ContainsRune(invalid, l.peek()) {
 		l.next()

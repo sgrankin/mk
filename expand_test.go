@@ -234,8 +234,6 @@ func TestExpand(t *testing.T) {
 		},
 	}
 
-	//	failing := tests[11:]
-
 	for i, tv := range tests {
 		got := expand(tv.input, tv.vars, tv.expandticks)
 
