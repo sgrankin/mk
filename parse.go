@@ -347,8 +347,8 @@ func parseRecipe(p *parser, t token) parserStateFun {
 	r.targets = make([]pattern, 0)
 	for k := 0; k < i; k++ {
 		exparts := expand(p.tokenbuf[k].val, p.rules.vars, true)
-		for i := range exparts {
-			targetstr := exparts[i]
+		for ei := range exparts {
+			targetstr := exparts[ei]
 			r.targets = append(r.targets, pattern{spat: targetstr})
 
 			if r.attributes.regex {
