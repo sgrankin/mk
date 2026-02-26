@@ -136,7 +136,10 @@ func mkNodePrereqs(g *graph, prereqs []*node, opts *buildOpts, required bool) no
 			default:
 				prereqs[i].mutex.Unlock()
 			}
-			if prereqs[i].status == nodeStatusFailed {
+			prereqs[i].mutex.Lock()
+			s := prereqs[i].status
+			prereqs[i].mutex.Unlock()
+			if s == nodeStatusFailed {
 				status = nodeStatusFailed
 			}
 		}
