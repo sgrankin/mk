@@ -424,12 +424,12 @@ func TestExpandSigilEnvLookup(t *testing.T) {
 func TestExpandBackQuoted(t *testing.T) {
 	tests := []expandtv{
 		{
-			input: "seq 1 5`",
+			input: "printf 'a b c'`",
 			vars: map[string][]string{
 				"shell": {"sh"},
 			},
 			expandticks: false,
-			want:        []string{"1", "2", "3", "4", "5"},
+			want:        []string{"a", "b", "c"},
 		},
 	}
 
