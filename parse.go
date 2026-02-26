@@ -183,6 +183,7 @@ func parseRedirInclude(p *parser, t token) parserStateFun {
 			p.basicErrorAtToken(fmt.Sprintf("cannot open %s", filename), p.tokenbuf[0])
 		}
 		input, _ := io.ReadAll(file)
+		file.Close()
 
 		path, _ := filepath.Abs(filename)
 
