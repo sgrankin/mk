@@ -8,6 +8,7 @@ import (
 )
 
 type expandtv struct {
+	name        string
 	input       string
 	vars        map[string][]string
 	expandticks bool
@@ -17,12 +18,14 @@ type expandtv struct {
 func TestExpand(t *testing.T) {
 	tests := []expandtv{
 		{
+			name:        "literal",
 			input:       "a",
 			vars:        map[string][]string{},
 			expandticks: false,
 			want:        []string{"a"},
 		},
 		{
+			name: "literal_same_as_var",
 			input: "a",
 			vars: map[string][]string{
 				"a": {"glenda"},
@@ -31,6 +34,7 @@ func TestExpand(t *testing.T) {
 			want:        []string{"a"},
 		},
 		{
+			name: "bare_var",
 			input: "$a",
 			vars: map[string][]string{
 				"a": {"glenda"},
@@ -39,6 +43,7 @@ func TestExpand(t *testing.T) {
 			want:        []string{"glenda"},
 		},
 		{
+			name: "braced_var",
 			input: "${a}",
 			vars: map[string][]string{
 				"a": {"glenda"},
@@ -47,6 +52,7 @@ func TestExpand(t *testing.T) {
 			want:        []string{"glenda"},
 		},
 		{
+			name: "braced_var_multi",
 			input: "${a}",
 			vars: map[string][]string{
 				"a": {"glenda", "gopher"},
@@ -55,6 +61,7 @@ func TestExpand(t *testing.T) {
 			want:        []string{"glenda", "gopher"},
 		},
 		{
+			name: "prefix_var",
 			input: "ab$targetpath",
 			vars: map[string][]string{
 				"targetpath": {"./testdata"},
@@ -63,6 +70,7 @@ func TestExpand(t *testing.T) {
 			want:        []string{"ab./testdata"},
 		},
 		{
+			name: "var_suffix_mismatch",
 			input: "$targetpathab",
 			vars: map[string][]string{
 				"targetpath": {"./testdata"},
@@ -71,6 +79,7 @@ func TestExpand(t *testing.T) {
 			want:        []string{"$targetpathab"},
 		},
 		{
+			name: "var_slash_suffix",
 			input: "$targetpath/foo",
 			vars: map[string][]string{
 				"targetpath": {"./testdata"},
@@ -79,6 +88,7 @@ func TestExpand(t *testing.T) {
 			want:        []string{"./testdata/foo"},
 		},
 		{
+			name: "braced_var_slash_suffix",
 			input: "${targetpath}/foo",
 			vars: map[string][]string{
 				"targetpath": {"./testdata"},
@@ -86,9 +96,9 @@ func TestExpand(t *testing.T) {
 			expandticks: false,
 			want:        []string{"./testdata/foo"},
 		},
-		// This one differs between p9p mk and mk.
-		// Do we want this difference?
 		{
+			// Differs from p9p mk: double quotes strip here.
+			name: "double_quoted_var",
 			input: "\"$targetpath\"",
 			vars: map[string][]string{
 				"targetpath": {"./testdata"},
@@ -97,6 +107,7 @@ func TestExpand(t *testing.T) {
 			want:        []string{"./testdata"},
 		},
 		{
+			name: "double_quoted_prefix_var",
 			input: "\"s3://$targetpath\"",
 			vars: map[string][]string{
 				"targetpath": {"testdata"},
@@ -105,6 +116,7 @@ func TestExpand(t *testing.T) {
 			want:        []string{"s3://testdata"},
 		},
 		{
+			name: "single_quoted_var",
 			input: "'$targetpath'",
 			vars: map[string][]string{
 				"targetpath": {"./testdata"},
@@ -113,6 +125,7 @@ func TestExpand(t *testing.T) {
 			want:        []string{"$targetpath"},
 		},
 		{
+			name: "multi_var_dot",
 			input: "$prefix.$suffix",
 			vars: map[string][]string{
 				"prefix": {"name"},
@@ -122,6 +135,7 @@ func TestExpand(t *testing.T) {
 			want:        []string{"name.o"},
 		},
 		{
+			name: "namelist_subst",
 			input: "${targets:%=$targetpath/%}",
 			vars: map[string][]string{
 				"targetpath": {"./testdata"},
@@ -131,6 +145,7 @@ func TestExpand(t *testing.T) {
 			want:        []string{"./testdata/rupert", "./testdata/ruxpin"},
 		},
 		{
+			name: "namelist_missing_var",
 			input: "${targets:%=%.$novar}",
 			vars: map[string][]string{
 				"suffixes": {"o", "ab", "b"},
@@ -140,6 +155,7 @@ func TestExpand(t *testing.T) {
 			want:        []string{"rupert.$novar", "ruxpin.$novar"},
 		},
 		{
+			name: "namelist_multi_value",
 			input: "${targets:%=%.$suffixes}",
 			vars: map[string][]string{
 				"suffixes": {"teddy", "ab", "b"},
@@ -156,6 +172,7 @@ func TestExpand(t *testing.T) {
 			},
 		},
 		{
+			name: "namelist_single_suffix",
 			input: "${targets:%=%.$suffixes}",
 			vars: map[string][]string{
 				"suffixes": {"adventure"},
@@ -167,64 +184,64 @@ func TestExpand(t *testing.T) {
 				"ruxpin bear.adventure",
 			},
 		},
-		// Backtick with expandBackticks=false → literal
 		{
+			name:        "backtick_literal",
 			input:       "`echo hello`",
 			vars:        map[string][]string{},
 			expandticks: false,
 			want:        []string{"`echo hello`"},
 		},
-		// Backtick after prefix with expandBackticks=false → literal, not duplicated
 		{
+			name:        "backtick_with_prefix",
 			input:       "prefix`cmd`suffix",
 			vars:        map[string][]string{},
 			expandticks: false,
 			want:        []string{"prefix`cmd`suffix"},
 		},
-		// Escaped space
 		{
+			name:        "escaped_space",
 			input:       `\ a`,
 			vars:        map[string][]string{},
 			expandticks: false,
 			want:        []string{" a"},
 		},
-		// Escaped tab
 		{
+			name:        "escaped_tab",
 			input:       "\\\ta",
 			vars:        map[string][]string{},
 			expandticks: false,
 			want:        []string{"\ta"},
 		},
-		// $$ → literal $
 		{
+			name:        "dollar_dollar",
 			input:       "$$",
 			vars:        map[string][]string{},
 			expandticks: false,
 			want:        []string{"$"},
 		},
-		// ${unclosed — missing }
 		{
+			name:        "unclosed_brace",
 			input:       "${unclosed",
 			vars:        map[string][]string{},
 			expandticks: false,
 			want:        []string{"${unclosed"},
 		},
-		// ${missing:%=.o} — namelist with nonexistent var
 		{
+			name:        "namelist_nonexistent_var",
 			input:       "${missing:%=%.o}",
 			vars:        map[string][]string{},
 			expandticks: false,
 			want:        []string{},
 		},
-		// $nonexistent — bare var not in vars or env
 		{
+			name:        "bare_nonexistent_var",
 			input:       "$nonexistent_var_xyz",
 			vars:        map[string][]string{},
 			expandticks: false,
 			want:        []string{"$nonexistent_var_xyz"},
 		},
-		// Namelist with pattern that doesn't match all values (else branch)
 		{
+			name: "namelist_partial_match",
 			input: "${targets:foo%=bar%}",
 			vars: map[string][]string{
 				"targets": {"fooX", "other"},
@@ -234,100 +251,94 @@ func TestExpand(t *testing.T) {
 		},
 	}
 
-	for i, tv := range tests {
-		got := expand(tv.input, tv.vars, tv.expandticks)
-
-		if !reflect.DeepEqual(got, tv.want) {
-			t.Errorf("%d: input: %#v, vars: %s, ticks: %v. got %s, want %s",
-				i,
-				tv.input, litter.Sdump(tv.vars), tv.expandticks,
-				litter.Sdump(got),
-				litter.Sdump(tv.want))
-		}
+	for _, tv := range tests {
+		t.Run(tv.name, func(t *testing.T) {
+			got := expand(tv.input, tv.vars, tv.expandticks)
+			if !reflect.DeepEqual(got, tv.want) {
+				t.Errorf("input: %#v, vars: %s, ticks: %v\n  got  %s\n  want %s",
+					tv.input, litter.Sdump(tv.vars), tv.expandticks,
+					litter.Sdump(got),
+					litter.Sdump(tv.want))
+			}
+		})
 	}
 }
 
 func TestExpandRecipeSigils(t *testing.T) {
-	tests := []expandtv{
+	tests := []struct {
+		name  string
+		input string
+		vars  map[string][]string
+		want  string
+	}{
 		{
+			name:  "braced_var",
 			input: "/runs/contition_${stem1}_bowtie_k10/mapping.bam.bai",
-			vars: map[string][]string{
-				"stem1": {"a"},
-			},
-			expandticks: false,
-			want:        []string{"/runs/contition_a_bowtie_k10/mapping.bam.bai"},
+			vars:  map[string][]string{"stem1": {"a"}},
+			want:  "/runs/contition_a_bowtie_k10/mapping.bam.bai",
 		},
 		{
+			name:  "s3_prefix",
 			input: "s3://runs/contition_${stem1}_bowtie_k10/mapping.bam.bai",
-			vars: map[string][]string{
-				"stem1": {"a"},
-			},
-			expandticks: false,
-			want:        []string{"s3://runs/contition_a_bowtie_k10/mapping.bam.bai"},
+			vars:  map[string][]string{"stem1": {"a"}},
+			want:  "s3://runs/contition_a_bowtie_k10/mapping.bam.bai",
 		},
 		{
+			name:  "multiline",
 			input: "mkdir -p $target\necho $target",
-			vars: map[string][]string{
-				"target": {"a"},
-			},
-			expandticks: false,
-			want:        []string{"mkdir -p a\necho a"},
+			vars:  map[string][]string{"target": {"a"}},
+			want:  "mkdir -p a\necho a",
 		},
 		{
+			name:  "subshell",
 			input: "mkdir -p $(dirname $target)\necho $target",
-			vars: map[string][]string{
-				"target": {"a"},
-			},
-			expandticks: false,
-			want:        []string{"mkdir -p $(dirname a)\necho a"},
+			vars:  map[string][]string{"target": {"a"}},
+			want:  "mkdir -p $(dirname a)\necho a",
 		},
-		// trailing backslash → preserved literally
 		{
+			name:  "trailing_backslash",
 			input: "echo \\",
 			vars:  map[string][]string{},
-			want:  []string{"echo \\"},
+			want:  "echo \\",
 		},
-		// backslash + non-$ char → preserved
 		{
+			name:  "backslash_non_dollar",
 			input: "echo \\n",
 			vars:  map[string][]string{},
-			want:  []string{"echo \\n"},
+			want:  "echo \\n",
 		},
 	}
 
-	for i, tv := range tests {
-		got := expandRecipeSigils(tv.input, tv.vars)
-
-		if !reflect.DeepEqual(got, tv.want[0]) {
-			t.Errorf("%d: input: %#v, vars: %s. got %s, want %s",
-				i,
-				tv.input, litter.Sdump(tv.vars),
-				litter.Sdump(got),
-				litter.Sdump(tv.want[0]))
-		}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := expandRecipeSigils(tt.input, tt.vars)
+			if got != tt.want {
+				t.Errorf("expandRecipeSigils(%q) = %q, want %q", tt.input, got, tt.want)
+			}
+		})
 	}
 }
 
 func TestExpandDoubleQuotedEdgeCases(t *testing.T) {
 	tests := []struct {
+		name  string
 		input string
 		want  string
 		wantN int
 	}{
-		// Unterminated double quote
-		{"abc", "abc", 3},
-		// Backslash at end of input
-		{"abc\\", "abc\\", 4},
-		// Backslash-escaped char inside (not at end), terminated by "
-		{"abc\\x\"", "abc\\x", 6},
+		{"unterminated", "abc", "abc", 3},
+		{"backslash_at_end", "abc\\", "abc\\", 4},
+		{"backslash_escaped_char", "abc\\x\"", "abc\\x", 6},
 	}
 
-	for i, tt := range tests {
-		got, n := expandDoubleQuoted(tt.input, map[string][]string{}, false)
-		if got != tt.want || n != tt.wantN {
-			t.Errorf("%d: expandDoubleQuoted(%q) = (%q, %d), want (%q, %d)",
-				i, tt.input, got, n, tt.want, tt.wantN)
-		}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, n := expandDoubleQuoted(tt.input, map[string][]string{}, false)
+			if got != tt.want || n != tt.wantN {
+				t.Errorf("expandDoubleQuoted(%q) = (%q, %d), want (%q, %d)",
+					tt.input, got, n, tt.want, tt.wantN)
+			}
+		})
 	}
 }
 
@@ -341,80 +352,85 @@ func TestExpandSingleQuotedEdgeCases(t *testing.T) {
 }
 
 func TestExpandBackQuotedEdgeCases(t *testing.T) {
-	// Unterminated sh-style backtick
-	got, n := expandBackQuoted("cmd without closing", map[string][]string{
-		"shell": {"sh"},
-	})
-	if len(got) != 1 || got[0] != "cmd without closing" || n != len("cmd without closing") {
-		t.Errorf("expandBackQuoted(unterminated sh) = (%v, %d), want ([%q], %d)",
-			got, n, "cmd without closing", len("cmd without closing"))
+	tests := []struct {
+		name  string
+		input string
+		want  []string
+		wantN int
+	}{
+		{
+			name:  "unterminated_sh",
+			input: "cmd without closing",
+			want:  []string{"cmd without closing"},
+			wantN: len("cmd without closing"),
+		},
+		{
+			name:  "unterminated_rc",
+			input: "{cmd without closing",
+			want:  []string{"{cmd without closing"},
+			wantN: len("{cmd without closing"),
+		},
 	}
 
-	// Unterminated rc-style backtick: `{cmd with no closing brace
-	input := "{cmd without closing"
-	got, n = expandBackQuoted(input, map[string][]string{
-		"shell": {"sh"},
-	})
-	if len(got) != 1 || got[0] != input || n != len(input) {
-		t.Errorf("expandBackQuoted(unterminated rc) = (%v, %d), want ([%q], %d)",
-			got, n, input, len(input))
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, n := expandBackQuoted(tt.input, map[string][]string{"shell": {"sh"}})
+			if !reflect.DeepEqual(got, tt.want) || n != tt.wantN {
+				t.Errorf("expandBackQuoted(%q) = (%v, %d), want (%v, %d)",
+					tt.input, got, n, tt.want, tt.wantN)
+			}
+		})
 	}
 }
 
 func TestExpandSuffixes(t *testing.T) {
 	tests := []struct {
+		name              string
 		input, stem, want string
 	}{
-		// Basic substitution
-		{"%.o", "foo", "foo.o"},
-		{"&.o", "foo", "foo.o"},
-		// Escaped % → literal %
-		{`\%`, "stem", "%"},
-		{`\%.o`, "stem", "%.o"},
-		// Escaped & → literal &
-		{`\&`, "stem", "&"},
-		// Multiple substitutions (exercises j>0 iterations)
-		{"%.c.%", "foo", "foo.c.foo"},
-		{"%.dir/%", "bar", "bar.dir/bar"},
-		// Backslash followed by non-meta char → preserved literally
-		{`\n`, "stem", `\n`},
-		{`\..o`, "stem", `\..o`},
-		{`a\.b`, "stem", `a\.b`},
-		// Trailing backslash → preserved literally
-		{`a\`, "stem", `a\`},
-		{`\`, "stem", `\`},
-		// Mix of escapes and substitutions
-		{`\%=%`, "stem", "%=stem"},
-		// No special chars
-		{"plain", "stem", "plain"},
-		// Empty input
-		{"", "stem", ""},
+		{"percent", "%.o", "foo", "foo.o"},
+		{"ampersand", "&.o", "foo", "foo.o"},
+		{"escaped_percent", `\%`, "stem", "%"},
+		{"escaped_percent_suffix", `\%.o`, "stem", "%.o"},
+		{"escaped_ampersand", `\&`, "stem", "&"},
+		{"multi_percent", "%.c.%", "foo", "foo.c.foo"},
+		{"multi_percent_slash", "%.dir/%", "bar", "bar.dir/bar"},
+		{"backslash_n", `\n`, "stem", `\n`},
+		{"backslash_dot", `\..o`, "stem", `\..o`},
+		{"backslash_mid", `a\.b`, "stem", `a\.b`},
+		{"trailing_backslash", `a\`, "stem", `a\`},
+		{"only_backslash", `\`, "stem", `\`},
+		{"escape_and_subst", `\%=%`, "stem", "%=stem"},
+		{"plain", "plain", "stem", "plain"},
+		{"empty", "", "stem", ""},
 	}
 
 	for _, tt := range tests {
-		got := expandSuffixes(tt.input, tt.stem)
-		if got != tt.want {
-			t.Errorf("expandSuffixes(%q, %q) = %q, want %q", tt.input, tt.stem, got, tt.want)
-		}
+		t.Run(tt.name, func(t *testing.T) {
+			got := expandSuffixes(tt.input, tt.stem)
+			if got != tt.want {
+				t.Errorf("expandSuffixes(%q, %q) = %q, want %q", tt.input, tt.stem, got, tt.want)
+			}
+		})
 	}
 }
 
 func TestExpandSigilEnvLookup(t *testing.T) {
-	// Valid varname not in vars but in env → env lookup path (lines 213-215)
+	// Valid varname not in vars but in env → env lookup path
 	t.Setenv("MK_TEST_ENV_VAR_XYZ", "envvalue")
 	got := expand("$MK_TEST_ENV_VAR_XYZ", map[string][]string{}, false)
 	if len(got) != 1 || got[0] != "envvalue" {
 		t.Errorf("expand env var: got %v, want [envvalue]", got)
 	}
 
-	// Bracketed invalid varname in env → lines 221-223
+	// Bracketed invalid varname in env
 	t.Setenv("1bad", "badval")
 	got = expand("${1bad}", map[string][]string{}, false)
 	if len(got) != 1 || got[0] != "badval" {
 		t.Errorf("expand invalid varname in env: got %v, want [badval]", got)
 	}
 
-	// Bracketed invalid varname not in env → line 225
+	// Bracketed invalid varname not in env
 	got = expand("${2nonexistent_xyzzy}", map[string][]string{}, false)
 	if len(got) != 1 || got[0] != "${2nonexistent_xyzzy}" {
 		t.Errorf("expand invalid varname not in env: got %v, want [${2nonexistent_xyzzy}]", got)
@@ -422,26 +438,27 @@ func TestExpandSigilEnvLookup(t *testing.T) {
 }
 
 func TestExpandBackQuoted(t *testing.T) {
-	tests := []expandtv{
+	tests := []struct {
+		name  string
+		input string
+		vars  map[string][]string
+		want  []string
+	}{
 		{
+			name:  "printf",
 			input: "printf 'a b c'`",
-			vars: map[string][]string{
-				"shell": {"sh"},
-			},
-			expandticks: false,
-			want:        []string{"a", "b", "c"},
+			vars:  map[string][]string{"shell": {"sh"}},
+			want:  []string{"a", "b", "c"},
 		},
 	}
 
-	for i, tv := range tests {
-		got, _ := expandBackQuoted(tv.input, tv.vars)
-
-		if !reflect.DeepEqual(got, tv.want) {
-			t.Errorf("%d: input: %#v, vars: %s. got %s, want %s",
-				i,
-				tv.input, litter.Sdump(tv.vars),
-				litter.Sdump(got),
-				litter.Sdump(tv.want))
-		}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, _ := expandBackQuoted(tt.input, tt.vars)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("expandBackQuoted(%q)\n  got  %s\n  want %s",
+					tt.input, litter.Sdump(got), litter.Sdump(tt.want))
+			}
+		})
 	}
 }

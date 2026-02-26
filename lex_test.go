@@ -3,26 +3,28 @@ package main
 import "testing"
 
 func TestTokenTypeString(t *testing.T) {
-	// Cover all named cases and the fallthrough default in tokenType.String().
-	cases := []struct {
+	tests := []struct {
+		name string
 		typ  tokenType
 		want string
 	}{
-		{tokenError, "[Error]"},
-		{tokenNewline, "[Newline]"},
-		{tokenWord, "[Word]"},
-		{tokenPipeInclude, "[PipeInclude]"},
-		{tokenRedirInclude, "[RedirInclude]"},
-		{tokenColon, "[Colon]"},
-		{tokenAssign, "[Assign]"},
-		{tokenRecipe, "[Recipe]"},
-		{tokenAssignU, "[AssignU]"},
-		{tokenType(999), "[MysteryToken]"},
+		{"error", tokenError, "[Error]"},
+		{"newline", tokenNewline, "[Newline]"},
+		{"word", tokenWord, "[Word]"},
+		{"pipe_include", tokenPipeInclude, "[PipeInclude]"},
+		{"redir_include", tokenRedirInclude, "[RedirInclude]"},
+		{"colon", tokenColon, "[Colon]"},
+		{"assign", tokenAssign, "[Assign]"},
+		{"recipe", tokenRecipe, "[Recipe]"},
+		{"assign_u", tokenAssignU, "[AssignU]"},
+		{"unknown", tokenType(999), "[MysteryToken]"},
 	}
-	for _, tc := range cases {
-		if got := tc.typ.String(); got != tc.want {
-			t.Errorf("tokenType(%d).String() = %q, want %q", tc.typ, got, tc.want)
-		}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.typ.String(); got != tt.want {
+				t.Errorf("tokenType(%d).String() = %q, want %q", tt.typ, got, tt.want)
+			}
+		})
 	}
 }
 

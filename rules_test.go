@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"reflect"
 	"regexp"
 	"testing"
 )
@@ -39,88 +41,188 @@ func TestMatchSimplePattern(t *testing.T) {
 }
 
 func TestEquivRecipe(t *testing.T) {
-	r1 := &rule{recipe: "build", shell: []string{"sh"}}
-	r2 := &rule{recipe: "build", shell: []string{"sh"}}
-	r3 := &rule{recipe: "other", shell: []string{"sh"}}
-	r4 := &rule{recipe: "build", shell: []string{"bash"}}
-	r5 := &rule{recipe: "build", shell: []string{"sh", "-e"}}
+	tests := []struct {
+		name string
+		a, b *rule
+		want bool
+	}{
+		{
+			name: "identical",
+			a:    &rule{recipe: "build", shell: []string{"sh"}},
+			b:    &rule{recipe: "build", shell: []string{"sh"}},
+			want: true,
+		},
+		{
+			name: "different_recipe",
+			a:    &rule{recipe: "build", shell: []string{"sh"}},
+			b:    &rule{recipe: "other", shell: []string{"sh"}},
+			want: false,
+		},
+		{
+			name: "different_shell",
+			a:    &rule{recipe: "build", shell: []string{"sh"}},
+			b:    &rule{recipe: "build", shell: []string{"bash"}},
+			want: false,
+		},
+		{
+			name: "different_shell_args",
+			a:    &rule{recipe: "build", shell: []string{"sh"}},
+			b:    &rule{recipe: "build", shell: []string{"sh", "-e"}},
+			want: false,
+		},
+	}
 
-	if !r1.equivRecipe(r2) {
-		t.Error("identical recipes should be equivalent")
-	}
-	if r1.equivRecipe(r3) {
-		t.Error("different recipes should not be equivalent")
-	}
-	if r1.equivRecipe(r4) {
-		t.Error("different shells should not be equivalent")
-	}
-	if r1.equivRecipe(r5) {
-		t.Error("different shell arg counts should not be equivalent")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.a.equivRecipe(tt.b)
+			if got != tt.want {
+				t.Errorf("equivRecipe() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
 
 func TestExecuteAssignment(t *testing.T) {
-	// Valid assignment with non-word tokens in value
-	rs := &ruleSet{
-		vars:           map[string][]string{},
-		rules:          []rule{},
-		targetrules:    map[string][]int{},
-		unexportedVars: map[string]bool{},
-	}
-	tokens := []token{
-		{typ: tokenWord, val: "x"},
-		{typ: tokenWord, val: "a"},
-		{typ: tokenColon, val: ":"},
-		{typ: tokenWord, val: "b"},
-	}
-	err := rs.executeAssignment(tokens, false)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if len(rs.vars["x"]) != 1 || rs.vars["x"][0] != "a:b" {
-		t.Errorf("expected x=[a:b], got %v", rs.vars["x"])
+	tests := []struct {
+		name   string
+		tokens []token
+		want   map[string][]string
+		err    bool
+	}{
+		{
+			name: "non_word_in_value",
+			tokens: []token{
+				{typ: tokenWord, val: "x"},
+				{typ: tokenWord, val: "a"},
+				{typ: tokenColon, val: ":"},
+				{typ: tokenWord, val: "b"},
+			},
+			want: map[string][]string{"x": {"a:b"}},
+		},
+		{
+			name: "value_starts_with_non_word",
+			tokens: []token{
+				{typ: tokenWord, val: "y"},
+				{typ: tokenColon, val: ":"},
+				{typ: tokenWord, val: "val"},
+			},
+			want: map[string][]string{"y": {":val"}},
+		},
+		{
+			name: "invalid_varname",
+			tokens: []token{
+				{typ: tokenWord, val: "1bad"},
+			},
+			err: true,
+		},
 	}
 
-	// Assignment value starting with non-word token (hits len(input)==0 branch)
-	nonWordStart := []token{
-		{typ: tokenWord, val: "y"},
-		{typ: tokenColon, val: ":"},
-		{typ: tokenWord, val: "val"},
-	}
-	err = rs.executeAssignment(nonWordStart, false)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if len(rs.vars["y"]) != 1 || rs.vars["y"][0] != ":val" {
-		t.Errorf("expected y=[:val], got %v", rs.vars["y"])
-	}
-
-	// Invalid variable name
-	badName := []token{
-		{typ: tokenWord, val: "1bad"},
-	}
-	err = rs.executeAssignment(badName, false)
-	if err == nil {
-		t.Error("expected error for invalid variable name")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rs := &ruleSet{
+				vars:           map[string][]string{},
+				rules:          []rule{},
+				targetrules:    map[string][]int{},
+				unexportedVars: map[string]bool{},
+			}
+			err := rs.executeAssignment(tt.tokens, false)
+			if tt.err {
+				if err == nil {
+					t.Error("expected error, got nil")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			for k, want := range tt.want {
+				if !reflect.DeepEqual(rs.vars[k], want) {
+					t.Errorf("vars[%q] = %v, want %v", k, rs.vars[k], want)
+				}
+			}
+		})
 	}
 }
 
 func TestIsValidVarName(t *testing.T) {
 	tests := []struct {
 		name string
+		input string
 		want bool
 	}{
-		{"foo", true},
-		{"_bar", true},
-		{"a1", true},
-		{"1bad", false},
-		{"a-b", false},
-		{"", false},
+		{"alpha", "foo", true},
+		{"underscore_prefix", "_bar", true},
+		{"alpha_digit", "a1", true},
+		{"digit_prefix", "1bad", false},
+		{"hyphen", "a-b", false},
+		{"empty", "", false},
 	}
 	for _, tt := range tests {
-		got := isValidVarName(tt.name)
-		if got != tt.want {
-			t.Errorf("isValidVarName(%q) = %v, want %v", tt.name, got, tt.want)
-		}
+		t.Run(tt.name, func(t *testing.T) {
+			got := isValidVarName(tt.input)
+			if got != tt.want {
+				t.Errorf("isValidVarName(%q) = %v, want %v", tt.input, got, tt.want)
+			}
+		})
+	}
+}
+
+func ruleAttributesNotSet(t *testing.T, r *rule) {
+	t.Helper()
+	noAttributes := attribSet{
+		delFailed:      false,
+		nonstop:        false,
+		forcedTimestamp: false,
+		nonvirtual:     false,
+		quiet:          false,
+		regex:          false,
+		update:         false,
+		virtual:        false,
+		exclusive:      false,
+	}
+	if r.attributes != noAttributes {
+		t.Error("rule attributes are not all false", r.attributes)
+	}
+}
+
+func TestParseOneRuleWithAttributeLocalFiles(t *testing.T) {
+	tests := []struct {
+		attr  string
+		field string
+	}{
+		{"D", "delFailed"},
+		{"E", "nonstop"},
+		{"n", "nonvirtual"},
+		{"N", "forcedTimestamp"},
+		{"Q", "quiet"},
+		{"R", "regex"},
+		{"U", "update"},
+		{"V", "virtual"},
+		{"X", "exclusive"},
+	}
+
+	for _, tt := range tests {
+		t.Run(fmt.Sprintf("attr_%s", tt.attr), func(t *testing.T) {
+			mkfileAsString := fmt.Sprintf("somefile.txt:%s: a_prereq.csv\n\techo $target", tt.attr)
+			env := make(map[string][]string)
+			ruleSet := parse(mkfileAsString, "mkfile", "/mkfile", env)
+			if len(ruleSet.rules) != 1 {
+				t.Fatalf("expected 1 rule, got %d", len(ruleSet.rules))
+			}
+			rule := ruleSet.rules[0]
+			if len(rule.prereqs) != 1 {
+				t.Fatalf("expected 1 prereq, got %d", len(rule.prereqs))
+			}
+			if rule.prereqs[0] != "a_prereq.csv" {
+				t.Errorf("prereq = %q, want %q", rule.prereqs[0], "a_prereq.csv")
+			}
+			f := reflect.ValueOf(rule.attributes).FieldByName(tt.field)
+			if !f.IsValid() {
+				t.Fatalf("no field %q in attribSet", tt.field)
+			}
+			if !f.Bool() {
+				t.Errorf("attribute %s (%s) not set", tt.attr, tt.field)
+			}
+		})
 	}
 }
