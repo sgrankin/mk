@@ -450,7 +450,7 @@ func main() {
 	if err != nil {
 		mkError("no mkfile found")
 	}
-	input, _ := io.ReadAll(mkfile)
+	input, _ := io.ReadAll(mkfile) // ReadAll on a regular file; error is not practically reachable.
 	mkfile.Close()
 
 	abspath, _ := filepath.Abs(mkfilepath)
