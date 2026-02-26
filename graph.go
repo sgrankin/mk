@@ -355,9 +355,10 @@ func (g *graph) ambiguous(n *node) {
 	g.pruneEdges(n)
 }
 
-// Print a trace of rules, k
+// Print a trace of rules from target back through the dependency chain.
 func (g *graph) trace(name string, e *edge) {
 	fmt.Fprintf(os.Stderr, "\t%s", name)
+outer:
 	for {
 		prereqname := ""
 		if e.v != nil {
@@ -368,12 +369,10 @@ func (g *graph) trace(name string, e *edge) {
 			for i := range e.v.prereqs {
 				if e.v.prereqs[i].r.recipe != "" {
 					e = e.v.prereqs[i]
-					continue
+					continue outer
 				}
 			}
-			break
-		} else {
-			break
 		}
+		break
 	}
 }
