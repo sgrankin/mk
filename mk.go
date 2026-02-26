@@ -247,6 +247,8 @@ func mkNode(g *graph, n *node, opts *buildOpts, required bool) {
 			uptodate = false
 		} else if len(e.r.command) > 0 && (n.exists || required) {
 			// P attribute: use custom program for staleness checking.
+			// Uses OS environment (not mk vars) because the program is an
+			// external tool (e.g. cmp -s), not a recipe.
 			for i := range prereqs {
 				args := append(append([]string{}, e.r.command[1:]...), n.name, prereqs[i].name)
 				_, ok := subprocess(e.r.command[0], args, os.Environ(), "", false)
