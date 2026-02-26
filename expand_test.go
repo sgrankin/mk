@@ -174,6 +174,13 @@ func TestExpand(t *testing.T) {
 			expandticks: false,
 			want:        []string{"`echo hello`"},
 		},
+		// Backtick after prefix with expandBackticks=false → literal, not duplicated
+		{
+			input:       "prefix`cmd`suffix",
+			vars:        map[string][]string{},
+			expandticks: false,
+			want:        []string{"prefix`cmd`suffix"},
+		},
 		// Escaped space
 		{
 			input:       `\ a`,

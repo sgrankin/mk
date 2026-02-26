@@ -52,9 +52,9 @@ func expand(input string, vars map[string][]string, expandBackticks bool) []stri
 					parts = append(parts, outparts[:len(outparts)-1]...)
 				}
 			} else {
-				out = input
-				off = len(input)
-				expanded += out
+				// Re-include the backtick and emit the rest literally.
+				expanded += "`" + input[i:]
+				off = len(input) - i
 			}
 
 		case '$':
