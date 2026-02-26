@@ -112,9 +112,10 @@ func dorecipe(n *node, e *edge, opts *buildOpts, nproc int) bool {
 	if len(e.r.shell) > 0 {
 		sh, args = expandShell(e.r.shell[0], e.r.shell[1:])
 	}
-	// E attribute: don't pass -e to the shell (allow recipe to continue on errors)
+	// E attribute: don't pass -e to the shell (allow recipe to continue on errors).
+	// Allocate a new slice to avoid mutating e.r.shell's backing array.
 	if e.r.attributes.nonstop {
-		filtered := args[:0]
+		filtered := make([]string, 0, len(args))
 		for _, a := range args {
 			if a != "-e" {
 				filtered = append(filtered, a)
