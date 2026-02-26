@@ -335,6 +335,7 @@ func (g *graph) ambiguous(n *node) {
 		} else {
 			if !le.r.equivRecipe(e.r) && !le.r.ismeta && e.r.ismeta {
 				// Concrete rule takes priority over meta-rule.
+				// Print the discarded meta-rule recipe as a diagnostic before pruning.
 				mkPrintRecipe(n.name, e.r.recipe, false)
 				e.togo = true
 				continue
