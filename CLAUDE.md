@@ -45,7 +45,7 @@ target: recipe
 
 Run a single script test: `go test -run TestScript/basic_rule`
 
-A few tests remain as Go tests in `mk_test.go`: `TestRecipesHaveEnv` (programmatic env inspection) and `TestInteractiveMode*` (stdin piping).
+A few tests remain as Go tests in `mk_test.go`: `TestInteractiveMode*` (stdin piping), `TestMkPrintRecipeEmptyRecipe` (stdout capture), and `TestMkNodeAlreadyClaimed` (node status).
 
 ## Pre-commit Checklist
 
