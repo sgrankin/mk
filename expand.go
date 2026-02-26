@@ -3,6 +3,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"regexp"
 	"strings"
@@ -340,8 +341,10 @@ func expandBackQuoted(input string, vars map[string][]string) ([]string, int) {
 		shell, shellargs = expandShell(vars["shell"][0], shellargs)
 	}
 
-	// TODO: handle errors
-	output, _ := subprocess(shell, shellargs, env, cmd, true)
+	output, ok := subprocess(shell, shellargs, env, cmd, true)
+	if !ok {
+		mkError(fmt.Sprintf("backtick expansion failed: `%s`", cmd))
+	}
 
 	parts := make([]string, 0)
 	_, tokens := lexWords(output)

@@ -1,0 +1,8 @@
+# Backtick expansion with a failing command should produce an error.
+! mk -f mkfile
+stderr 'backtick expansion failed'
+
+-- mkfile --
+result=`false`
+all:
+	echo $result
